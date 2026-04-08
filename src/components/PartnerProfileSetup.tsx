@@ -690,90 +690,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         throw error;
       }
       
-const confirmSave = async () => {
-  setShowConfirmModal(false);
-  setSaving(true);
-  try {
-    // Check if user exists
-    if (!user || !user.id) {
-      alert('You must be logged in to save your profile. Please refresh the page and try again.');
-      setSaving(false);
-      return;
-    }
-    
-    const rate = parseInt(hourlyRate);
-    if (isNaN(rate) || rate < 100 || rate > 1000) {
-      alert('Please enter a valid default hourly rate between $100 and $1000.');
-      setSaving(false);
-      return;
-    }
-    
-    const serviceAreasJson = serviceAreas.map(area => ({
-      name: area.name,
-      lat: area.lat,
-      lng: area.lng,
-    }));
-    
-    const availabilityJson = availability.map(day => ({
-      day: day.day,
-      times: day.times,
-    }));
-    
-    const allServiceTypes = [...serviceTypes, ...customServiceTypes];
-    const filteredRates: Record<string, ServiceRate> = {};
-    for (const type of allServiceTypes) {
-      if (serviceRates[type]) {
-        filteredRates[type] = {
-          hourly: Math.floor(serviceRates[type].hourly),
-          halfHour: Math.floor(serviceRates[type].halfHour)
-        };
-      }
-    }
-    
-    const updateData = {
-      hourly_rate: rate,
-      bio: bio,
-      service_types: serviceTypes,
-      custom_service_types: customServiceTypes,
-      service_rates: filteredRates,
-      half_hour_enabled: halfHourEnabled,
-      service_areas: serviceAreasJson,
-      availability: availabilityJson,
-      photos: photos,
-      min_advance_notice: minAdvanceNotice,
-      cancellation_window: cancellationWindow,
-      certifications: certifications,
-      is_partner: true,
-      updated_at: new Date().toISOString(),
-    };
-    
-    console.log('Saving profile data for user:', user.id);
-    console.log('Update data:', updateData);
-    
-    const { error } = await supabase
-      .from('profiles')
-      .update(updateData)
-      .eq('id', user.id);
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      throw error;
-    }
-    
-    await refreshProfile();
-alert('Profile saved successfully!');
-
-// Force redirect to dashboard
-window.location.href = '/dashboard';
-    
-  } catch (err) {
-    console.error('Error saving profile:', err);
-    alert('Failed to save profile. Please try again.');
-  } finally {
-    setSaving(false);
-  }
-};
-
+      await refreshProfile();
+      alert('Profile saved successfully!');
+      
+      // Force redirect to dashboard
+      window.location.href = '/dashboard';
       
     } catch (err) {
       console.error('Error saving profile:', err);
@@ -900,13 +821,13 @@ window.location.href = '/dashboard';
             />
             
             <div className="flex justify-between items-center mt-2">
-  <p className="text-xs text-gray-500">
-    ⚡ This ain't Tinder. No contact info, no offensive words, no funny business — just fitness.
-  </p>
-  <p className={`text-xs ${bio.trim().length >= 20 && bio.trim().length <= 500 ? 'text-green-400' : 'text-red-400'}`}>
-    {bio.trim().length}/500
-  </p>
-</div>
+              <p className="text-xs text-gray-500">
+                ⚡ This ain't Tinder. No contact info, no offensive words, no funny business — just fitness.
+              </p>
+              <p className={`text-xs ${bio.trim().length >= 20 && bio.trim().length <= 500 ? 'text-green-400' : 'text-red-400'}`}>
+                {bio.trim().length}/500
+              </p>
+            </div>
             
             {!isBioComplete() && (
               <p className="text-xs text-red-400 mt-2">⚠️ Required: Tell us about yourself (minimum 20 characters, maximum 500)</p>
@@ -1048,7 +969,7 @@ window.location.href = '/dashboard';
             )}
           </div>
           
-          {/* ========== SECTION 5: SERVICE AREAS (FIXED) ========== */}
+          {/* ========== SECTION 5: SERVICE AREAS ========== */}
           <div className="mb-8 p-4 rounded-xl bg-white/5">
             <div className="flex items-center gap-2 mb-3">
               {isServiceAreasComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
