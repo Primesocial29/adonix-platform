@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -50,47 +49,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       if (isLogin) {
         await signIn(email, password);
-        onClose(); // Close modal after login
+        onClose();
+        window.location.href = '/dashboard';
       } else {
-        // Sign up the user with role in metadata
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              role: selectedRole,
-              tos_accepted_at: new Date().toISOString(),
-              is_over_18: true,
-              tos_version: '1.0',
-              profile_complete: false,
-            },
-          },
-        });
-
-        if (signUpError) throw signUpError;
-
-        // Also update the profiles table
-        if (data?.user) {
-          await supabase
-            .from('profiles')
-            .update({
-              role: selectedRole,
-              tos_accepted_at: new Date().toISOString(),
-              is_over_18: true,
-              tos_version: '1.0',
-              profile_complete: false,
-            })
-            .eq('id', data.user.id);
-        }
-
-        // Close modal
+        await signUp(email, password, selectedRole);
         onClose();
         
         // Redirect based on role
         if (selectedRole === 'partner') {
-          window.location.href = '/partner-profile-setup';
+          window.location.href = '/partner-setup';
         } else {
-          window.location.href = '/client-profile-setup';
+          window.location.href = '/client-setup';
         }
         return;
       }
