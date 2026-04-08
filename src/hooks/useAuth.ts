@@ -7,7 +7,10 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTrainer, setIsTrainer] = useState(false);
+  const [isPartner, setIsPartner] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     // Get initial session
@@ -28,7 +31,10 @@ export function useAuth() {
       } else {
         setProfile(null);
         setIsTrainer(false);
+        setIsPartner(false);
         setIsClient(false);
+        setIsMember(false);
+        setRole(null);
         setLoading(false);
       }
     });
@@ -47,8 +53,15 @@ export function useAuth() {
       if (error) throw error;
       
       setProfile(data);
-      setIsTrainer(data?.role === 'trainer');
-      setIsClient(data?.role === 'client');
+      const userRole = data?.role;
+      setRole(userRole);
+      
+      // Handle different role naming conventions
+      setIsTrainer(userRole === 'trainer' || userRole === 'partner');
+      setIsPartner(userRole === 'partner');
+      setIsClient(userRole === 'client' || userRole === 'member');
+      setIsMember(userRole === 'member');
+      
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -56,9 +69,46 @@ export function useAuth() {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  return { user, profile, loading, isTrainer, isClient, signOut };
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
+  return { 
+    user, 
+    profile, 
+    loading, 
+    isTrainer, 
+    isPartner, 
+    isClient, 
+    isMember,
+    role,
+    signIn,
+    signUp,
+    signOut, 
+    refreshProfile 
+  };
 }
