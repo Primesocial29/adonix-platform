@@ -764,8 +764,7 @@ const confirmSave = async () => {
 alert('Profile saved successfully!');
 
 // Force redirect to dashboard
-window.location.href = '/dashboard';dow.location.href = '/dashboard';
-    }
+window.location.href = '/dashboard';
     
   } catch (err) {
     console.error('Error saving profile:', err);
