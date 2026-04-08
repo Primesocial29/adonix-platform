@@ -192,7 +192,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   // Helper functions for completion tracking
   const isProfilePhotoComplete = () => photos.length > 0;
-  const isBioComplete = () => bio.trim().length >= 20;
+  const isBioComplete = () => bio.trim().length >= 20 && bio.trim().length <= 500;
   const isServicesComplete = () => serviceTypes.length + customServiceTypes.length > 0;
   const isServiceAreasComplete = () => serviceAreas.length > 0;
   const isAvailabilityComplete = () => availability.some(day => day.times.length > 0);
@@ -601,6 +601,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }
     
     if (bio) {
+      if (bio.length < 20) {
+        setBioError('Bio must be at least 20 characters');
+        return;
+      }
+      if (bio.length > 500) {
+        setBioError('Bio cannot exceed 500 characters');
+        return;
+      }
       const bioValidation = await validateText(bio, 'profile bio');
       if (!bioValidation.isValid) {
         setBlockedWords(bioValidation.blockedWords);
@@ -796,23 +804,28 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             
             <textarea
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell them about your fitness philosophy, experience, and what makes you great..."
+              onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                  setBio(e.target.value);
+                }
+              }}
+              placeholder="Why should someone choose you? Don't be boring. Don't be obvious. Just be memorable... (20-500 chars)"
               rows={4}
+              maxLength={500}
               className={`w-full px-4 py-3 bg-white/5 border rounded-xl focus:border-red-500 focus:outline-none transition-colors text-white placeholder-gray-500 text-base ${
                 bioError ? 'border-red-500' : 'border-white/10'
               }`}
             />
             
             <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500">Share your fitness journey</p>
-              <p className={`text-xs ${bio.trim().length >= 20 ? 'text-green-400' : 'text-red-400'}`}>
-                {bio.trim().length}/20 minimum characters
+              <p className="text-xs text-gray-500">⚡ No contact info or social handles — keep the mystery.</p>
+              <p className={`text-xs ${bio.trim().length >= 20 && bio.trim().length <= 500 ? 'text-green-400' : 'text-red-400'}`}>
+                {bio.trim().length}/500
               </p>
             </div>
             
             {!isBioComplete() && (
-              <p className="text-xs text-red-400 mt-2">⚠️ Required: Tell us about yourself (minimum 20 characters)</p>
+              <p className="text-xs text-red-400 mt-2">⚠️ Required: Tell us about yourself (minimum 20 characters, maximum 500)</p>
             )}
           </div>
           
