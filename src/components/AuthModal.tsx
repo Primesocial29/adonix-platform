@@ -123,7 +123,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
               <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
               <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                💵 I will earn money
+                💵 I want to earn money
               </div>
             </button>
           </div>
