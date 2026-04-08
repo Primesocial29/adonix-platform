@@ -818,11 +818,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             />
             
             <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-gray-500">⚡ No contact info or social handles — keep the mystery.</p>
-              <p className={`text-xs ${bio.trim().length >= 20 && bio.trim().length <= 500 ? 'text-green-400' : 'text-red-400'}`}>
-                {bio.trim().length}/500
-              </p>
-            </div>
+  <p className="text-xs text-gray-500">
+    ⚡ This ain't Tinder. No contact info, no offensive words, no funny business — just fitness.
+  </p>
+  <p className={`text-xs ${bio.trim().length >= 20 && bio.trim().length <= 500 ? 'text-green-400' : 'text-red-400'}`}>
+    {bio.trim().length}/500
+  </p>
+</div>
             
             {!isBioComplete() && (
               <p className="text-xs text-red-400 mt-2">⚠️ Required: Tell us about yourself (minimum 20 characters, maximum 500)</p>
