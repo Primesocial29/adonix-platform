@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
-import { Camera, X, AlertCircle } from 'lucide-react';
+import { Camera, X, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { validateText, containsBlockedWords } from '../lib/textSanitizer';
 import BlockedWordAlert from './BlockedWordAlert';
 import LiveCameraCapture from './LiveCameraCapture';
@@ -48,7 +48,8 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
   // Form fields
   const [photo, setPhoto] = useState('');
   const [bio, setBio] = useState('');
-  const [fitnessGoals, setFitnessGoals] = useState('');
+  const [fitnessGoals, setFitnessGoals] = useState<string[]>([]);
+  const [customGoal, setCustomGoal] = useState('');
   const [age, setAge] = useState('');
   const [city, setCity] = useState('');
   
@@ -59,17 +60,55 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
   // Validation states
   const [bioError, setBioError] = useState<string | null>(null);
   const [blockedWords, setBlockedWords] = useState<string[]>([]);
+  const [customGoalError, setCustomGoalError] = useState('');
+  
+  const fitnessGoalOptions = [
+    'Lose weight', 'Build muscle', 'Improve endurance', 'Get toned',
+    'Train for an event', 'Improve flexibility', 'Reduce stress',
+    'General fitness', 'Rehab/Recovery', 'Just have fun'
+  ];
   
   // Check if all required fields are complete
   const isProfileComplete = () => {
     return photo && 
            bio.trim().length >= 20 && 
            bio.trim().length <= 500 && 
-           fitnessGoals.trim().length >= 10 && 
+           fitnessGoals.length > 0 &&
            age && 
            parseInt(age) >= 18 && 
            city.trim().length >= 2 &&
            termsAccepted;
+  };
+
+  const addCustomGoal = () => {
+    const trimmed = customGoal.trim();
+    if (!trimmed) return;
+    
+    if (containsBlockedWords(trimmed)) {
+      setCustomGoalError('This goal contains blocked words.');
+      return;
+    }
+    
+    if (fitnessGoals.includes(trimmed) || fitnessGoalOptions.includes(trimmed)) {
+      setCustomGoalError('This goal is already in your list.');
+      return;
+    }
+    
+    setFitnessGoals([...fitnessGoals, trimmed]);
+    setCustomGoal('');
+    setCustomGoalError('');
+  };
+
+  const removeGoal = (goal: string) => {
+    setFitnessGoals(fitnessGoals.filter(g => g !== goal));
+  };
+
+  const toggleGoal = (goal: string) => {
+    if (fitnessGoals.includes(goal)) {
+      setFitnessGoals(fitnessGoals.filter(g => g !== goal));
+    } else {
+      setFitnessGoals([...fitnessGoals, goal]);
+    }
   };
 
   const handleSave = async () => {
@@ -112,8 +151,8 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
       return;
     }
     
-    if (fitnessGoals.length < 10) {
-      alert('Please tell us more about your fitness goals (minimum 10 characters).');
+    if (fitnessGoals.length === 0) {
+      alert('Please select at least one fitness goal.');
       return;
     }
     
@@ -121,12 +160,6 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
     if (!bioValidation.isValid) {
       setBlockedWords(bioValidation.blockedWords);
       setBioError(bioValidation.error);
-      return;
-    }
-    
-    const goalsValidation = await validateText(fitnessGoals, 'fitness goals');
-    if (!goalsValidation.isValid) {
-      alert(`Your fitness goals contain blocked words: ${goalsValidation.blockedWords.join(', ')}`);
       return;
     }
     
@@ -167,12 +200,6 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
       setSaving(false);
     }
   };
-
-  const fitnessGoalOptions = [
-    'Lose weight', 'Build muscle', 'Improve endurance', 'Get toned',
-    'Train for an event', 'Improve flexibility', 'Reduce stress',
-    'General fitness', 'Rehab/Recovery', 'Just have fun'
-  ];
 
   return (
     <>
@@ -292,14 +319,14 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
             <div className="p-4 rounded-xl bg-white/5">
               <label className="block font-semibold mb-2 text-white">Fitness Goals <span className="text-red-500">*</span></label>
               
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {fitnessGoalOptions.map(goal => (
                   <button
                     key={goal}
                     type="button"
-                    onClick={() => setFitnessGoals(goal)}
+                    onClick={() => toggleGoal(goal)}
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                      fitnessGoals === goal
+                      fitnessGoals.includes(goal)
                         ? 'bg-red-600 text-white'
                         : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
@@ -309,15 +336,41 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
                 ))}
               </div>
               
-              <textarea
-                value={fitnessGoals}
-                onChange={(e) => setFitnessGoals(e.target.value)}
-                placeholder="Or write your own goals... (minimum 10 characters)"
-                rows={2}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tell partners what you want to achieve. Be specific — it helps them help you.
+              {/* Custom Goal Input */}
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={customGoal}
+                  onChange={(e) => setCustomGoal(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addCustomGoal()}
+                  placeholder="Add your own goal..."
+                  className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500 text-sm"
+                />
+                <button
+                  onClick={addCustomGoal}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                </button>
+              </div>
+              {customGoalError && <p className="text-red-400 text-xs mb-2">{customGoalError}</p>}
+              
+              {/* Selected Goals List */}
+              {fitnessGoals.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {fitnessGoals.map(goal => (
+                    <div key={goal} className="flex items-center gap-2 bg-red-500/20 rounded-full px-3 py-1">
+                      <span className="text-sm text-white">{goal}</span>
+                      <button onClick={() => removeGoal(goal)} className="text-gray-400 hover:text-red-500">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-500 mt-2">
+                Select your goals or add your own. Be specific — it helps partners help you.
               </p>
             </div>
             
@@ -363,7 +416,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
               {!age && "🎂 Add your age • "}
               {!city && "📍 Add your city • "}
               {bio.length < 20 && "📝 Complete your bio • "}
-              {!fitnessGoals && "🎯 Tell us your goals • "}
+              {fitnessGoals.length === 0 && "🎯 Select or add a goal • "}
               {!termsAccepted && "📜 Accept Terms"}
             </p>
           </div>
