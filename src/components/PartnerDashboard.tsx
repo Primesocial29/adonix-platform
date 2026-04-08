@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { Check, X, User, MapPin, Clock, AlertCircle } from 'lucide-react';
 import GpsConsentModal from './GpsConsentModal';
 import DeclineModal from './DeclineModal';
-import PartnerSessionManager from './PartnerSessionManager'; // <-- added
+import PartnerSessionManager from './PartnerSessionManager';
 
 interface Booking {
   id: string;
@@ -22,11 +22,11 @@ interface Booking {
     fitness_goals: string;
     photos: string[];
   };
-  duration_seconds?: number; // optional – if not present, we use default
+  duration_seconds?: number;
 }
 
 export default function PartnerDashboard() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, isPartner, loading: authLoading, refreshProfile } = useAuth();
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [pastBookings, setPastBookings] = useState<Booking[]>([]);
@@ -38,15 +38,25 @@ export default function PartnerDashboard() {
   const [declineModalOpen, setDeclineModalOpen] = useState(false);
   const [declineBookingId, setDeclineBookingId] = useState<string | null>(null);
   const [declineClientId, setDeclineClientId] = useState<string | null>(null);
-
-  // New state for the QR-based check‑in flow
   const [activeCheckinBooking, setActiveCheckinBooking] = useState<Booking | null>(null);
 
+  // Role guard - redirect if not a partner
+  if (!authLoading && !isPartner) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400 mb-4">You don't have access to this page.</p>
+          <a href="/" className="text-red-500 hover:underline">Return to Home</a>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
-    if (user) {
+    if (user && isPartner) {
       fetchBookings();
     }
-  }, [user]);
+  }, [user, isPartner]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -105,24 +115,15 @@ export default function PartnerDashboard() {
     setDeclineModalOpen(true);
   };
 
-  // The old GPS functions (performCheckIn, performCheckOut, etc.) are no longer used
-  // because we replace them with the new QR flow. We keep them but won't call them.
-  // (They can be removed later if you want to clean up.)
-
   const onConsentGiven = async () => {
     await refreshProfile();
-    // Not used anymore, but kept for reference
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-gray-400">Please log in to view your dashboard.</p>
-      </div>
-    );
+  if (!user || !isPartner) {
+    return null;
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
@@ -130,11 +131,8 @@ export default function PartnerDashboard() {
     );
   }
 
-  // If a booking is selected for QR check‑in, show the session manager
   if (activeCheckinBooking) {
-    // Calculate duration in seconds – use booking.duration_seconds or default 1 hour
     const durationSeconds = activeCheckinBooking.duration_seconds || 3600;
-
     return (
       <div className="min-h-screen bg-black text-white p-8">
         <div className="max-w-4xl mx-auto">
@@ -151,7 +149,7 @@ export default function PartnerDashboard() {
             bookedDurationSeconds={durationSeconds}
             onSessionComplete={() => {
               setActiveCheckinBooking(null);
-              fetchBookings(); // refresh the list
+              fetchBookings();
             }}
           />
         </div>
@@ -172,7 +170,6 @@ export default function PartnerDashboard() {
           </div>
         )}
 
-        {/* Pending Requests */}
         {pendingBookings.length > 0 && (
           <>
             <h2 className="text-xl font-semibold mb-4">Pending Requests</h2>
@@ -210,7 +207,6 @@ export default function PartnerDashboard() {
           </>
         )}
 
-        {/* Upcoming Sessions (confirmed) – using new QR flow */}
         {upcomingBookings.length > 0 && (
           <>
             <h2 className="text-xl font-semibold mb-4 mt-6">Upcoming Sessions</h2>
@@ -239,7 +235,6 @@ export default function PartnerDashboard() {
                         </div>
                       )}
                       <div className="flex gap-3 mt-4">
-                        {/* New button to start QR check‑in process */}
                         <button
                           onClick={() => setActiveCheckinBooking(booking)}
                           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
@@ -256,7 +251,6 @@ export default function PartnerDashboard() {
           </>
         )}
 
-        {/* Past Sessions */}
         {pastBookings.length > 0 && (
           <>
             <h2 className="text-xl font-semibold mb-4 mt-6">Past Sessions</h2>
