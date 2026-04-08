@@ -130,3 +130,31 @@ export function useAuth() {
     refreshProfile 
   };
 }
+
+const signUp = async (email: string, password: string, role: 'member' | 'partner', username: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        role: role,
+        username: username,
+        profile_complete: false,
+      },
+    },
+  });
+  if (error) throw error;
+  
+  if (data?.user) {
+    await supabase
+      .from('profiles')
+      .update({
+        role: role,
+        username: username,
+        profile_complete: false,
+      })
+      .eq('id', data.user.id);
+  }
+  
+  return data;
+};
