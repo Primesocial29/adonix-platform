@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Camera, Calendar, Dumbbell } from 'lucide-react';
 
 interface PartnerProfileSetupProps {
   onClose: () => void;
@@ -10,21 +10,15 @@ interface PartnerProfileSetupProps {
 
 // Blocked words list (profanity, social media, contact info)
 const BLOCKED_WORDS = [
-  // Social media platforms
   'instagram', 'insta', 'ig', 'facebook', 'fb', 'twitter', 'x.com', 'tiktok', 'snapchat', 'youtube', 'twitch',
-  // Contact methods  
   'whatsapp', 'telegram', 'signal', 'wechat', 'kik', 'discord', 'onlyfans',
-  // Email patterns
   '@gmail', '@yahoo', '@hotmail', '@outlook', '@aol', '@icloud', 'email', 'e-mail',
-  // Phone patterns  
   'call me', 'text me', 'phone', 'number', 'whatsapp',
-  // Profanity (add more as needed)
   'fuck', 'shit', 'bitch', 'cunt', 'damn', 'asshole', 'dick', 'pussy',
 ];
 
-// Social media handle patterns (regex)
 const SOCIAL_MEDIA_PATTERNS = [
-  /@[\w]+/i,  // @username
+  /@[\w]+/i,
   /instagram\.com\/[\w]+/i,
   /facebook\.com\/[\w]+/i,
   /twitter\.com\/[\w]+/i,
@@ -54,40 +48,38 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
   const [formData, setFormData] = useState({
     bio: '',
     specialties: [] as string[],
+    services: [] as string[],
     hourly_rate: '',
     live_photo_url: '',
+    availability: [] as string[],
+    vibe: '',
   });
   const [bioError, setBioError] = useState('');
 
   const handleBioChange = (value: string) => {
-    // Check blocked words
     const check = BLOCKED_WORD_CHECK(value);
     if (!check.isValid && value.length > 0) {
-      setBioError(`⚠️ "${check.foundWord}" is not allowed in your bio. No social media handles, contact info, or inappropriate language.`);
+      setBioError(`⚠️ "${check.foundWord}" is not allowed. No social media, contact info, or inappropriate language.`);
     } else {
       setBioError('');
     }
     
-    // Enforce max 500 characters, show counter
     if (value.length <= 500) {
       setFormData({ ...formData, bio: value });
     }
   };
 
   const handleSubmit = async () => {
-    // Validate bio minimum
     if (formData.bio.length < 20) {
       setBioError('Bio must be at least 20 characters');
       return;
     }
     
-    // Validate bio maximum
     if (formData.bio.length > 500) {
       setBioError('Bio cannot exceed 500 characters');
       return;
     }
     
-    // Validate bio blocked words one more time
     const check = BLOCKED_WORD_CHECK(formData.bio);
     if (!check.isValid) {
       setBioError(`"${check.foundWord}" is not allowed in your bio`);
@@ -104,7 +96,16 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
       return;
     }
 
-    // Show confirmation modal instead of window.confirm
+    if (formData.services.length === 0) {
+      setError('Please select at least one service');
+      return;
+    }
+
+    if (!formData.vibe) {
+      setError('Please select your training vibe');
+      return;
+    }
+    
     setShowConfirmModal(true);
   };
 
@@ -119,8 +120,11 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
         .update({
           bio: formData.bio,
           specialties: formData.specialties,
+          services: formData.services,
           hourly_rate: parseFloat(formData.hourly_rate),
           live_photo_url: formData.live_photo_url,
+          availability: formData.availability,
+          vibe: formData.vibe,
           role: 'partner',
           profile_complete: true,
         })
@@ -128,7 +132,6 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
 
       if (updateError) throw updateError;
       
-      // Close modal and go back to main profile
       onComplete();
     } catch (err: any) {
       console.error('Error saving profile:', err);
@@ -138,12 +141,30 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
     }
   };
 
-  const toggleSpecialty = (specialty: string) => {
+  const toggleSpecialty = (item: string) => {
     setFormData(prev => ({
       ...prev,
-      specialties: prev.specialties.includes(specialty)
-        ? prev.specialties.filter(s => s !== specialty)
-        : [...prev.specialties, specialty]
+      specialties: prev.specialties.includes(item)
+        ? prev.specialties.filter(s => s !== item)
+        : [...prev.specialties, item]
+    }));
+  };
+
+  const toggleService = (item: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.includes(item)
+        ? prev.services.filter(s => s !== item)
+        : [...prev.services, item]
+    }));
+  };
+
+  const toggleAvailability = (day: string) => {
+    setFormData(prev => ({
+      ...prev,
+      availability: prev.availability.includes(day)
+        ? prev.availability.filter(d => d !== day)
+        : [...prev.availability, day]
     }));
   };
 
@@ -151,6 +172,20 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
     'Weight Loss', 'Muscle Building', 'Cardio', 'Yoga', 'Pilates', 
     'Nutrition Coaching', 'Senior Fitness', 'Posture Correction', 
     'Injury Recovery', 'Sports Performance', 'Group Classes', 'Personal Training'
+  ];
+
+  const serviceOptions = [
+    '1-on-1 Training', 'Partner Training', 'Group Sessions', 
+    'Outdoor Bootcamp', 'Virtual Coaching', 'Nutrition Planning',
+    'Flexibility Training', 'Sports Specific', 'Rehab Training'
+  ];
+
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const vibeOptions = [
+    { value: 'energetic', label: '🔥 High Energy', desc: 'Push your limits' },
+    { value: 'chill', label: '🧘 Chill & Balanced', desc: 'Feel good while moving' },
+    { value: 'flirty', label: '😏 Playful & Fun', desc: 'Good vibes only' },
   ];
 
   return (
@@ -164,6 +199,22 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
         </div>
 
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="p-6 space-y-6">
+          
+          {/* Profile Photo */}
+          <div>
+            <label className="block font-semibold mb-2 flex items-center gap-2">
+              <Camera className="w-4 h-4" /> Profile Photo
+            </label>
+            <input
+              type="url"
+              value={formData.live_photo_url}
+              onChange={(e) => setFormData({ ...formData, live_photo_url: e.target.value })}
+              placeholder="https://example.com/your-photo.jpg"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none transition"
+            />
+            <p className="text-gray-500 text-xs mt-1">A clear photo helps you get more bookings</p>
+          </div>
+
           {/* Bio Field */}
           <div>
             <label className="block font-semibold mb-2">
@@ -172,16 +223,13 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
             <textarea
               value={formData.bio}
               onChange={(e) => handleBioChange(e.target.value)}
-              placeholder="Tell potential clients about your fitness philosophy, experience, and what makes you unique..."
-              rows={5}
+              placeholder="Why should someone choose you? Don't be boring. Don't be obvious. Just be memorable... (20-500 chars)"
+              rows={4}
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none transition"
             />
-            <div className="flex justify-between mt-1 text-sm">
-              <span className={formData.bio.length < 20 ? 'text-red-400' : 'text-gray-400'}>
-                {formData.bio.length}/20 minimum characters
-              </span>
-              <span className={formData.bio.length > 500 ? 'text-red-400' : 'text-gray-400'}>
-                {formData.bio.length}/500 maximum characters
+            <div className="flex justify-end mt-1">
+              <span className={`text-sm ${formData.bio.length < 20 || formData.bio.length > 500 ? 'text-red-400' : 'text-gray-400'}`}>
+                {formData.bio.length}/500
               </span>
             </div>
             {bioError && (
@@ -190,14 +238,38 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
               </p>
             )}
             <p className="text-gray-500 text-xs mt-2">
-              ✅ No social media handles, contact info, or inappropriate language allowed
+              ⚡ No contact info or social handles — keep the mystery.
             </p>
           </div>
 
-          {/* Specialties Field */}
+          {/* Vibe Selector */}
           <div>
-            <label className="block font-semibold mb-2">
-              Specialties <span className="text-red-500">*</span>
+            <label className="block font-semibold mb-2 flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Training Vibe <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {vibeOptions.map((vibe) => (
+                <button
+                  key={vibe.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, vibe: vibe.value })}
+                  className={`p-3 rounded-xl border transition ${
+                    formData.vibe === vibe.value
+                      ? 'border-red-500 bg-red-500/20'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="font-semibold text-sm">{vibe.label}</div>
+                  <div className="text-xs text-gray-400">{vibe.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Specialties */}
+          <div>
+            <label className="block font-semibold mb-2 flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Specialties <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {specialtyOptions.map((specialty) => (
@@ -217,6 +289,52 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
             </div>
           </div>
 
+          {/* Services Offered */}
+          <div>
+            <label className="block font-semibold mb-2 flex items-center gap-2">
+              <Dumbbell className="w-4 h-4" /> Services Offered <span className="text-red-500">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {serviceOptions.map((service) => (
+                <button
+                  key={service}
+                  type="button"
+                  onClick={() => toggleService(service)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                    formData.services.includes(service)
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                  }`}
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Availability Calendar */}
+          <div>
+            <label className="block font-semibold mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Availability
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {daysOfWeek.map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleAvailability(day)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    formData.availability.includes(day)
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                  }`}
+                >
+                  {day.substring(0, 3)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Hourly Rate */}
           <div>
             <label className="block font-semibold mb-2">
@@ -229,18 +347,6 @@ export default function PartnerProfileSetup({ onClose, onComplete }: PartnerProf
               placeholder="e.g., 50"
               min="0"
               step="5"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none transition"
-            />
-          </div>
-
-          {/* Profile Photo */}
-          <div>
-            <label className="block font-semibold mb-2">Profile Photo URL (optional)</label>
-            <input
-              type="url"
-              value={formData.live_photo_url}
-              onChange={(e) => setFormData({ ...formData, live_photo_url: e.target.value })}
-              placeholder="https://example.com/your-photo.jpg"
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none transition"
             />
           </div>
