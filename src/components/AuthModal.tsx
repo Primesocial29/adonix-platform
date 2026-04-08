@@ -11,6 +11,7 @@ type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+  const { signIn, signUp } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [isLogin, setIsLogin] = useState(false);
@@ -20,7 +21,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isOver18, setIsOver18] = useState(false);
-  const { signIn, signUp } = useAuth();
 
   if (!isOpen) return null;
 
@@ -30,9 +30,37 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   const handleBack = () => {
-    setStep('welcome');
-    setSelectedRole(null);
+    if (isLogin) {
+      // If in login mode, go back to welcome
+      setIsLogin(false);
+      setStep('welcome');
+      setError('');
+      setEmail('');
+      setPassword('');
+    } else {
+      // If in signup mode, go back to role selection
+      setStep('welcome');
+      setSelectedRole(null);
+      setError('');
+    }
+  };
+
+  const handleSignInClick = () => {
+    setIsLogin(true);
+    setStep('credentials');
     setError('');
+    setSelectedRole(null);
+  };
+
+  const handleSignUpClick = () => {
+    setIsLogin(false);
+    setStep('welcome');
+    setError('');
+    setSelectedRole(null);
+    setEmail('');
+    setPassword('');
+    setAcceptedTerms(false);
+    setIsOver18(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +81,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
+    // Sign-up validations
     if (!isOver18) {
       setError('You must be 18 years or older to create an account.');
       setLoading(false);
@@ -123,17 +152,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
               <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
               <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                💵 I Want To Earn Money
+                💵 I will earn money
               </div>
             </button>
           </div>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-8">
             <button
-              onClick={() => setIsLogin(true)}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              onClick={handleSignInClick}
+              className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10"
             >
-              Already have an account? <span className="text-red-500">Sign in</span>
+              Already have an account? <span className="text-red-500">Sign in →</span>
             </button>
           </div>
         </div>
@@ -154,19 +183,29 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         <button
           onClick={handleBack}
-          className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm"
+          className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
         >
           ← Back
         </button>
 
         <div className="text-center mb-6">
-          <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
-          <h2 className="text-2xl font-bold text-white">
-            {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
-          </h2>
-          <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-            {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
-          </p>
+          {!isLogin && (
+            <>
+              <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
+              <h2 className="text-2xl font-bold text-white">
+                {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
+              </h2>
+              <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+                {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
+              </p>
+            </>
+          )}
+          {isLogin && (
+            <>
+              <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+              <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
+            </>
+          )}
         </div>
 
         {error && (
@@ -240,15 +279,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-gray-400 hover:text-white text-sm"
-            >
-              {isLogin ? "Don't have an account? Create one" : "Already have an account? Sign in"}
-            </button>
-          </div>
+          {isLogin && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleSignUpClick}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Don't have an account? <span className="text-red-500">Sign up</span>
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
