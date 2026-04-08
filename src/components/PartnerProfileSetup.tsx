@@ -692,7 +692,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       
       await refreshProfile();
       alert('Profile saved successfully!');
-      if (onComplete) onComplete();
+      <PartnerProfileSetup 
+  onComplete={() => {
+    // Close the setup modal
+    setShowPartnerSetup(false);
+    // Optional: refresh profile data
+    refreshProfile();
+  }} 
+/>
     } catch (err) {
       console.error('Error saving profile:', err);
       alert('Failed to save profile. Please try again.');
