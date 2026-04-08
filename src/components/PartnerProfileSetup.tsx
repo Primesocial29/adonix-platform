@@ -761,14 +761,10 @@ const confirmSave = async () => {
     }
     
     await refreshProfile();
-    alert('Profile saved successfully!');
-    
-    // ✅ FIXED: Call onComplete if it exists, otherwise redirect
-    if (onComplete) {
-      onComplete();
-    } else {
-      // Fallback redirect
-      window.location.href = '/dashboard';
+alert('Profile saved successfully!');
+
+// Force redirect to dashboard
+window.location.href = '/dashboard';dow.location.href = '/dashboard';
     }
     
   } catch (err) {
