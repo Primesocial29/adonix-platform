@@ -2,19 +2,20 @@ import { useState, useEffect } from 'react';
 import { Dumbbell, LogOut } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import TrainerDashboard from "./TrainerDashboard";  // ← Changed from PartnerMarketplace
+import TrainerDashboard from "./TrainerDashboard";
 import BookingFlow, { BookingDetails } from './BookingFlow';
 import CheckoutScreen from './CheckoutScreen';
 import AuthModal from './AuthModal';
+import MyBookings from './MyBookings';
 
 export default function PublicHome() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, role, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
   const handleBookTrainer = (trainer: Profile) => {
-    setSelectedPartner(trainer);  // ← Fixed: changed 'partner' to 'trainer'
+    setSelectedPartner(trainer);
   };
 
   const handleProceedToCheckout = (details: BookingDetails) => {
@@ -33,7 +34,7 @@ export default function PublicHome() {
 
   // Client notifications for booking status changes
   useEffect(() => {
-    if (!user || profile?.is_partner) return;
+    if (!user || role !== 'client') return;
 
     const fetchClientBookings = async () => {
       const { data, error } = await supabase
@@ -73,7 +74,35 @@ export default function PublicHome() {
     };
 
     fetchClientBookings();
-  }, [user, profile]);
+  }, [user, role]);
+
+  // Don't render anything while loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
+
+  // If no profile_complete, show setup prompt
+  if (user && profile && !profile.profile_complete) {
+    const setupUrl = role === 'trainer' ? '/partner-setup' : '/client-setup';
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Profile</h2>
+          <p className="text-gray-400 mb-6">You need to complete your profile before continuing.</p>
+          <button
+            onClick={() => window.location.href = setupUrl}
+            className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition"
+          >
+            Complete Profile →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -87,9 +116,9 @@ export default function PublicHome() {
             {user ? (
               <>
                 <span className="text-gray-300 text-sm">
-                  Welcome, {profile?.first_name || 'Fitness Enthusiast'}!
+                  Welcome, {profile?.first_name || (role === 'trainer' ? 'Trainer' : 'Fitness Enthusiast')}!
                 </span>
-                {profile?.is_partner && (
+                {role === 'trainer' && (
                   <a href="/partner-dashboard" className="text-gray-400 hover:text-white transition-colors">
                     Partner Dashboard
                   </a>
@@ -118,19 +147,28 @@ export default function PublicHome() {
       </nav>
 
       <div className="pt-20 max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Browse Fitness Partners</h1>
-          <p className="text-gray-400 text-lg">Find your perfect workout buddy</p>
-          {/* Optional: Remove this button if you don't need it anymore */}
-          <button
-            onClick={() => window.location.href = '/partner-setup'}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Partner Setup (Test)
-          </button>
-        </div>
+        {/* ========== CLIENT VIEW ========== */}
+        {role === 'client' && (
+          <>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2">Browse Fitness Partners</h1>
+              <p className="text-gray-400 text-lg">Find your perfect workout buddy</p>
+            </div>
+            <TrainerDashboard onBookTrainer={handleBookTrainer} />
+            <MyBookings />
+          </>
+        )}
 
-        <TrainerDashboard onBookTrainer={handleBookTrainer} />
+        {/* ========== TRAINER VIEW ========== */}
+        {role === 'trainer' && (
+          <>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2">Trainer Dashboard</h1>
+              <p className="text-gray-400 text-lg">Manage your sessions, clients, and earnings</p>
+            </div>
+            <TrainerDashboard />
+          </>
+        )}
       </div>
 
       {selectedPartner && (
