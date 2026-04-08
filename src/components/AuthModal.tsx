@@ -8,10 +8,13 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
+type UserRole = 'member' | 'partner' | null;
+
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -37,6 +40,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setLoading(false);
         return;
       }
+      if (!selectedRole) {
+        setError('Please select whether you want to hire a partner or offer services.');
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -44,24 +52,47 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         await signIn(email, password);
         onClose(); // Close modal after login
       } else {
-        // Sign up the user
-        await signUp(email, password);
-        // After sign‑up, update profile with acceptance info
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase
-            .from('profiles')
-            .update({ 
+        // Sign up the user with role in metadata
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              role: selectedRole,
               tos_accepted_at: new Date().toISOString(),
               is_over_18: true,
               tos_version: '1.0',
+              profile_complete: false,
+            },
+          },
+        });
+
+        if (signUpError) throw signUpError;
+
+        // Also update the profiles table
+        if (data?.user) {
+          await supabase
+            .from('profiles')
+            .update({
+              role: selectedRole,
+              tos_accepted_at: new Date().toISOString(),
+              is_over_18: true,
+              tos_version: '1.0',
+              profile_complete: false,
             })
-            .eq('id', user.id);
+            .eq('id', data.user.id);
         }
-        // Redirect to role selection page
-        window.location.href = '/choose-role';
-        onClose(); // Close modal after redirect
-        return; // Stop further execution
+
+        // Close modal
+        onClose();
+        
+        // Redirect based on role
+        if (selectedRole === 'partner') {
+          window.location.href = '/partner-profile-setup';
+        } else {
+          window.location.href = '/client-profile-setup';
+        }
+        return;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -122,6 +153,41 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             />
           </div>
 
+          {/* Role Selection - only for sign-up */}
+          {!isLogin && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-white">
+                I want to:
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('member')}
+                  className={`p-3 rounded-xl border transition-all ${
+                    selectedRole === 'member'
+                      ? 'border-red-500 bg-red-500/20'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="block font-semibold text-white">Hire a Partner</span>
+                  <span className="text-xs text-gray-400">Find fitness pros to train with</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('partner')}
+                  className={`p-3 rounded-xl border transition-all ${
+                    selectedRole === 'partner'
+                      ? 'border-red-500 bg-red-500/20'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="block font-semibold text-white">Offer Services</span>
+                  <span className="text-xs text-gray-400">Become a partner and earn</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Age gate + Terms & Privacy checkboxes – only for sign‑up */}
           {!isLogin && (
             <div className="space-y-3">
@@ -157,7 +223,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           <button
             type="submit"
-            disabled={loading || (!isLogin && (!isOver18 || !acceptedTerms))}
+            disabled={loading || (!isLogin && (!isOver18 || !acceptedTerms || !selectedRole))}
             className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
