@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
-import { Camera, CheckCircle, X, AlertCircle, Sparkles } from 'lucide-react';
+import { Camera, X, AlertCircle } from 'lucide-react';
 import { validateText, containsBlockedWords } from '../lib/textSanitizer';
 import BlockedWordAlert from './BlockedWordAlert';
 import LiveCameraCapture from './LiveCameraCapture';
@@ -46,10 +46,11 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
   // Form fields
-  const [photo, setPhoto] = useState<string>('');
+  const [photo, setPhoto] = useState('');
   const [bio, setBio] = useState('');
   const [fitnessGoals, setFitnessGoals] = useState('');
   const [age, setAge] = useState('');
+  const [city, setCity] = useState('');
   
   // Terms acceptance
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -67,6 +68,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
            fitnessGoals.trim().length >= 10 && 
            age && 
            parseInt(age) >= 18 && 
+           city.trim().length >= 2 &&
            termsAccepted;
   };
 
@@ -92,6 +94,11 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
     
     if (!age || parseInt(age) < 18) {
       alert('You must be at least 18 years old to use Adonix Fit.');
+      return;
+    }
+    
+    if (!city || city.trim().length < 2) {
+      alert('Please enter your city.');
       return;
     }
     
@@ -136,6 +143,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
         bio: bio,
         fitness_goals: fitnessGoals,
         age: parseInt(age),
+        city: city.trim(),
         role: 'member',
         profile_complete: true,
         updated_at: new Date().toISOString(),
@@ -239,6 +247,19 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
               />
               <p className="text-xs text-gray-500 mt-1">You must be at least 18 years old to use Adonix Fit.</p>
             </div>
+
+            {/* ========== CITY ========== */}
+            <div className="p-4 rounded-xl bg-white/5">
+              <label className="block font-semibold mb-2 text-white">City <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g., Los Angeles, Miami, New York"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white"
+              />
+              <p className="text-xs text-gray-500 mt-1">Your city helps us find partners near you.</p>
+            </div>
             
             {/* ========== BIO ========== */}
             <div className="p-4 rounded-xl bg-white/5">
@@ -340,6 +361,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
             <p className="text-xs text-gray-500 text-center">
               {!photo && "📸 Add a photo • "}
               {!age && "🎂 Add your age • "}
+              {!city && "📍 Add your city • "}
               {bio.length < 20 && "📝 Complete your bio • "}
               {!fitnessGoals && "🎯 Tell us your goals • "}
               {!termsAccepted && "📜 Accept Terms"}
@@ -377,7 +399,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
         isOpen={showTermsModal === 'privacy'}
         onClose={() => setShowTermsModal(null)}
         title="Privacy Policy"
-        content="Adonix Fit respects your privacy. We collect your name, email, age, photos, and location data to facilitate fitness sessions. Location data is only used during active sessions to verify attendance. We do not sell your personal data. Photos are used for profile identification. You may request deletion of your account and data at any time. Payment information is processed securely through Stripe and is not stored on our servers."
+        content="Adonix Fit respects your privacy. We collect your name, email, age, city, photos, and location data to facilitate fitness sessions. Location data is only used during active sessions to verify attendance. We do not sell your personal data. Photos are used for profile identification. You may request deletion of your account and data at any time. Payment information is processed securely through Stripe and is not stored on our servers."
       />
       
       {/* Confirmation Modal */}
