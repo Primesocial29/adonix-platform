@@ -40,7 +40,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         return;
       }
       if (!selectedRole) {
-        setError('Please select whether you want to hire a partner or offer services.');
+        setError('Please select whether you want to be The Fire or The Fuel.');
         setLoading(false);
         return;
       }
@@ -126,32 +126,38 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {!isLogin && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-white">
-                I want to:
+                I'm here to:
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedRole('member')}
-                  className={`p-3 rounded-xl border transition-all ${
+                  className={`p-4 rounded-xl border transition-all text-left ${
                     selectedRole === 'member'
-                      ? 'border-red-500 bg-red-500/20'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      ? 'border-red-500 bg-red-500/20 ring-1 ring-red-500'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-red-500/50'
                   }`}
                 >
-                  <span className="block font-semibold text-white">Hire a Partner</span>
-                  <span className="text-xs text-gray-400">Find fitness pros to train with</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">💪</span>
+                    <span className="font-semibold text-white">The Fire — I Want to Sweat</span>
+                  </div>
+                  <div className="text-xs text-gray-400 ml-9">With someone who makes it worth showing up</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedRole('partner')}
-                  className={`p-3 rounded-xl border transition-all ${
+                  className={`p-4 rounded-xl border transition-all text-left ${
                     selectedRole === 'partner'
-                      ? 'border-red-500 bg-red-500/20'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      ? 'border-red-500 bg-red-500/20 ring-1 ring-red-500'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-red-500/50'
                   }`}
                 >
-                  <span className="block font-semibold text-white">Offer Services</span>
-                  <span className="text-xs text-gray-400">Become a partner and earn</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">💰</span>
+                    <span className="font-semibold text-white">The Fuel — I Make People Sweat</span>
+                  </div>
+                  <div className="text-xs text-gray-400 ml-9">Get paid to be the reason they show up</div>
                 </button>
               </div>
             </div>
