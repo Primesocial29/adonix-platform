@@ -5,12 +5,49 @@ const BANNED_WORDS = [
   // Adult content
   'onlyfans', '0f', 'sex', 'hj', 'bj', 'blowjob', 'hookup', 'hook up',
   'massage', 'gfe', 'escort', 'callgirl', 'call girl',
+
+  // Profanity / Sexual content
+  'fuck', 'cunt', 'dick', 'pussy', 'asshole', , 'whore', 'slut',
+  'cock', 'cum', 'orgasm', 'penis', 'vagina', 'anal',  'nude', 'naked',
+  'sexy', 'sexual', 'porn', 'porno', 'xxx', 'horny', 'bdsm', 'kink', 'kinky',
+  'escort', 'hooker', 'prostitute', 'stripper', , 'erotic',
   
   // Social media
   'instagram', 'ig', 'telegram', 'snapchat', 'tiktok', 'twitter', 'facebook',
+  'whatsapp', 'patreon', 'linktree', 'beacons', 'kik', 'discord',
   
-  // Contact info
-  'phone', 'email', 'gmail'
+  // Contact Info Patterns
+  'email', 'e-mail', 'call me', 'text me', 'dm me', 'message me', 'contact me',
+  'phone', 'number', 'cell', 'whatsapp', '@gmail', '@yahoo', '@hotmail', '@outlook',
+  '@aol', '@icloud', '@proton', '@pm.me', '@yandex',
+
+  // Payment/Venmo references
+  'venmo', 'cashapp', 'cash app', 'paypal', 'zelle', 'apple pay', 'google pay',
+  'crypto', 'bitcoin', 'btc',
+  
+  // Location/Private meetup hints
+  'private', 'discreet', 'hotel', 
+];
+
+// Regular expression patterns for social media handles
+export const SOCIAL_MEDIA_PATTERNS = [
+  /@[\w\d_.]+/gi,                           // @username
+  /instagram\.com\/[\w\d_.]+/gi,            // instagram.com/username
+  /instagr\.am\/[\w\d_.]+/gi,               // instagr.am/username
+  /facebook\.com\/[\w\d_.]+/gi,             // facebook.com/username
+  /fb\.com\/[\w\d_.]+/gi,                   // fb.com/username
+  /twitter\.com\/[\w\d_.]+/gi,              // twitter.com/username
+  /x\.com\/[\w\d_.]+/gi,                    // x.com/username
+  /tiktok\.com\/@[\w\d_.]+/gi,              // tiktok.com/@username
+  /snapchat\.com\/add\/[\w\d_.]+/gi,        // snapchat.com/add/username
+  /onlyfans\.com\/[\w\d_.]+/gi,             // onlyfans.com/username
+  /discord\.gg\/[\w\d_]+/gi,                // discord.gg/invite
+  /discord\.com\/invite\/[\w\d_]+/gi,       // discord.com/invite/
+  /t\.me\/[\w\d_]+/gi,                      // t.me/username (Telegram)
+  /wa\.me\/[\w\d_]+/gi,                     // wa.me/ (WhatsApp)
+  /[\w\d_.]+\.[\w]{2,}\/[\w\d_.]+/gi,       // any domain.com/username
+  /\b\d{10}\b/g,                            // 10-digit phone number
+  /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g,         // phone with separators (123-456-7890)
 ];
 
 // Check if text contains any banned words
