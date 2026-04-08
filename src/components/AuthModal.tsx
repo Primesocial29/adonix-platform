@@ -41,7 +41,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setLoading(true);
 
     if (isLogin) {
-      // Login flow
       try {
         await signIn(email, password);
         onClose();
@@ -54,7 +53,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    // Sign-up validations
     if (!isOver18) {
       setError('You must be 18 years or older to create an account.');
       setLoading(false);
@@ -75,7 +73,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signUp(email, password, selectedRole);
       onClose();
       
-      // Redirect based on role
       if (selectedRole === 'partner') {
         window.location.href = '/partner-setup';
       } else {
@@ -112,8 +109,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
             >
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-              <div className="font-bold text-xl text-white mb-1">I Want to Sweat</div>
-              <div className="text-xs text-gray-400">(I will pay for sessions)</div>
+              <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
+              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+                💸 I will pay for sessions
+              </div>
             </button>
 
             {/* Partner / The Fuel */}
@@ -122,8 +121,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
             >
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-              <div className="font-bold text-xl text-white mb-1">I Make People Sweat</div>
-              <div className="text-xs text-gray-400">(I will earn money)</div>
+              <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
+              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+                💵 I will earn money
+              </div>
             </button>
           </div>
 
@@ -163,8 +164,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <h2 className="text-2xl font-bold text-white">
             {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
           </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            {selectedRole === 'partner' ? 'You will earn money' : 'You will pay for sessions'}
+          <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+            {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
           </p>
         </div>
 
@@ -199,7 +200,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             />
           </div>
 
-          {/* Only show age + terms for sign-up, not login */}
           {!isLogin && (
             <div className="space-y-3">
               <div className="flex items-start gap-2">
