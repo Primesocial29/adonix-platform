@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,12 +18,56 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isOver18, setIsOver18] = useState(false);
 
   if (!isOpen) return null;
+
+  // Username validation
+  const validateUsername = (value: string) => {
+    if (!value) return '';
+    if (value.length < 3) return 'Username must be at least 3 characters';
+    if (value.length > 20) return 'Username cannot exceed 20 characters';
+    if (!/^[a-zA-Z0-9_.]+$/.test(value)) return 'Use only letters, numbers, underscore (_), and period (.)';
+    return '';
+  };
+
+  // Check username availability
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!username || username.length < 3 || validateUsername(username)) {
+        setUsernameAvailable(null);
+        return;
+      }
+
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username.toLowerCase())
+          .maybeSingle();
+
+        if (error) throw error;
+        setUsernameAvailable(!data);
+        setUsernameError('');
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const timeout = setTimeout(checkAvailability, 500);
+    return () => clearTimeout(timeout);
+  }, [username]);
 
   const handleRoleSelect = (role: 'member' | 'partner') => {
     setSelectedRole(role);
@@ -31,14 +76,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleBack = () => {
     if (isLogin) {
-      // If in login mode, go back to welcome
       setIsLogin(false);
       setStep('welcome');
       setError('');
       setEmail('');
       setPassword('');
+      setUsername('');
     } else {
-      // If in signup mode, go back to role selection
       setStep('welcome');
       setSelectedRole(null);
       setError('');
@@ -59,6 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setSelectedRole(null);
     setEmail('');
     setPassword('');
+    setUsername('');
     setAcceptedTerms(false);
     setIsOver18(false);
   };
@@ -97,9 +142,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setLoading(false);
       return;
     }
+    if (!username) {
+      setError('Please choose a username.');
+      setLoading(false);
+      return;
+    }
+    
+    const usernameValidationError = validateUsername(username);
+    if (usernameValidationError) {
+      setError(usernameValidationError);
+      setLoading(false);
+      return;
+    }
+    
+    if (!usernameAvailable) {
+      setError('This username is already taken. Please choose another.');
+      setLoading(false);
+      return;
+    }
 
     try {
-      await signUp(email, password, selectedRole);
+      await signUp(email, password, selectedRole, username.toLowerCase());
       onClose();
       
       if (selectedRole === 'partner') {
@@ -132,7 +195,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Client / The Fire */}
             <button
               onClick={() => handleRoleSelect('member')}
               className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
@@ -144,7 +206,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
             </button>
 
-            {/* Partner / The Fuel */}
             <button
               onClick={() => handleRoleSelect('partner')}
               className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
@@ -215,6 +276,53 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Username field - only for sign-up */}
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium mb-2 text-white">
+                Username <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  className={`w-full pl-7 pr-10 py-3 bg-white/5 border rounded-xl focus:outline-none text-white placeholder-gray-500 ${
+                    usernameAvailable === true
+                      ? 'border-green-500 focus:border-green-500'
+                      : usernameAvailable === false
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-white/10 focus:border-red-500'
+                  }`}
+                  placeholder="jess_fit"
+                />
+                {checkingUsername && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+                  </div>
+                )}
+                {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Check className="w-5 h-5 text-green-500" />
+                  </div>
+                )}
+                {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                3-20 characters • letters, numbers, underscore (_), period (.) only
+              </p>
+              {usernameAvailable === false && (
+                <p className="text-xs text-red-400 mt-1">Username already taken</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-2 text-white">Email Address</label>
             <input
@@ -273,7 +381,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           <button
             type="submit"
-            disabled={loading || (!isLogin && (!isOver18 || !acceptedTerms))}
+            disabled={loading || (!isLogin && (!isOver18 || !acceptedTerms || !usernameAvailable))}
             className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
