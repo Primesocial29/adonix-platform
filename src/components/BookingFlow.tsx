@@ -297,7 +297,14 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </div>
           </div>
 
-          {/* NEW: Public Locations Notice */}
+          {/* NEW: Public Locations Notice */}{/* NEW: No External Payment Apps Warning */}
+<div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+  <p className="text-xs text-red-400 text-center">
+    ⚠️ WARNING: All payments must be made through Adonix Fit. 
+    Never send money via Venmo, CashApp, PayPal, Zelle, or any other external payment app. 
+    Users who request external payments will be permanently banned.
+  </p>
+</div>
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <p className="text-xs text-yellow-400 text-center">
               ⚠️ Public locations only. Private residences, hotels, Airbnbs, home gyms, and any non-public venues are strictly prohibited. 
