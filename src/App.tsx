@@ -9,6 +9,7 @@ import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
 import ContactPage from './components/ContactPage';
 import Settings from './components/Settings';
+import AccessibilityPage from './components/AccessibilityPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -68,6 +69,11 @@ function App() {
   }
   if (currentRoute === '/contact') {
     return <ContactPage />;
+  }
+
+  // Accessibility page
+  if (currentRoute === '/accessibility') {
+    return <AccessibilityPage />;
   }
 
   // Default
