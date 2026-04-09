@@ -257,6 +257,13 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
                 <p className="text-xs text-gray-500 text-center">
                   A clear photo of your face. No sunglasses, no group shots, no filters that hide your face.
                 </p>
+                
+                {/* AI-generated photo notice */}
+                <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg w-full">
+                  <p className="text-xs text-yellow-400 text-center">
+                    ⚠️ Real human photo only. AI-generated, deepfake, or synthetic images are prohibited and will result in account termination.
+                  </p>
+                </div>
               </div>
             </div>
             
