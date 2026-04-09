@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -14,17 +14,13 @@ type Step = 'welcome' | 'credentials';
 // Terms Modal Component with scroll-to-bottom requirement
 function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [scrollHeight, setScrollHeight] = useState(0);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
     if (contentRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50;
       setHasScrolledToBottom(isAtBottom);
-      setScrollPosition(scrollTop);
-      setScrollHeight(scrollHeight);
     }
   };
 
@@ -41,11 +37,10 @@ function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onCl
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => {}}>
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {/* Only show X button if scrolled to bottom */}
           {hasScrolledToBottom && (
             <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
               <X className="w-5 h-5 text-gray-400 hover:text-white" />
@@ -58,7 +53,7 @@ function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onCl
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap font-mono text-sm"
         >
-          <p>{content}</p>
+          {content}
         </div>
         
         <div className="p-4 border-t border-white/10">
