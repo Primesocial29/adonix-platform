@@ -193,21 +193,22 @@ export default function PublicHome() {
       )}
 
       <footer className="mt-12 pt-8 pb-6 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-xs text-gray-500">
-              © 2026 Adonix Fit. All rights reserved.
-            </div>
-            <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-              <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-              <span className="text-gray-600 hidden sm:inline">|</span>
-              <span className="text-gray-600">Adonix Fit – Safe fitness connections</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+  <div className="max-w-7xl mx-auto px-6">
+    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="text-xs text-gray-500">
+        © 2026 Adonix Fit. All rights reserved.
+      </div>
+      <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+        <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+        <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+        <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+        <a href="/accessibility" className="hover:text-white transition-colors">Accessibility</a>
+        <span className="text-gray-600 hidden sm:inline">|</span>
+        <span className="text-gray-600">Adonix Fit – Safe fitness connections</span>
+      </div>
+    </div>
+  </div>
+</footer>
     </div>
   );
 }
