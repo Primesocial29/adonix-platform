@@ -875,4 +875,30 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                   onClick={handleSignUpClick}
                   className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
-                  Don't have an account? <span
+                  Don't have an account? <span className="text-red-500">Sign up</span>
+                </button>
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Terms Modal - Credentials Step */}
+      <TermsModal
+        isOpen={showTermsModal === 'terms'}
+        onClose={() => setShowTermsModal(null)}
+        title="Terms of Service"
+        content={fullTermsContent}
+        onAgree={handleTermsAgreed}
+      />
+      
+      <TermsModal
+        isOpen={showTermsModal === 'privacy'}
+        onClose={() => setShowTermsModal(null)}
+        title="Privacy Policy"
+        content={fullPrivacyContent}
+        onAgree={handlePrivacyAgreed}
+      />
+    </>
+  );
+}
