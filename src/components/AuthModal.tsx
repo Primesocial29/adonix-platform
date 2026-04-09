@@ -118,6 +118,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
+  
+  // Facial age estimation consent (for future implementation)
+  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
 
   if (!isOpen) return null;
 
@@ -178,6 +181,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setBirthDay('');
       setBirthYear('');
       setAgeVerifyConsent(false);
+      setFacialAgeConsent(false);
       setAcceptedTerms(false);
       setHasReadTerms(false);
       setHasReadPrivacy(false);
@@ -208,6 +212,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setBirthDay('');
     setBirthYear('');
     setAgeVerifyConsent(false);
+    setFacialAgeConsent(false);
     setHasReadTerms(false);
     setHasReadPrivacy(false);
   };
@@ -311,6 +316,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setLoading(false);
       return;
     }
+
+    // Facial age estimation consent is optional for now
+    // Uncomment the following block when implementing facial age estimation
+    // if (!facialAgeConsent) {
+    //   setError('You must consent to facial age estimation to use this feature.');
+    //   setLoading(false);
+    //   return;
+    // }
 
     try {
       await signUp(email, password, selectedRole, username.toLowerCase());
@@ -785,6 +798,21 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                     I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
                   </label>
                 </div>
+
+                {/* Facial Age Estimation Consent Checkbox - For future implementation */}
+                <div className="flex items-start gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="facialAgeConsent"
+                    checked={facialAgeConsent}
+                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
+                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. 
+                    This complies with Illinois BIPA.
+                  </label>
+                </div>
               </div>
             )}
 
@@ -847,30 +875,4 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                   onClick={handleSignUpClick}
                   className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
-                  Don't have an account? <span className="text-red-500">Sign up</span>
-                </button>
-              </div>
-            )}
-          </form>
-        </div>
-      </div>
-
-      {/* Terms Modal - Credentials Step */}
-      <TermsModal
-        isOpen={showTermsModal === 'terms'}
-        onClose={() => setShowTermsModal(null)}
-        title="Terms of Service"
-        content={fullTermsContent}
-        onAgree={handleTermsAgreed}
-      />
-      
-      <TermsModal
-        isOpen={showTermsModal === 'privacy'}
-        onClose={() => setShowTermsModal(null)}
-        title="Privacy Policy"
-        content={fullPrivacyContent}
-        onAgree={handlePrivacyAgreed}
-      />
-    </>
-  );
-}
+                  Don't have an account? <span
