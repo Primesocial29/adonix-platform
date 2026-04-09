@@ -11,25 +11,74 @@ interface AuthModalProps {
 type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
-// Terms Modal Component
+// Terms Modal Component with scroll-to-bottom requirement
 function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [scrollHeight, setScrollHeight] = useState(0);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (contentRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // 50px threshold
+      setHasScrolledToBottom(isAtBottom);
+      setScrollPosition(scrollTop);
+      setScrollHeight(scrollHeight);
+    }
+  };
+
+  // Reset scroll state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setHasScrolledToBottom(false);
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+      }
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => {}}>
       <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
+          {/* Only show X button if scrolled to bottom */}
+          {hasScrolledToBottom && (
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+              <X className="w-5 h-5 text-gray-400 hover:text-white" />
+            </button>
+          )}
         </div>
-        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap font-mono text-sm">
+        
+        <div 
+          ref={contentRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap font-mono text-sm"
+        >
           <p>{content}</p>
         </div>
+        
         <div className="p-4 border-t border-white/10">
-          <button onClick={onClose} className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            Close
+          {!hasScrolledToBottom && (
+            <div className="text-center mb-3">
+              <p className="text-xs text-yellow-400 animate-pulse">
+                ⚠️ Please scroll to the bottom to read the complete {title} before closing ⚠️
+              </p>
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            disabled={!hasScrolledToBottom}
+            className={`w-full px-4 py-2 rounded-lg font-semibold transition-all ${
+              hasScrolledToBottom
+                ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+            }`}
+          >
+            {hasScrolledToBottom ? 'I have read and understand' : 'Scroll to bottom to close'}
           </button>
         </div>
       </div>
