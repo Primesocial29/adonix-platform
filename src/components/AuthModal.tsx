@@ -25,7 +25,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [isOver18, setIsOver18] = useState(false);
+  
+  // Birth date fields (replacing isOver18)
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
 
   if (!isOpen) return null;
 
@@ -82,6 +87,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setEmail('');
       setPassword('');
       setUsername('');
+      setBirthMonth('');
+      setBirthDay('');
+      setBirthYear('');
+      setAgeVerifyConsent(false);
     } else {
       setStep('welcome');
       setSelectedRole(null);
@@ -105,7 +114,23 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setPassword('');
     setUsername('');
     setAcceptedTerms(false);
-    setIsOver18(false);
+    setBirthMonth('');
+    setBirthDay('');
+    setBirthYear('');
+    setAgeVerifyConsent(false);
+  };
+
+  // Calculate age from birth date
+  const calculateAge = (month: string, day: string, year: string): number | null => {
+    if (!month || !day || !year) return null;
+    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,11 +152,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     // Sign-up validations
-    if (!isOver18) {
-      setError('You must be 18 years or older to create an account.');
+    
+    // Birth date validation
+    if (!birthMonth || !birthDay || !birthYear) {
+      setError('Please enter your full birth date.');
       setLoading(false);
       return;
     }
+    
+    const age = calculateAge(birthMonth, birthDay, birthYear);
+    if (age === null || age < 18) {
+      setError('You must be at least 18 years old to use Adonix Fit.');
+      setLoading(false);
+      return;
+    }
+    
+    if (!ageVerifyConsent) {
+      setError('You must consent to age verification to create an account.');
+      setLoading(false);
+      return;
+    }
+    
     if (!acceptedTerms) {
       setError('You must agree to the Terms of Service and Privacy Policy to create an account.');
       setLoading(false);
@@ -347,20 +388,83 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             />
           </div>
 
+          {/* Birth Date Fields - replaces 18+ checkbox */}
           {!isLogin && (
             <div className="space-y-3">
-              <div className="flex items-start gap-2">
+              <label className="block text-sm font-medium text-white">
+                Birth Date <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {/* Month Dropdown */}
+                <select
+                  value={birthMonth}
+                  onChange={(e) => setBirthMonth(e.target.value)}
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                >
+                  <option value="">Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+
+                {/* Day Dropdown */}
+                <select
+                  value={birthDay}
+                  onChange={(e) => setBirthDay(e.target.value)}
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                >
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+
+                {/* Year Dropdown */}
+                <select
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value)}
+                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                >
+                  <option value="">Year</option>
+                  {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Disclosure text */}
+              <p className="text-xs text-gray-500">
+                Used only to verify you are 18+. Deleted immediately after confirmation.
+              </p>
+
+              {/* Age verification consent checkbox */}
+              <div className="flex items-start gap-2 mt-2">
                 <input
                   type="checkbox"
-                  id="ageGate"
-                  checked={isOver18}
-                  onChange={(e) => setIsOver18(e.target.checked)}
+                  id="ageVerifyConsent"
+                  checked={ageVerifyConsent}
+                  onChange={(e) => setAgeVerifyConsent(e.target.checked)}
                   className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
                 />
-                <label htmlFor="ageGate" className="text-sm text-gray-300">
-                  I am 18 years or older
+                <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
+                  I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
                 </label>
               </div>
+            </div>
+          )}
+
+          {/* Terms & Conditions */}
+          {!isLogin && (
+            <div className="space-y-3">
               <div className="flex items-start gap-2">
                 <input
                   type="checkbox"
@@ -381,7 +485,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           <button
             type="submit"
-            disabled={loading || (!isLogin && (!isOver18 || !acceptedTerms || !usernameAvailable))}
+            disabled={loading || (!isLogin && (!birthMonth || !birthDay || !birthYear || !ageVerifyConsent || !acceptedTerms || !usernameAvailable))}
             className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
