@@ -297,7 +297,21 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </div>
           </div>
 
-          <button onClick={handleProceed} disabled={serviceAreas.length === 0 || !selectedService} className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold transition-all">Proceed to Checkout</button>
+          {/* NEW: Public Locations Notice */}
+          <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <p className="text-xs text-yellow-400 text-center">
+              ⚠️ Public locations only. Private residences, hotels, Airbnbs, home gyms, and any non-public venues are strictly prohibited. 
+              Violations result in account suspension or permanent ban.
+            </p>
+          </div>
+
+          <button 
+            onClick={handleProceed} 
+            disabled={serviceAreas.length === 0 || !selectedService} 
+            className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold transition-all"
+          >
+            Proceed to Checkout
+          </button>
         </div>
       </div>
     </div>
