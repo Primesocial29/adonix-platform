@@ -150,36 +150,45 @@ export default function PartnerSessionManager({ bookingId, partnerId, clientId, 
   return (
     <div className="bg-black rounded-xl p-4 shadow text-white">
       {!session && (
-  <div>
-    <h3 className="font-bold text-lg text-gray-900 mb-2">Select meeting location</h3>
-    <StandaloneSearchBox
-      onLoad={(ref) => (searchBoxRef.current = ref)}
-      onPlacesChanged={() => {
-        const places = searchBoxRef.current?.getPlaces();
-        if (places && places.length > 0) setSelectedPlace(places[0]);
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Search address or gym"
-        className="w-full p-2 rounded-lg mt-1 bg-orange-600 text-white placeholder-white/80 focus:ring-2 focus:ring-orange-400 focus:outline-none"
-      />
-    </StandaloneSearchBox>
-    <button
-      onClick={() => selectedPlace && createSession(selectedPlace)}
-      disabled={!selectedPlace}
-      className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors disabled:opacity-50"
-    >
-      Use this location
-    </button>
-  </div>
-)}
+        <div>
+          <h3 className="font-bold text-lg text-gray-900 mb-2">Select meeting location</h3>
+          <StandaloneSearchBox
+            onLoad={(ref) => (searchBoxRef.current = ref)}
+            onPlacesChanged={() => {
+              const places = searchBoxRef.current?.getPlaces();
+              if (places && places.length > 0) setSelectedPlace(places[0]);
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Search address or gym"
+              className="w-full p-2 rounded-lg mt-1 bg-orange-600 text-white placeholder-white/80 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+            />
+          </StandaloneSearchBox>
+          <button
+            onClick={() => selectedPlace && createSession(selectedPlace)}
+            disabled={!selectedPlace}
+            className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors disabled:opacity-50"
+          >
+            Use this location
+          </button>
+        </div>
+      )}
 
       {session && qrValue && status === 'waiting_client' && (
         <div className="text-center">
           <h3 className="font-bold">Show this QR code to client</h3>
           <QRCode value={qrValue} size={200} style={{ margin: "auto", display: "block" }} />
           <p className="text-sm text-gray-500">Client must be within 0.75 miles to confirm payment.</p>
+          
+          {/* GPS Verification Notice */}
+          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <p className="text-xs text-blue-300 text-center">
+              📍 GPS Verification: Client must be within 0.75 miles (1207 meters) of this location to confirm payment.
+              Please ensure you are at the agreed public location.
+            </p>
+          </div>
+          
           <p className="text-xs mt-2">Status: Waiting for client confirmation...</p>
         </div>
       )}
