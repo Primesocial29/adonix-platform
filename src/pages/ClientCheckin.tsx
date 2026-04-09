@@ -48,7 +48,7 @@ export default function ClientCheckin() {
       async (pos) => {
         const distance = getDistance(pos.coords.latitude, pos.coords.longitude, session.location_lat, session.location_lng);
         if (distance > session.radius_meters) {
-          setError(`You are ${Math.round(distance)}m away. Must be within ${session.radius_meters}m.`);
+          setError(`You are ${Math.round(distance)}m away. Must be within ${session.radius_meters}m (0.75 miles).`);
           return;
         }
         if (pos.coords.accuracy > 300) {
@@ -74,7 +74,16 @@ export default function ClientCheckin() {
     <div className="max-w-md mx-auto mt-10 p-4 bg-white rounded shadow">
       <h2 className="text-xl font-bold">Confirm check‑in</h2>
       <p className="mt-2"><strong>Location:</strong> {session.location_name}<br/>{session.location_address}</p>
-      <p className="text-sm text-gray-500">You must be within 0.75 miles to confirm payment.</p>
+      <p className="text-sm text-gray-500">You must be within 0.75 miles (1207 meters) to confirm payment.</p>
+      
+      {/* GPS Verification Notice */}
+      <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+        <p className="text-xs text-blue-800 text-center">
+          📍 GPS Verification Required: You must be within 0.75 miles (1207 meters) of the session location to confirm payment.
+          Please ensure you are at the correct public location.
+        </p>
+      </div>
+      
       <button onClick={handleConfirm} className="mt-4 bg-green-600 text-white px-6 py-2 rounded w-full">
         Confirm Payment & Location
       </button>
