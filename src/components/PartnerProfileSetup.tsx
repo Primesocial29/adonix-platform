@@ -131,7 +131,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const progressBarRef = useRef<HTMLDivElement>(null);
   
   // Form fields
-  const [hourlyRate, setHourlyRate] = useState('100');
   const [bio, setBio] = useState('');
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [serviceRates, setServiceRates] = useState<Record<string, ServiceRate>>({});
@@ -193,7 +192,17 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   // Helper functions for completion tracking
   const isProfilePhotoComplete = () => photos.length > 0;
   const isBioComplete = () => bio.trim().length >= 20 && bio.trim().length <= 500;
-  const isServicesComplete = () => serviceTypes.length + customServiceTypes.length > 0;
+  const isServicesComplete = () => {
+    const allServices = [...serviceTypes, ...customServiceTypes];
+    if (allServices.length === 0) return false;
+    // Check if all selected services have rates
+    for (const service of allServices) {
+      const rate = serviceRates[service];
+      if (!rate || !rate.hourly || rate.hourly < 100 || rate.hourly > 1000) return false;
+      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 50 || rate.halfHour > rate.hourly)) return false;
+    }
+    return true;
+  };
   const isServiceAreasComplete = () => serviceAreas.length > 0;
   const isAvailabilityComplete = () => availability.some(day => day.times.length > 0);
   const isBookingSettingsComplete = () => minAdvanceNotice !== 0;
@@ -212,6 +221,24 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const completedCount = getCompletedCount();
   const totalSections = 6;
   const progressPercentage = (completedCount / totalSections) * 100;
+
+  // Calculate earnings for preview
+  const calculateEarningsPreview = (hourlyRate: number) => {
+    const platformFeePercent = 0.15; // 15% as per Terms of Service
+    const platformFee = hourlyRate * platformFeePercent;
+    const stripeFeeAmount = (hourlyRate * 0.029) + 0.30;
+    const partnerEarnings = hourlyRate - platformFee - stripeFeeAmount;
+    return { platformFee, stripeFeeAmount, partnerEarnings: Math.max(0, partnerEarnings) };
+  };
+
+  // Get a sample rate for earnings preview
+  const getSampleRate = () => {
+    const allServices = [...serviceTypes, ...customServiceTypes];
+    if (allServices.length > 0 && serviceRates[allServices[0]]?.hourly) {
+      return serviceRates[allServices[0]].hourly;
+    }
+    return 100;
+  };
 
   // Check if user is loaded
   useEffect(() => {
@@ -242,7 +269,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       if (error && error.code !== 'PGRST116') throw error;
       if (data) {
         setProfile(data);
-        setHourlyRate(data.hourly_rate?.toString() || '100');
         setBio(data.bio || '');
         setServiceTypes(data.service_types || []);
         setServiceRates(data.service_rates || {});
@@ -276,13 +302,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const toggleServiceType = (type: string) => {
     setServiceTypes(prev => {
       const newTypes = prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type];
-      if (!prev.includes(type)) {
-        const defaultHourly = parseInt(hourlyRate) || 100;
-        setServiceRates(prevRates => ({
-          ...prevRates,
-          [type]: { hourly: defaultHourly, halfHour: Math.floor(defaultHourly / 2) }
-        }));
-      }
       return newTypes;
     });
   };
@@ -291,13 +310,25 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     let num = parseInt(value);
     if (isNaN(num)) num = 0;
     if (num < 0) num = 0;
+    if (num > 1000) num = 1000;
+    
+    if (field === 'hourly' && num < 100) {
+      alert('Hourly rate must be at least $100.');
+      return;
+    }
+    
     if (field === 'halfHour') {
       const hourly = serviceRates[type]?.hourly || 0;
       if (num > hourly) {
         alert('Half‑hour rate cannot exceed hourly rate.');
         return;
       }
+      if (num < 50) {
+        alert('Half‑hour rate must be at least $50.');
+        return;
+      }
     }
+    
     setServiceRates(prev => ({
       ...prev,
       [type]: { ...prev[type], [field]: num }
@@ -318,11 +349,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     setCustomServiceTypes([...customServiceTypes, trimmed]);
     setNewCustomService('');
     setCustomServiceError('');
-    const defaultHourly = parseInt(hourlyRate) || 100;
-    setServiceRates(prev => ({
-      ...prev,
-      [trimmed]: { hourly: defaultHourly, halfHour: Math.floor(defaultHourly / 2) }
-    }));
   };
 
   const removeCustomServiceType = (type: string) => {
@@ -412,14 +438,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
       return daySchedule;
     }));
-  };
-
-  const calculateEarnings = (hourly: number) => {
-    const platformFeePercent = 0.10;
-    const platformFee = hourly * platformFeePercent;
-    const stripeFeeAmount = (hourly * 0.029) + 0.30;
-    const partnerEarnings = hourly - platformFee - stripeFeeAmount;
-    return { platformFee, stripeFeeAmount, partnerEarnings: Math.max(0, partnerEarnings) };
   };
 
   const searchAddress = async (query: string) => {
@@ -617,6 +635,20 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
     }
     
+    // Validate all selected services have rates
+    const allServices = [...serviceTypes, ...customServiceTypes];
+    for (const service of allServices) {
+      const rate = serviceRates[service];
+      if (!rate || !rate.hourly || rate.hourly < 100 || rate.hourly > 1000) {
+        alert(`Please set a valid hourly rate for "${service}" ($100-$1000).`);
+        return;
+      }
+      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 50 || rate.halfHour > rate.hourly)) {
+        alert(`Please set a valid half-hour rate for "${service}" (minimum $50, cannot exceed hourly rate).`);
+        return;
+      }
+    }
+    
     setShowConfirmModal(true);
   };
   
@@ -627,13 +659,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       // Check if user exists
       if (!user || !user.id) {
         alert('You must be logged in to save your profile. Please refresh the page and try again.');
-        setSaving(false);
-        return;
-      }
-      
-      const rate = parseInt(hourlyRate);
-      if (isNaN(rate) || rate < 100 || rate > 1000) {
-        alert('Please enter a valid default hourly rate between $100 and $1000.');
         setSaving(false);
         return;
       }
@@ -661,7 +686,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
       
       const updateData = {
-        hourly_rate: rate,
         bio: bio,
         service_types: serviceTypes,
         custom_service_types: customServiceTypes,
@@ -711,6 +735,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       </div>
     );
   }
+
+  const allSelectedServices = [...serviceTypes, ...customServiceTypes];
+  const sampleRate = getSampleRate();
+  const earningsPreview = calculateEarningsPreview(sampleRate);
 
   return (
     <>
@@ -899,7 +927,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               <label className="text-base font-medium text-white">Services & Rates</label>
             </div>
             
-            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your rates (whole dollars only).</p>
+            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your rates (whole dollars only). Minimum hourly rate $100, maximum $1000.</p>
             
             <div className="flex flex-wrap gap-2 mb-4">
               {SERVICE_TYPES.map(type => (
@@ -947,7 +975,64 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               </div>
             )}
             
-            <div className="flex items-center justify-between gap-3 mb-4 p-3 bg-white/5 rounded-xl">
+            {/* Rate Inputs for Selected Services */}
+            {allSelectedServices.length > 0 && (
+              <div className="mt-4 space-y-4">
+                <p className="text-sm font-medium text-white">Set your rates for each service:</p>
+                {allSelectedServices.map(service => (
+                  <div key={service} className="p-4 bg-white/5 rounded-xl border border-white/10">
+                    <p className="font-semibold text-white mb-3">{service}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">
+                          Hourly Rate <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            value={serviceRates[service]?.hourly || ''}
+                            onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
+                            placeholder="100"
+                            min="100"
+                            max="1000"
+                            step="1"
+                            className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+                          />
+                          <span className="text-gray-400 text-sm">/ hour</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Minimum $100, maximum $1000</p>
+                      </div>
+                      
+                      {halfHourEnabled && (
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Half-Hour Rate <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              value={serviceRates[service]?.halfHour || ''}
+                              onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
+                              placeholder="50"
+                              min="50"
+                              max={serviceRates[service]?.hourly || 1000}
+                              step="1"
+                              className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+                            />
+                            <span className="text-gray-400 text-sm">/ 30 min</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Minimum $50, cannot exceed hourly rate</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between gap-3 mb-4 p-3 bg-white/5 rounded-xl mt-4">
               <div>
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-gray-300">Half‑Hour Sessions</label>
@@ -971,8 +1056,35 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               </button>
             </div>
             
+            {/* Earnings Breakdown Preview */}
+            {allSelectedServices.length > 0 && serviceRates[allSelectedServices[0]]?.hourly && (
+              <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+                <p className="text-sm font-semibold text-blue-300 mb-2">💰 Example Earnings Breakdown (based on ${sampleRate}/hour session)</p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Your rate:</span>
+                    <span className="text-white">${sampleRate}.00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Adonix fee (15%):</span>
+                    <span className="text-red-400">-${earningsPreview.platformFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Stripe fee (2.9% + $0.30):</span>
+                    <span className="text-red-400">-${earningsPreview.stripeFeeAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-white/10 my-2"></div>
+                  <div className="flex justify-between font-bold">
+                    <span className="text-white">You earn:</span>
+                    <span className="text-green-400">${earningsPreview.partnerEarnings.toFixed(2)}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Fees are calculated per session. You keep 100% of tips.</p>
+              </div>
+            )}
+            
             {!isServicesComplete() && (
-              <p className="text-xs text-red-400 mt-2">⚠️ Required: Select at least one service</p>
+              <p className="text-xs text-red-400 mt-2">⚠️ Required: Select at least one service and set rates for each</p>
             )}
           </div>
           
@@ -1280,55 +1392,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                 <p className="text-xs text-gray-500">Cancel within the time you set = no charge. Cancel after = full session price.</p>
               </div>
             </div>
-          </div>
-          
-          {/* Default Hourly Rate */}
-          <div className="mb-8 p-4 rounded-xl bg-white/5">
-            <label className="block text-base font-medium mb-2 flex items-center gap-2 text-white">
-              <DollarSign className="w-5 h-5" />
-              Default Hourly Rate (fallback)
-            </label>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-red-500">$</span>
-              <input
-                type="number"
-                value={hourlyRate}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (value === '') {
-                    setHourlyRate('');
-                  } else {
-                    let num = parseInt(value);
-                    if (!isNaN(num)) {
-                      if (num > 1000) {
-                        setHourlyRate('1000');
-                      } else if (num < 100 && value !== '') {
-                        setHourlyRate('100');
-                      } else {
-                        setHourlyRate(value);
-                      }
-                    } else {
-                      setHourlyRate('100');
-                    }
-                  }
-                }}
-                onBlur={() => {
-                  let num = parseInt(hourlyRate);
-                  if (isNaN(num) || num < 100) {
-                    setHourlyRate('100');
-                  } else if (num > 1000) {
-                    setHourlyRate('1000');
-                  }
-                }}
-                placeholder="100"
-                min="100"
-                max="1000"
-                step="1"
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white"
-              />
-              <span className="text-gray-400">/ hour</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">Minimum $100, maximum $1000. Used when a service type does not have its own rate.</p>
           </div>
           
           {/* Terms & Conditions Acceptance */}
