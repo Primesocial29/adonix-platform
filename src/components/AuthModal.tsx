@@ -12,8 +12,9 @@ type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
 // Terms Modal Component with scroll-to-bottom requirement
-function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [hasAgreed, setHasAgreed] = useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
@@ -24,10 +25,19 @@ function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onCl
     }
   };
 
+  const handleAgree = () => {
+    setHasAgreed(true);
+    if (onAgree) {
+      onAgree();
+    }
+    onClose();
+  };
+
   // Reset scroll state when modal opens
   useEffect(() => {
     if (isOpen) {
       setHasScrolledToBottom(false);
+      setHasAgreed(false);
       if (contentRef.current) {
         contentRef.current.scrollTop = 0;
       }
@@ -60,20 +70,22 @@ function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onCl
           {!hasScrolledToBottom && (
             <div className="text-center mb-3">
               <p className="text-xs text-yellow-400 animate-pulse">
-                ⚠️ Please scroll to the bottom to read the complete {title} before closing ⚠️
+                ⚠️ Please scroll to the bottom to read the complete {title} before agreeing ⚠️
               </p>
             </div>
           )}
           <button
-            onClick={onClose}
-            disabled={!hasScrolledToBottom}
+            onClick={handleAgree}
+            disabled={!hasScrolledToBottom || hasAgreed}
             className={`w-full px-4 py-2 rounded-lg font-semibold transition-all ${
-              hasScrolledToBottom
+              hasScrolledToBottom && !hasAgreed
                 ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
+                : hasAgreed
+                ? 'bg-green-600 text-white cursor-default'
                 : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
             }`}
           >
-            {hasScrolledToBottom ? 'I have read and understand' : 'Scroll to bottom to close'}
+            {hasAgreed ? '✓ Agreed' : (hasScrolledToBottom ? 'I have read and understand' : 'Scroll to bottom to agree')}
           </button>
         </div>
       </div>
@@ -96,6 +108,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
+  
+  // Track if user has read both documents
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   
   // Birth date fields (replacing isOver18)
   const [birthMonth, setBirthMonth] = useState('');
@@ -162,6 +178,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setBirthDay('');
       setBirthYear('');
       setAgeVerifyConsent(false);
+      setAcceptedTerms(false);
+      setHasReadTerms(false);
+      setHasReadPrivacy(false);
     } else {
       setStep('welcome');
       setSelectedRole(null);
@@ -189,6 +208,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setBirthDay('');
     setBirthYear('');
     setAgeVerifyConsent(false);
+    setHasReadTerms(false);
+    setHasReadPrivacy(false);
   };
 
   // Calculate age from birth date
@@ -202,6 +223,24 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       age--;
     }
     return age;
+  };
+
+  // Handle Terms agreement from modal
+  const handleTermsAgreed = () => {
+    setHasReadTerms(true);
+    // Only auto-check if both have been read
+    if (hasReadPrivacy) {
+      setAcceptedTerms(true);
+    }
+  };
+
+  // Handle Privacy agreement from modal
+  const handlePrivacyAgreed = () => {
+    setHasReadPrivacy(true);
+    // Only auto-check if both have been read
+    if (hasReadTerms) {
+      setAcceptedTerms(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -245,7 +284,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
     
     if (!acceptedTerms) {
-      setError('You must agree to the Terms of Service and Privacy Policy to create an account.');
+      setError('You must read and agree to the Terms of Service and Privacy Policy to create an account.');
       setLoading(false);
       return;
     }
@@ -544,6 +583,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
           onClose={() => setShowTermsModal(null)}
           title="Terms of Service"
           content={fullTermsContent}
+          onAgree={handleTermsAgreed}
         />
         
         <TermsModal
@@ -551,6 +591,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
           onClose={() => setShowTermsModal(null)}
           title="Privacy Policy"
           content={fullPrivacyContent}
+          onAgree={handlePrivacyAgreed}
         />
       </>
     );
@@ -747,7 +788,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
               </div>
             )}
 
-            {/* Terms & Conditions - MODAL BUTTONS instead of external links */}
+            {/* Terms & Conditions - MODAL BUTTONS with read tracking */}
             {!isLogin && (
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
@@ -756,7 +797,8 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                     id="terms"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                    disabled={!hasReadTerms || !hasReadPrivacy}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <label htmlFor="terms" className="text-sm text-gray-300">
                     I have read and agree to the{' '}
@@ -777,6 +819,16 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                     </button>.
                   </label>
                 </div>
+                {(!hasReadTerms || !hasReadPrivacy) && (
+                  <p className="text-xs text-yellow-400 mt-1">
+                    ⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking this box.
+                  </p>
+                )}
+                {hasReadTerms && hasReadPrivacy && !acceptedTerms && (
+                  <p className="text-xs text-green-400 mt-1">
+                    ✓ You have read both documents. Check the box to agree.
+                  </p>
+                )}
               </div>
             )}
 
@@ -809,6 +861,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
         onClose={() => setShowTermsModal(null)}
         title="Terms of Service"
         content={fullTermsContent}
+        onAgree={handleTermsAgreed}
       />
       
       <TermsModal
@@ -816,6 +869,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
         onClose={() => setShowTermsModal(null)}
         title="Privacy Policy"
         content={fullPrivacyContent}
+        onAgree={handlePrivacyAgreed}
       />
     </>
   );
