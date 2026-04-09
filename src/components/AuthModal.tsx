@@ -475,7 +475,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 />
                 <label htmlFor="terms" className="text-sm text-gray-300">
                   I have read and agree to the{' '}
-                  <a href="/terms" target="_blank" className="text-red-500 hover:underline">Terms of Service</a>{' '}
+                  <button onClick={() => setShowTermsModal('terms')} className="text-red-500 hover:underline">
+  Terms of Service
+</button>{' '}
                   and{' '}
                   <a href="/privacy" target="_blank" className="text-red-500 hover:underline">Privacy Policy</a>.
                 </label>
