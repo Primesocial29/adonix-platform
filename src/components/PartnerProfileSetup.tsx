@@ -792,6 +792,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                 </p>
               </div>
               
+              {/* AI-generated photo notice */}
+              <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg w-full">
+                <p className="text-xs text-yellow-400 text-center">
+                  ⚠️ Real human photo only. AI-generated, deepfake, or synthetic images are prohibited and will result in account termination.
+                </p>
+              </div>
+              
               {!isProfilePhotoComplete() && (
                 <p className="text-xs text-red-400 text-center animate-pulse">⚠️ Required: Take a live photo of yourself</p>
               )}
