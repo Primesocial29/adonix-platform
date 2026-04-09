@@ -123,8 +123,9 @@ export default function PublicHome() {
                     Partner Dashboard
                   </a>
                 )}
-                <a href="/profile" className="text-gray-400 hover:text-white transition-colors">
-                  My Profile
+                {/* CHANGED: "My Profile" now links to /settings */}
+                <a href="/settings" className="text-gray-400 hover:text-white transition-colors">
+                  Settings
                 </a>
                 <button
                   onClick={handleLogout}
