@@ -11,6 +11,32 @@ interface AuthModalProps {
 type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
+// Terms Modal Component
+function TermsModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap">
+          <p>{content}</p>
+        </div>
+        <div className="p-4 border-t border-white/10">
+          <button onClick={onClose} className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { signIn, signUp } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
@@ -25,6 +51,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
   // Birth date fields (replacing isOver18)
   const [birthMonth, setBirthMonth] = useState('');
@@ -221,8 +248,79 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   // ========== WELCOME STEP ==========
   if (step === 'welcome') {
     return (
+      <>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-white mb-2">Let's get real.</h2>
+              <p className="text-xl text-gray-300">What brings that body here?</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => handleRoleSelect('member')}
+                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
+              >
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
+                <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
+                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+                  💸 I will pay for sessions
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRoleSelect('partner')}
+                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
+              >
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
+                <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
+                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+                  💵 I will earn money
+                </div>
+              </button>
+            </div>
+
+            <div className="text-center mt-8">
+              <button
+                onClick={handleSignInClick}
+                className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10"
+              >
+                Already have an account? <span className="text-red-500">Sign in →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Terms Modal */}
+        <TermsModal
+          isOpen={showTermsModal === 'terms'}
+          onClose={() => setShowTermsModal(null)}
+          title="Terms of Service"
+          content="By using Adonix Fit, you agree to the following: You are at least 18 years old. Adonix Fit connects clients with fitness partners. Partners are independent contractors. Adonix Fit is not responsible for any injuries, damages, or incidents that occur during sessions. All sessions take place in public locations. You agree to the cancellation and no-show policy: cancellations within the partner's specified window (24-48 hours) result in no charge. No-shows or failure to scan the QR code result in full forfeiture of session payment. Adonix Fit reserves the right to suspend or ban users who violate these terms. Disputes will be resolved through arbitration."
+        />
+        
+        <TermsModal
+          isOpen={showTermsModal === 'privacy'}
+          onClose={() => setShowTermsModal(null)}
+          title="Privacy Policy"
+          content="Adonix Fit respects your privacy. We collect your name, email, age, city, photos, and location data to facilitate fitness sessions. Location data is only used during active sessions to verify attendance. We do not sell your personal data. Photos are used for profile identification. You may request deletion of your account and data at any time. Payment information is processed securely through Stripe and is not stored on our servers."
+        />
+      </>
+    );
+  }
+
+  // ========== CREDENTIALS STEP ==========
+  return (
+    <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
+        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -230,282 +328,255 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <X className="w-6 h-6" />
           </button>
 
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Let's get real.</h2>
-            <p className="text-xl text-gray-300">What brings that body here?</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleRoleSelect('member')}
-              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
-            >
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-              <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
-              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                💸 I will pay for sessions
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleRoleSelect('partner')}
-              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
-            >
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-              <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
-              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                💵 I will earn money
-              </div>
-            </button>
-          </div>
-
-          <div className="text-center mt-8">
-            <button
-              onClick={handleSignInClick}
-              className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10"
-            >
-              Already have an account? <span className="text-red-500">Sign in →</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ========== CREDENTIALS STEP ==========
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
-
-        <button
-          onClick={handleBack}
-          className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
-        >
-          ← Back
-        </button>
-
-        <div className="text-center mb-6">
-          {!isLogin && (
-            <>
-              <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
-              <h2 className="text-2xl font-bold text-white">
-                {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
-              </h2>
-              <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
-              </p>
-            </>
-          )}
-          {isLogin && (
-            <>
-              <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-              <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
-            </>
-          )}
-        </div>
-
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-6 text-red-300 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username field - only for sign-up */}
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">
-                Username <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  className={`w-full pl-7 pr-10 py-3 bg-white/5 border rounded-xl focus:outline-none text-white placeholder-gray-500 ${
-                    usernameAvailable === true
-                      ? 'border-green-500 focus:border-green-500'
-                      : usernameAvailable === false
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-white/10 focus:border-red-500'
-                  }`}
-                  placeholder="jess_fit"
-                />
-                {checkingUsername && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                  </div>
-                )}
-                {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Check className="w-5 h-5 text-green-500" />
-                  </div>
-                )}
-                {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                3-20 characters • letters, numbers, underscore (_), period (.) only
-              </p>
-              {usernameAvailable === false && (
-                <p className="text-xs text-red-400 mt-1">Username already taken</p>
-              )}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-white">Email Address</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-white">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {/* Birth Date Fields - replaces 18+ checkbox */}
-          {!isLogin && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-white">
-                Birth Date <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {/* Month Dropdown */}
-                <select
-                  value={birthMonth}
-                  onChange={(e) => setBirthMonth(e.target.value)}
-                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                >
-                  <option value="">Month</option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-
-                {/* Day Dropdown */}
-                <select
-                  value={birthDay}
-                  onChange={(e) => setBirthDay(e.target.value)}
-                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                >
-                  <option value="">Day</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <option key={day} value={day}>{day}</option>
-                  ))}
-                </select>
-
-                {/* Year Dropdown */}
-                <select
-                  value={birthYear}
-                  onChange={(e) => setBirthYear(e.target.value)}
-                  className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                >
-                  <option value="">Year</option>
-                  {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Disclosure text */}
-              <p className="text-xs text-gray-500">
-                Used only to verify you are 18+. Deleted immediately after confirmation.
-              </p>
-
-              {/* Age verification consent checkbox */}
-              <div className="flex items-start gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="ageVerifyConsent"
-                  checked={ageVerifyConsent}
-                  onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-                  className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                />
-                <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-                  I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Terms & Conditions */}
-          {!isLogin && (
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                />
-                <label htmlFor="terms" className="text-sm text-gray-300">
-                  I have read and agree to the{' '}
-                  <button onClick={() => setShowTermsModal('terms')} className="text-red-500 hover:underline">
-  Terms of Service
-</button>{' '}
-                  and{' '}
-                  <a href="/privacy" target="_blank" className="text-red-500 hover:underline">Privacy Policy</a>.
-                </label>
-              </div>
-            </div>
-          )}
-
           <button
-            type="submit"
-            disabled={loading || (!isLogin && (!birthMonth || !birthDay || !birthYear || !ageVerifyConsent || !acceptedTerms || !usernameAvailable))}
-            className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
+            onClick={handleBack}
+            className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
           >
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+            ← Back
           </button>
 
-          {isLogin && (
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleSignUpClick}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
-              >
-                Don't have an account? <span className="text-red-500">Sign up</span>
-              </button>
+          <div className="text-center mb-6">
+            {!isLogin && (
+              <>
+                <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
+                <h2 className="text-2xl font-bold text-white">
+                  {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
+                </h2>
+                <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+                  {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
+                </p>
+              </>
+            )}
+            {isLogin && (
+              <>
+                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+                <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
+              </>
+            )}
+          </div>
+
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-6 text-red-300 text-sm">
+              {error}
             </div>
           )}
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Username field - only for sign-up */}
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium mb-2 text-white">
+                  Username <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    className={`w-full pl-7 pr-10 py-3 bg-white/5 border rounded-xl focus:outline-none text-white placeholder-gray-500 ${
+                      usernameAvailable === true
+                        ? 'border-green-500 focus:border-green-500'
+                        : usernameAvailable === false
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-white/10 focus:border-red-500'
+                    }`}
+                    placeholder="jess_fit"
+                  />
+                  {checkingUsername && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+                    </div>
+                  )}
+                  {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                  )}
+                  {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  3-20 characters • letters, numbers, underscore (_), period (.) only
+                </p>
+                {usernameAvailable === false && (
+                  <p className="text-xs text-red-400 mt-1">Username already taken</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-white">Email Address</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-white">Password</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Birth Date Fields - replaces 18+ checkbox */}
+            {!isLogin && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-white">
+                  Birth Date <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Month Dropdown */}
+                  <select
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Month</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+
+                  {/* Day Dropdown */}
+                  <select
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                      <option key={day} value={day}>{day}</option>
+                    ))}
+                  </select>
+
+                  {/* Year Dropdown */}
+                  <select
+                    value={birthYear}
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Year</option>
+                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Disclosure text */}
+                <p className="text-xs text-gray-500">
+                  Used only to verify you are 18+. Deleted immediately after confirmation.
+                </p>
+
+                {/* Age verification consent checkbox */}
+                <div className="flex items-start gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="ageVerifyConsent"
+                    checked={ageVerifyConsent}
+                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
+                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Terms & Conditions - MODAL BUTTONS instead of external links */}
+            {!isLogin && (
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button 
+                      type="button"
+                      onClick={() => setShowTermsModal('terms')} 
+                      className="text-red-500 hover:underline"
+                    >
+                      Terms of Service
+                    </button>{' '}
+                    and{' '}
+                    <button 
+                      type="button"
+                      onClick={() => setShowTermsModal('privacy')} 
+                      className="text-red-500 hover:underline"
+                    >
+                      Privacy Policy
+                    </button>.
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || (!isLogin && (!birthMonth || !birthDay || !birthYear || !ageVerifyConsent || !acceptedTerms || !usernameAvailable))}
+              className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
+            >
+              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
+
+            {isLogin && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleSignUpClick}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Don't have an account? <span className="text-red-500">Sign up</span>
+                </button>
+              </div>
+            )}
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={showTermsModal === 'terms'}
+        onClose={() => setShowTermsModal(null)}
+        title="Terms of Service"
+        content="By using Adonix Fit, you agree to the following: You are at least 18 years old. Adonix Fit connects clients with fitness partners. Partners are independent contractors. Adonix Fit is not responsible for any injuries, damages, or incidents that occur during sessions. All sessions take place in public locations. You agree to the cancellation and no-show policy: cancellations within the partner's specified window (24-48 hours) result in no charge. No-shows or failure to scan the QR code result in full forfeiture of session payment. Adonix Fit reserves the right to suspend or ban users who violate these terms. Disputes will be resolved through arbitration."
+      />
+      
+      <TermsModal
+        isOpen={showTermsModal === 'privacy'}
+        onClose={() => setShowTermsModal(null)}
+        title="Privacy Policy"
+        content="Adonix Fit respects your privacy. We collect your name, email, age, city, photos, and location data to facilitate fitness sessions. Location data is only used during active sessions to verify attendance. We do not sell your personal data. Photos are used for profile identification. You may request deletion of your account and data at any time. Payment information is processed securely through Stripe and is not stored on our servers."
+      />
+    </>
   );
 }
