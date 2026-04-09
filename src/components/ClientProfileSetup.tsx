@@ -67,7 +67,7 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
     'General fitness', 'Rehab/Recovery', 'Just have fun'
   ];
   
-  // Check if all required fields are complete (age removed)
+  // Check if all required fields are complete
   const isProfileComplete = () => {
     return photo && 
            bio.trim().length >= 20 && 
@@ -462,6 +462,6 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
