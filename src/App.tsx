@@ -8,6 +8,7 @@ import TrainerDashboard from './components/TrainerDashboard';
 import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
 import ContactPage from './components/ContactPage';
+import Settings from './components/Settings';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -53,6 +54,11 @@ function App() {
     }} />;
   }
 
+  // Settings route
+  if (currentRoute === '/settings') {
+    return <Settings />;
+  }
+
   // Legal pages
   if (currentRoute === '/terms') {
     return <TermsPage />;
@@ -69,10 +75,3 @@ function App() {
 }
 
 export default App;
-
-import Settings from './components/Settings';
-
-// Then add this to your route checks
-if (currentRoute === '/settings') {
-  return <Settings />;
-}
