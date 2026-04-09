@@ -288,6 +288,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             )}
           </div>
 
+          {/* Cancellation Policy */}
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-3">
             <Info className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-yellow-300">
@@ -297,18 +298,20 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </div>
           </div>
 
-          {/* NEW: Public Locations Notice */}{/* NEW: No External Payment Apps Warning */}
-<div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-  <p className="text-xs text-red-400 text-center">
-    ⚠️ WARNING: All payments must be made through Adonix Fit. 
-    Never send money via Venmo, CashApp, PayPal, Zelle, or any other external payment app. 
-    Users who request external payments will be permanently banned.
-  </p>
-</div>
+          {/* Public Locations Notice */}
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <p className="text-xs text-yellow-400 text-center">
               ⚠️ Public locations only. Private residences, hotels, Airbnbs, home gyms, and any non-public venues are strictly prohibited. 
               Violations result in account suspension or permanent ban.
+            </p>
+          </div>
+
+          {/* No External Payment Apps Warning */}
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p className="text-xs text-red-400 text-center">
+              ⚠️ WARNING: All payments must be made through Adonix Fit. 
+              Never send money via Venmo, CashApp, PayPal, Zelle, or any other external payment app. 
+              Users who request external payments will be permanently banned.
             </p>
           </div>
 
