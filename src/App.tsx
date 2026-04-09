@@ -69,3 +69,10 @@ function App() {
 }
 
 export default App;
+
+import Settings from './components/Settings';
+
+// Then add this to your route checks
+if (currentRoute === '/settings') {
+  return <Settings />;
+}
