@@ -325,8 +325,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     //   return;
     // }
 
+    // Format birth date for database (YYYY-MM-DD)
+    const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+
     try {
-      await signUp(email, password, selectedRole, username.toLowerCase());
+      // Pass birthDate to signUp function
+      await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
       onClose();
       
       if (selectedRole === 'partner') {
