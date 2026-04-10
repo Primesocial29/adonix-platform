@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Profile } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
-import { X, Calendar, Clock, MapPin, ChevronLeft, ChevronRight, Phone, Info } from 'lucide-react';
+import { X, Calendar, MapPin, ChevronLeft, ChevronRight, Phone, Info, Clock } from 'lucide-react';
 import { validateText } from '../lib/textSanitizer';
 import BlockedWordAlert from './BlockedWordAlert';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BookingFlowProps {
   partner: Profile;
@@ -14,7 +15,8 @@ interface BookingFlowProps {
 export interface BookingDetails {
   partner: Profile;
   date: Date;
-  time: string;
+  startTime: string;
+  endTime: string;
   duration: number;
   locationName: string;
   locationLat: number;
@@ -25,10 +27,18 @@ export interface BookingDetails {
   serviceRate: number;
 }
 
+interface TimeBlock {
+  start: string;
+  end: string;
+  startHour: number;
+  endHour: number;
+  duration: number;
+}
+
 export default function BookingFlow({ partner, onClose, onProceedToCheckout }: BookingFlowProps) {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState('');
-  const [duration, setDuration] = useState(60);
+  const [selectedTimeBlock, setSelectedTimeBlock] = useState<TimeBlock | null>(null);
   const [selectedLocationIndex, setSelectedLocationIndex] = useState<number | null>(null);
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -37,48 +47,68 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [blockedWords, setBlockedWords] = useState<string[]>([]);
-  const [availableDaysMap, setAvailableDaysMap] = useState<Record<string, string[]>>({});
+  const [availableTimeBlocks, setAvailableTimeBlocks] = useState<TimeBlock[]>([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [hasPendingBooking, setHasPendingBooking] = useState(false);
+  const [checkingPending, setCheckingPending] = useState(true);
 
   const allServices = [...(partner.service_types || []), ...(partner.custom_service_types || [])];
   const serviceRates = partner.service_rates || {};
+  const halfHourEnabled = (partner as any).half_hour_enabled || false;
 
   const getServiceRate = (service: string) => {
     const rate = serviceRates[service];
     if (rate) return { hourly: rate.hourly, halfHour: rate.halfHour };
-    const defaultHourly = partner.hourly_rate || 50;
-    return { hourly: defaultHourly, halfHour: Math.floor(defaultHourly / 2) };
+    return { hourly: 50, halfHour: 30 };
   };
 
-  const getPriceForDuration = () => {
-    if (!selectedService) return 0;
-    const rate = getServiceRate(selectedService);
-    const hours = duration / 60;
-    return rate.hourly * hours;
-  };
+  // Check if user already has a pending booking with this partner
+  useEffect(() => {
+    const checkPendingBooking = async () => {
+      if (!user) {
+        setCheckingPending(false);
+        return;
+      }
 
-  const getHalfHourPrice = () => {
-    if (!selectedService) return 0;
-    return getServiceRate(selectedService).halfHour;
-  };
+      try {
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('id, status')
+          .eq('client_id', user.id)
+          .eq('partner_id', partner.id)
+          .in('status', ['pending', 'confirmed'])
+          .maybeSingle();
 
-  const timeSlots = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-    '18:00', '19:00', '20:00', '21:00'
-  ];
+        if (error) throw error;
+        setHasPendingBooking(!!data);
+      } catch (err) {
+        console.error('Error checking pending booking:', err);
+      } finally {
+        setCheckingPending(false);
+      }
+    };
 
-  const serviceAreas = partner.service_areas || [];
+    checkPendingBooking();
+  }, [user, partner.id]);
 
-  const getAvailableTimesForDate = async (date: Date) => {
+  // Generate time blocks for a given date
+  const generateTimeBlocks = async (date: Date) => {
     if (!partner.availability) return [];
+    
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
     const daySchedule = partner.availability.find((d: any) => d.day === dayName);
-    let times = daySchedule ? daySchedule.times : [];
-    // Fetch already booked times for this date
+    
+    if (!daySchedule || daySchedule.times.length === 0) return [];
+    
+    const availableTimes = daySchedule.times;
+    const blocks: TimeBlock[] = [];
+    
+    // Get already booked times for this date
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
+    
     const { data: bookedData } = await supabase
       .from('bookings')
       .select('booking_date')
@@ -86,73 +116,121 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
       .eq('status', 'confirmed')
       .gte('booking_date', startOfDay.toISOString())
       .lte('booking_date', endOfDay.toISOString());
-    const bookedTimes = (bookedData || []).map(b => new Date(b.booking_date).toTimeString().slice(0, 5));
-    times = times.filter(time => !bookedTimes.includes(time));
-    return times;
-  };
-
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    const days = [];
-    for (let i = 0; i < startingDayOfWeek; i++) days.push(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
-    return days;
-  };
-
-  const isDateAvailable = async (date: Date) => {
-    const times = await getAvailableTimesForDate(date);
-    return times.length > 0;
+    
+    const bookedTimes = (bookedData || []).map(b => 
+      new Date(b.booking_date).toTimeString().slice(0, 5)
+    );
+    
+    // Filter out booked times
+    const freeTimes = availableTimes.filter(time => !bookedTimes.includes(time));
+    
+    if (freeTimes.length === 0) return [];
+    
+    // Convert time strings to hours for easier calculation
+    const timeValues = freeTimes.map(time => {
+      const [hour, minute] = time.split(':').map(Number);
+      return hour + minute / 60;
+    }).sort((a, b) => a - b);
+    
+    // Group contiguous times into blocks (max 2 hours)
+    let currentBlockStart = timeValues[0];
+    let prevTime = timeValues[0];
+    
+    for (let i = 1; i <= timeValues.length; i++) {
+      const currentTime = timeValues[i];
+      const isEndOfBlock = !currentTime || currentTime - prevTime > 0.5 || (currentTime - currentBlockStart) >= 2;
+      
+      if (isEndOfBlock) {
+        const duration = Math.round((prevTime - currentBlockStart) * 60);
+        if (duration >= 30) {
+          const startHour = Math.floor(currentBlockStart);
+          const startMinute = Math.round((currentBlockStart % 1) * 60);
+          const endHour = Math.floor(prevTime);
+          const endMinute = Math.round((prevTime % 1) * 60);
+          
+          blocks.push({
+            start: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`,
+            end: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`,
+            startHour: currentBlockStart,
+            endHour: prevTime,
+            duration: duration
+          });
+        }
+        currentBlockStart = currentTime;
+      }
+      prevTime = currentTime;
+    }
+    
+    return blocks;
   };
 
   const handleDateClick = async (day: Date) => {
-    const available = await isDateAvailable(day);
-    if (!available) return;
     setSelectedDate(day);
-    setSelectedTime('');
+    setSelectedTimeBlock(null);
+    setLoadingBlocks(true);
+    
+    const blocks = await generateTimeBlocks(day);
+    setAvailableTimeBlocks(blocks);
+    setLoadingBlocks(false);
+  };
+
+  const formatTimeDisplay = (time: string) => {
+    const [hour, minute] = time.split(':');
+    const hourNum = parseInt(hour);
+    const period = hourNum >= 12 ? 'PM' : 'AM';
+    const displayHour = hourNum > 12 ? hourNum - 12 : hourNum === 0 ? 12 : hourNum;
+    return `${displayHour}:${minute} ${period}`;
   };
 
   const handleProceed = async () => {
     setEmailError(null);
     setPhoneError(null);
     setBlockedWords([]);
-    if (!selectedDate || !selectedTime || selectedLocationIndex === null || !contactEmail || !contactPhone || !selectedService) {
+    
+    if (!selectedDate || !selectedTimeBlock || selectedLocationIndex === null || !contactEmail || !contactPhone || !selectedService) {
       alert('Please fill in all fields');
       return;
     }
+    
+    if (hasPendingBooking) {
+      alert('You already have a pending or confirmed booking with this partner. Please complete or cancel that session before booking another.');
+      return;
+    }
+    
     const emailValidation = await validateText(contactEmail, 'email address');
     if (!emailValidation.isValid) {
       setBlockedWords(emailValidation.blockedWords);
       setEmailError(emailValidation.error || 'Your email contains blocked words');
       return;
     }
+    
     const phoneRegex = /^[0-9]{10}$/;
     const cleanPhone = contactPhone.replace(/\D/g, '');
     if (!phoneRegex.test(cleanPhone)) {
       setPhoneError('Please enter a valid 10‑digit phone number.');
       return;
     }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contactEmail)) {
       alert('Please enter a valid email address');
       return;
     }
-    const [hours, minutes] = selectedTime.split(':').map(Number);
+    
+    const [startHours, startMinutes] = selectedTimeBlock.start.split(':').map(Number);
     const sessionDate = new Date(selectedDate);
-    sessionDate.setHours(hours, minutes, 0, 0);
+    sessionDate.setHours(startHours, startMinutes, 0, 0);
+    
     const location = serviceAreas[selectedLocationIndex];
     const rate = getServiceRate(selectedService);
-    // For half‑hour sessions, use halfHour rate; otherwise hourly rate
-    const serviceRate = duration === 30 ? rate.halfHour : rate.hourly;
+    const serviceRate = selectedTimeBlock.duration === 30 ? rate.halfHour : rate.hourly;
+    
     onProceedToCheckout({
       partner,
       date: sessionDate,
-      time: selectedTime,
-      duration,
+      startTime: selectedTimeBlock.start,
+      endTime: selectedTimeBlock.end,
+      duration: selectedTimeBlock.duration,
       locationName: location.name,
       locationLat: location.lat || 0,
       locationLng: location.lng || 0,
@@ -163,13 +241,46 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
     });
   };
 
-  const days = getDaysInMonth(currentMonth);
+  const days = (() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    const daysArray = [];
+    for (let i = 0; i < startingDayOfWeek; i++) daysArray.push(null);
+    for (let i = 1; i <= daysInMonth; i++) daysArray.push(new Date(year, month, i));
+    return daysArray;
+  })();
+
   const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const price = getPriceForDuration();
-  const halfHourPrice = getHalfHourPrice();
+  const price = getServiceRate(selectedService);
+  const halfHourPrice = price.halfHour;
+
+  // Show pending booking warning
+  if (hasPendingBooking && !checkingPending) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+        <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-md w-full p-8 text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-3">Pending Booking Exists</h2>
+          <p className="text-gray-400 mb-6">
+            You already have a pending or confirmed booking with {partner.first_name}. 
+            Please complete or cancel that session before booking another.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
       <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-zinc-900 border-b border-white/10 p-6 flex justify-between items-center">
           <div>
@@ -180,10 +291,12 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><X className="w-6 h-6" /></button>
         </div>
+        
         <div className="p-6 space-y-6">
           {emailError && <BlockedWordAlert blockedWords={blockedWords} onClose={() => { setEmailError(null); setBlockedWords([]); }} />}
           {phoneError && <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-300 text-sm">{phoneError}</div>}
 
+          {/* Service Selection */}
           {allServices.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-3">Select Activity</label>
@@ -208,6 +321,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </div>
           )}
 
+          {/* Date Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3"><Calendar className="w-4 h-4 inline mr-1" /> Select Date</label>
             <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -219,16 +333,16 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
               <div className="grid grid-cols-7 gap-2 text-center">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => <div key={day} className="text-xs text-gray-500 font-medium py-2">{day}</div>)}
                 {days.map((day, idx) => {
-                  const isAvailable = day ? isDateAvailable(day) : false;
+                  const isSelectable = day && day >= new Date(new Date().setHours(0, 0, 0, 0));
                   return (
                     <button
                       key={idx}
-                      disabled={!day || !isAvailable}
+                      disabled={!day || !isSelectable}
                       onClick={() => day && handleDateClick(day)}
                       className={`aspect-square rounded-lg text-sm transition-all ${
                         !day ? 'invisible' : ''
                       } ${
-                        !isAvailable ? 'text-gray-600 cursor-not-allowed' : 'hover:bg-white/10'
+                        !isSelectable ? 'text-gray-600 cursor-not-allowed' : 'hover:bg-white/10'
                       } ${selectedDate?.toDateString() === day?.toDateString() ? 'bg-red-500 font-bold' : ''}`}
                     >
                       {day?.getDate()}
@@ -239,35 +353,54 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3"><Clock className="w-4 h-4 inline mr-1" /> Select Time</label>
-            {selectedDate ? (
-              <div className="grid grid-cols-4 gap-2">
-                {timeSlots.map(time => (
-                  <button
-                    key={time}
-                    onClick={() => setSelectedTime(time)}
-                    className={`py-2 px-4 rounded-lg text-sm font-medium transition-all ${selectedTime === time ? 'bg-red-500' : 'bg-white/5 hover:bg-white/10'}`}
-                  >
-                    {time}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-400">Please select a date first.</p>
-            )}
-          </div>
+          {/* Time Block Selection */}
+          {selectedDate && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3"><Clock className="w-4 h-4 inline mr-1" /> Select Time Block</label>
+              {loadingBlocks ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                </div>
+              ) : availableTimeBlocks.length === 0 ? (
+                <div className="bg-white/5 rounded-xl p-6 text-center">
+                  <p className="text-gray-400">No available time slots on this date.</p>
+                  <p className="text-sm text-gray-500 mt-1">Please select another date.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  {availableTimeBlocks.map((block, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedTimeBlock(block)}
+                      className={`p-4 rounded-xl border transition-all text-left ${
+                        selectedTimeBlock === block
+                          ? 'border-red-500 bg-red-500/20'
+                          : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-white">
+                            {formatTimeDisplay(block.start)} - {formatTimeDisplay(block.end)}
+                          </span>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Duration: {block.duration} minutes
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-red-500 font-bold">
+                            ${block.duration === 30 ? price.halfHour : price.hourly * (block.duration / 60)}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">Duration</label>
-            <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500 transition-colors">
-              <option value={30}>30 minutes (${halfHourPrice})</option>
-              <option value={60}>1 hour (${halfHourPrice * 2})</option>
-              <option value={90}>1.5 hours (${halfHourPrice * 3})</option>
-              <option value={120}>2 hours (${halfHourPrice * 4})</option>
-            </select>
-          </div>
-
+          {/* Contact Info */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3">Contact Email</label>
             <input type="email" placeholder="your.email@example.com" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors" />
@@ -278,6 +411,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             <input type="tel" placeholder="5551234567" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors" />
           </div>
 
+          {/* Location Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3"><MapPin className="w-4 h-4 inline mr-1" /> Session Location</label>
             {serviceAreas.length === 0 ? <p className="text-sm text-red-400">This partner hasn't added any service areas yet.</p> : (
@@ -288,43 +422,30 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             )}
           </div>
 
-          {/* Cancellation Policy */}
+          {/* Notices */}
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-start gap-3">
             <Info className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-yellow-300">
               <p className="font-medium">Cancellation Policy</p>
               <p>You can cancel or modify your booking from your profile page. If you cancel less than {partner.cancellation_window || 24} hours before the session, the full amount will be charged.</p>
-              <a href="/profile" className="text-white underline mt-1 inline-block">Go to my profile →</a>
             </div>
           </div>
 
-          {/* Public Locations Notice */}
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <p className="text-xs text-yellow-400 text-center">
-              ⚠️ Public locations only. Private residences, hotels, Airbnbs, home gyms, and any non-public venues are strictly prohibited. 
-              Violations result in account suspension or permanent ban.
-            </p>
+            <p className="text-xs text-yellow-400 text-center">⚠️ Public locations only. Private residences, hotels, Airbnbs, home gyms, and any non-public venues are strictly prohibited.</p>
           </div>
 
-          {/* No External Payment Apps Warning */}
           <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-            <p className="text-xs text-red-400 text-center">
-              ⚠️ WARNING: All payments must be made through Adonix Fit. 
-              Never send money via Venmo, CashApp, PayPal, Zelle, or any other external payment app. 
-              Users who request external payments will be permanently banned.
-            </p>
+            <p className="text-xs text-red-400 text-center">⚠️ WARNING: All payments must be made through Adonix Fit. Never send money via external payment apps.</p>
           </div>
 
-          {/* Two-Person Only Notice */}
           <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-            <p className="text-xs text-purple-300 text-center">
-              👥 Two-person only: Sessions are limited to you and your partner. No friends, family, or spectators permitted.
-            </p>
+            <p className="text-xs text-purple-300 text-center">👥 Two-person only: Sessions are limited to you and your partner. No friends, family, or spectators permitted.</p>
           </div>
 
           <button 
             onClick={handleProceed} 
-            disabled={serviceAreas.length === 0 || !selectedService} 
+            disabled={serviceAreas.length === 0 || !selectedService || !selectedTimeBlock || !selectedDate || hasPendingBooking} 
             className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold transition-all"
           >
             Proceed to Checkout
