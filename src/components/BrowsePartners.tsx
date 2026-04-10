@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase, Profile } from '../lib/supabase';
-import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight, ChevronDown, X, Plus, AlertCircle } from 'lucide-react';
+import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight, ChevronDown, X, Plus, AlertCircle, Navigation, Home } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 
 interface BrowsePartnersProps {
   onSelectPartner?: (partner: Profile) => void;
+  presetCity?: string; // NEW: city from previous screen
 }
 
-// Base service type options (from your PartnerProfileSetup)
+// Base service type options
 const BASE_SERVICE_OPTIONS = [
   'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
   'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
 ];
 
-// Distance options (in miles)
-const DISTANCE_OPTIONS = [1, 2, 5, 10, 15, 20, 25, 50];
+// Distance options (in miles) - 1 to 25 miles
+const DISTANCE_OPTIONS = [1, 2, 3, 5, 10, 15, 20, 25];
 
 // Blocked words for custom services
 const BLOCKED_WORDS = [
@@ -22,11 +23,10 @@ const BLOCKED_WORDS = [
   'violence', 'abuse', 'spam', 'nude', 'porn', 'gambling', 'drugs', 'crypto',
   'bitcoin', 'darkweb', 'escort', 'sexual', 'xxx', 'fuck', 'shit', 'bitch',
   'asshole', 'naked', 'whore', 'sex', 'anal', 'orgy', 'incest', 'pedo',
-  'molest', 'trafficking', 'weapon', 'murder', 'heroin', 'cocaine', 'meth',
-  'slut', 'cunt', 'dick', 'cock', 'pussy', 'bastard', 'racist', 'nigger', 'faggot'
+  'molest', 'trafficking', 'weapon', 'murder', 'heroin', 'cocaine', 'meth'
 ];
 
-export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps) {
+export default function BrowsePartners({ onSelectPartner, presetCity = '' }: BrowsePartnersProps) {
   const [partners, setPartners] = useState<Profile[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +39,10 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [presetCityLocation, setPresetCityLocation] = useState<{ lat: number; lng: number; city: string } | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationMode, setLocationMode] = useState<'preset' | 'current' | 'none'>('none');
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,8 +64,55 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     return R * c;
   };
 
-  // Try to get user's location (with better error handling)
+  // Geocode city name to coordinates
+  const geocodeCity = async (city: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      // Using OpenStreetMap Nominatim (free, no API key needed)
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
+  // Load preset city from previous screen
   useEffect(() => {
+    const loadPresetCity = async () => {
+      if (presetCity && presetCity.trim() !== '') {
+        setLocationLoading(true);
+        const coords = await geocodeCity(presetCity);
+        if (coords) {
+          setPresetCityLocation({
+            lat: coords.lat,
+            lng: coords.lng,
+            city: presetCity
+          });
+          setLocationMode('preset');
+          setLocationError(null);
+        } else {
+          setLocationError(`Could not find "${presetCity}". Try using current location.`);
+          setLocationMode('none');
+        }
+        setLocationLoading(false);
+      } else {
+        // If no preset city, try current location
+        getCurrentLocation();
+      }
+    };
+    
+    loadPresetCity();
+  }, [presetCity]);
+
+  // Get current location
+  const getCurrentLocation = () => {
     if (navigator.geolocation) {
       setLocationLoading(true);
       navigator.geolocation.getCurrentPosition(
@@ -72,15 +121,19 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
+          setLocationMode('current');
           setLocationError(null);
           setLocationLoading(false);
+          
+          // Also try to get city name from coordinates (reverse geocode)
+          reverseGeocode(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
           console.warn('Location permission denied:', error);
           let errorMsg = 'Unable to get your location. ';
           switch(error.code) {
             case error.PERMISSION_DENIED:
-              errorMsg += 'Please enable location access to filter by distance.';
+              errorMsg += 'Please enable location access to find partners near you.';
               break;
             case error.POSITION_UNAVAILABLE:
               errorMsg += 'Location information unavailable.';
@@ -89,17 +142,48 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
               errorMsg += 'Location request timed out.';
               break;
             default:
-              errorMsg += 'Using default distance filter.';
+              errorMsg += 'Using distance filter may not work.';
           }
           setLocationError(errorMsg);
           setLocationLoading(false);
+          setLocationMode('none');
         }
       );
     } else {
       setLocationError('Geolocation is not supported by your browser.');
       setLocationLoading(false);
+      setLocationMode('none');
     }
-  }, []);
+  };
+
+  // Reverse geocode to get city name from coordinates (for display)
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+      const data = await response.json();
+      if (data && data.address) {
+        const city = data.address.city || data.address.town || data.address.village || 'your area';
+        // Just for display, we keep using coordinates for actual distance
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+    }
+  };
+
+  // Switch to current location
+  const switchToCurrentLocation = () => {
+    getCurrentLocation();
+    setDistance(10); // Reset to default radius
+    setCurrentPage(1);
+  };
+
+  // Switch back to preset city
+  const switchToPresetCity = () => {
+    if (presetCityLocation) {
+      setLocationMode('preset');
+      setCurrentPage(1);
+    }
+  };
 
   // Fetch all partners on mount
   useEffect(() => {
@@ -109,12 +193,11 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   // Apply filters whenever filters change
   useEffect(() => {
     applyFilters();
-  }, [partners, searchTerm, selectedServices, distance, userLocation, customServices]);
+  }, [partners, searchTerm, selectedServices, distance, locationMode, userLocation, presetCityLocation, customServices]);
 
   const fetchPartners = async () => {
     setLoading(true);
     try {
-      // Fetch all users with role = 'trainer' (partners)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -148,34 +231,28 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   const addCustomService = () => {
     const name = customServiceName.trim();
     
-    // Reset error
     setCustomError('');
     
-    // Check limit
     if (customServices.length >= MAX_CUSTOM_SERVICES) {
       setCustomError(`You can only add up to ${MAX_CUSTOM_SERVICES} custom services.`);
       return;
     }
     
-    // Check empty
     if (!name) {
       setCustomError('Please enter a service name.');
       return;
     }
     
-    // Check blocked words
     if (containsBlockedWord(name)) {
       setCustomError(`"${name}" contains inappropriate language. Please use a professional service name.`);
       return;
     }
     
-    // Check duplicate (case insensitive)
     if (allServiceOptions.some(s => s.toLowerCase() === name.toLowerCase())) {
       setCustomError(`"${name}" already exists in the list.`);
       return;
     }
     
-    // Add custom service
     setCustomServices([...customServices, name]);
     setCustomServiceName('');
     setShowCustomInput(false);
@@ -185,7 +262,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   // Remove custom service
   const removeCustomService = (serviceToRemove: string) => {
     setCustomServices(customServices.filter(s => s !== serviceToRemove));
-    // Also remove from selected services if it was selected
     setSelectedServices(prev => prev.filter(s => s !== serviceToRemove));
     setCurrentPage(1);
   };
@@ -200,7 +276,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   const applyFilters = () => {
     let filtered = [...partners];
 
-    // Filter by search term (username)
+    // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase().replace('@', '');
       filtered = filtered.filter(partner => 
@@ -209,7 +285,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
       );
     }
 
-    // Filter by services (partner must offer at least ONE of the selected services)
+    // Filter by services
     if (selectedServices.length > 0) {
       filtered = filtered.filter(partner => {
         const services = (partner as any).service_types || [];
@@ -219,26 +295,25 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
       });
     }
 
-    // Filter by distance (if we have user location)
-    if (userLocation) {
+    // Filter by distance based on location mode
+    const activeLocation = locationMode === 'preset' ? presetCityLocation : (locationMode === 'current' ? userLocation : null);
+    
+    if (activeLocation) {
       filtered = filtered.filter(partner => {
-        // If partner has coordinates stored, calculate distance
         if ((partner as any).service_areas_center_lat && (partner as any).service_areas_center_lng) {
           const dist = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
+            activeLocation.lat,
+            activeLocation.lng,
             (partner as any).service_areas_center_lat,
             (partner as any).service_areas_center_lng
           );
           (partner as any)._distance = dist;
           return dist <= distance;
         }
-        // If no coordinates, show but mark distance as unknown
         (partner as any)._distance = null;
         return true;
       });
     } else {
-      // No location, just show all
       filtered.forEach(partner => {
         (partner as any)._distance = null;
       });
@@ -256,6 +331,17 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   const endIndex = startIndex + itemsPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
 
+  // Get current location display name
+  const getLocationDisplayName = () => {
+    if (locationMode === 'preset' && presetCityLocation) {
+      return presetCityLocation.city;
+    }
+    if (locationMode === 'current') {
+      return 'your current location';
+    }
+    return 'unknown location';
+  };
+
   const PartnerCard = ({ partner }: { partner: Profile }) => {
     const services = (partner as any).service_types || [];
     const customPartnerServices = (partner as any).custom_service_types || [];
@@ -269,7 +355,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
         onClick={() => setSelectedPartner(partner)}
         className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/50 hover:scale-[1.02] transition-all cursor-pointer group"
       >
-        {/* Photo */}
         <div className="aspect-square bg-gradient-to-br from-red-500/20 to-orange-500/20 relative">
           {partner.live_photo_url ? (
             <img 
@@ -284,7 +369,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
           )}
         </div>
 
-        {/* Info */}
         <div className="p-4">
           <div className="flex items-start justify-between mb-2">
             <div>
@@ -297,13 +381,11 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             </div>
           </div>
 
-          {/* Primary Service */}
           <div className="flex items-center gap-1 mt-1">
             <Dumbbell className="w-3 h-3 text-gray-500" />
             <span className="text-xs text-gray-400">{primaryService}</span>
           </div>
 
-          {/* Rating & Distance */}
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
@@ -312,7 +394,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 text-gray-500" />
               <span className="text-xs text-gray-400">
-                {distance !== null ? `${Math.round(distance)} mi` : (userLocation ? 'Distance unknown' : 'Location off')}
+                {distance !== null ? `${Math.round(distance)} mi away` : 'Distance unknown'}
               </span>
             </div>
           </div>
@@ -339,29 +421,90 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <p className="text-gray-400">Discover fitness partners who match your vibe</p>
           </div>
 
-          {/* Location Status Bar */}
-          <div className="mb-4 flex items-center gap-2 text-sm">
-            {locationLoading ? (
-              <div className="flex items-center gap-2 text-gray-400">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500"></div>
-                <span>Getting your location...</span>
+          {/* Location Control Bar - Shows preset city and allows switching to current location */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-red-400" />
+                <div>
+                  <p className="text-sm text-gray-400">Showing partners near</p>
+                  {locationLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500"></div>
+                      <span className="text-white text-sm">Loading location...</span>
+                    </div>
+                  ) : locationError ? (
+                    <p className="text-yellow-400 text-sm">{locationError}</p>
+                  ) : (
+                    <p className="text-white font-medium">
+                      {locationMode === 'preset' && presetCityLocation ? presetCityLocation.city : 'your current location'}
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : userLocation ? (
-              <div className="flex items-center gap-2 text-green-400">
-                <MapPin className="w-4 h-4" />
-                <span>Location detected — showing partners within {distance} miles</span>
+              
+              <div className="flex gap-2">
+                {presetCity && presetCityLocation && (
+                  <button
+                    onClick={switchToPresetCity}
+                    className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors ${
+                      locationMode === 'preset' 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    {presetCity}
+                  </button>
+                )}
+                <button
+                  onClick={switchToCurrentLocation}
+                  className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 transition-colors ${
+                    locationMode === 'current' 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  Current Location
+                </button>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 text-yellow-400">
-                <AlertCircle className="w-4 h-4" />
-                <span>{locationError || 'Location unavailable — showing all partners'}</span>
+            </div>
+
+            {/* Distance Radius Slider/Selector */}
+            {!locationLoading && !locationError && (locationMode === 'preset' || locationMode === 'current') && (
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm text-gray-400">Search radius:</label>
+                  <span className="text-red-400 font-medium">{distance} miles</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="25"
+                  step="1"
+                  value={distance}
+                  onChange={(e) => {
+                    setDistance(parseInt(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1 mi</span>
+                  <span>5 mi</span>
+                  <span>10 mi</span>
+                  <span>15 mi</span>
+                  <span>20 mi</span>
+                  <span>25 mi</span>
+                </div>
               </div>
             )}
           </div>
 
           {/* Filters Bar */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -374,18 +517,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                 />
               </div>
 
-              {/* Distance Filter */}
-              <select
-                value={distance}
-                onChange={(e) => setDistance(parseInt(e.target.value))}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
-                disabled={!userLocation}
-              >
-                {DISTANCE_OPTIONS.map(miles => (
-                  <option key={miles} value={miles}>Within {miles} miles{!userLocation && ' (enable location)'}</option>
-                ))}
-              </select>
-
               {/* Clear Filters */}
               <button
                 onClick={clearFilters}
@@ -395,7 +526,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
               </button>
             </div>
 
-            {/* Service Selection - CLICKABLE BOXES GRID (replaces dropdown) */}
+            {/* Service Selection - CLICKABLE BOXES GRID */}
             <div className="border-t border-white/10 pt-4">
               <label className="block text-sm text-gray-400 mb-3">
                 Select services you're looking for:
@@ -419,7 +550,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                     {service}
                     {selectedServices.includes(service) && <span className="ml-1">✓</span>}
                     
-                    {/* Remove button for custom services */}
                     {customServices.includes(service) && (
                       <button
                         onClick={(e) => {
@@ -436,7 +566,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                 ))}
               </div>
 
-              {/* Add Custom Service Button & Input */}
+              {/* Add Custom Service */}
               {!showCustomInput ? (
                 <button
                   onClick={() => setShowCustomInput(true)}
@@ -505,7 +635,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                   </button>
                 </span>
               ))}
-              {distance !== 10 && userLocation && (
+              {distance !== 10 && (
                 <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
                   Within {distance} miles
                   <button onClick={() => setDistance(10)} className="hover:text-white">
@@ -519,7 +649,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
           {/* Results Count */}
           <div className="mb-4 text-sm text-gray-400">
             Found {filteredPartners.length} partner{filteredPartners.length !== 1 ? 's' : ''}
-            {userLocation && distance && ` within ${distance} miles`}
+            {!locationLoading && (locationMode === 'preset' || locationMode === 'current') && ` within ${distance} miles of ${getLocationDisplayName()}`}
           </div>
 
           {/* Partners Grid */}
@@ -527,7 +657,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <div className="text-center py-20">
               <Dumbbell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
               <h3 className="text-2xl font-bold mb-2">No Partners Found</h3>
-              <p className="text-gray-400">Try adjusting your filters or check back later</p>
+              <p className="text-gray-400">Try adjusting your filters or increasing your search radius</p>
             </div>
           ) : (
             <>
