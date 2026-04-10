@@ -25,6 +25,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
