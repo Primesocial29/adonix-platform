@@ -92,11 +92,11 @@ export default function Dashboard() {
         </div>
 
         {activeTab === 'browse' && (
-          <>
-            <FeaturedPartner onBook={handleBookPartner} />
-            <PartnerMarketplace onBookPartner={handleBookPartner} />
-          </>
-        )}
+  <BrowsePartners 
+    onSelectPartner={handleBookPartner}
+    presetCity={profile?.city || ''}
+  />
+)}
         {activeTab === 'bookings' && <MyBookings />}
       </div>
 
