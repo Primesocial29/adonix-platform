@@ -198,8 +198,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     // Check if all selected services have rates
     for (const service of allServices) {
       const rate = serviceRates[service];
-      if (!rate || !rate.hourly || rate.hourly < 100 || rate.hourly > 1000) return false;
-      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 50 || rate.halfHour > rate.hourly)) return false;
+      if (!rate || !rate.hourly || rate.hourly < 50 || rate.hourly > 500) return false;
+      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 30 || rate.halfHour > rate.hourly)) return false;
     }
     return true;
   };
@@ -310,31 +310,32 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     let num = parseInt(value);
     if (isNaN(num)) num = 0;
     if (num < 0) num = 0;
-    if (num > 1000) num = 1000;
+    if (num > 500) num = 500;
     
     if (field === 'hourly' && num < 50) {
-  alert('Hourly rate must be at least $50.');
-  return;
-}
-if (field === 'hourly' && num > 500) {
-  alert('Hourly rate cannot exceed $500.');
-  return;
-}
-
-if (field === 'halfHour') {
-  if (num < 30) {
-    alert('Half‑hour rate must be at least $30.');
-    return;
-  }
-  if (num > 250) {
-    alert('Half‑hour rate cannot exceed $250.');
-    return;
-  }
-  if (num > hourly) {
-    alert('Half‑hour rate cannot exceed hourly rate.');
-    return;
-  }
-}
+      alert('Hourly rate must be at least $50.');
+      return;
+    }
+    if (field === 'hourly' && num > 500) {
+      alert('Hourly rate cannot exceed $500.');
+      return;
+    }
+    
+    if (field === 'halfHour') {
+      if (num < 30) {
+        alert('Half‑hour rate must be at least $30.');
+        return;
+      }
+      if (num > 250) {
+        alert('Half‑hour rate cannot exceed $250.');
+        return;
+      }
+      const hourly = serviceRates[type]?.hourly || 0;
+      if (num > hourly) {
+        alert('Half‑hour rate cannot exceed hourly rate.');
+        return;
+      }
+    }
     
     setServiceRates(prev => ({
       ...prev,
@@ -646,12 +647,12 @@ if (field === 'halfHour') {
     const allServices = [...serviceTypes, ...customServiceTypes];
     for (const service of allServices) {
       const rate = serviceRates[service];
-      if (!rate || !rate.hourly || rate.hourly < 100 || rate.hourly > 1000) {
-        alert(`Please set a valid hourly rate for "${service}" ($100-$1000).`);
+      if (!rate || !rate.hourly || rate.hourly < 50 || rate.hourly > 500) {
+        alert(`Please set a valid hourly rate for "${service}" ($50-$500).`);
         return;
       }
-      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 50 || rate.halfHour > rate.hourly)) {
-        alert(`Please set a valid half-hour rate for "${service}" (minimum $50, cannot exceed hourly rate).`);
+      if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 30 || rate.halfHour > rate.hourly)) {
+        alert(`Please set a valid half-hour rate for "${service}" (minimum $30, cannot exceed hourly rate).`);
         return;
       }
     }
@@ -934,7 +935,7 @@ if (field === 'halfHour') {
               <label className="text-base font-medium text-white">Services & Rates</label>
             </div>
             
-            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your rates (whole dollars only). Minimum hourly rate $100, maximum $1000.</p>
+            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your rates (whole dollars only). Minimum hourly rate $50, maximum $500.</p>
             
             <div className="flex flex-wrap gap-2 mb-4">
               {SERVICE_TYPES.map(type => (
@@ -1000,15 +1001,15 @@ if (field === 'halfHour') {
                             type="number"
                             value={serviceRates[service]?.hourly || ''}
                             onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
-                            placeholder="100"
-                            min="100"
-                            max="1000"
+                            placeholder="50"
+                            min="50"
+                            max="500"
                             step="1"
                             className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
                           />
                           <span className="text-gray-400 text-sm">/ hour</span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Minimum $100, maximum $1000</p>
+                        <p className="text-xs text-gray-500 mt-1">Minimum $50, maximum $500</p>
                       </div>
                       
                       {halfHourEnabled && (
@@ -1022,15 +1023,15 @@ if (field === 'halfHour') {
                               type="number"
                               value={serviceRates[service]?.halfHour || ''}
                               onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
-                              placeholder="50"
-                              min="50"
-                              max={serviceRates[service]?.hourly || 1000}
+                              placeholder="30"
+                              min="30"
+                              max={serviceRates[service]?.hourly || 500}
                               step="1"
                               className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
                             />
                             <span className="text-gray-400 text-sm">/ 30 min</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Minimum $50, cannot exceed hourly rate</p>
+                          <p className="text-xs text-gray-500 mt-1">Minimum $30, cannot exceed hourly rate</p>
                         </div>
                       )}
                     </div>
