@@ -14,6 +14,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-2">1. Acceptance of Terms</h2>
             <p>By accessing Adonix (also referred to as Adonix Fit) (the "App"), you agree to these Terms. The App is operated by Prime Social LLC ("Company", "we", "us").</p>
+            <p className="mt-2 font-semibold text-red-400">Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.</p>
           </section>
 
           {/* 2. USA-Only Service & 18+ Eligibility */}
@@ -330,10 +331,34 @@ export default function TermsPage() {
             <p className="mt-2">Residents of all US states and territories have the same rights to access, delete, correct, and opt-out as described in Section 16. To exercise your rights, email <a href="mailto:primesocial@primesocial.xyz" className="text-red-500 hover:underline">primesocial@primesocial.xyz</a>.</p>
           </section>
 
+          {/* 34. No Personal Liability (LLC Veil Protection) */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">34. No Personal Liability</h2>
+            <p>You agree that recourse against Prime Social LLC shall be limited to the assets of the Company. No member, manager, employee, or agent of Prime Social LLC shall have personal liability for any claim arising from these Terms or the App. This provision is intended to preserve the corporate veil and limit liability to the Company's assets only.</p>
+          </section>
+
+          {/* 35. Park Permits & Public Space Compliance */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">35. Park Permits &amp; Public Space Compliance</h2>
+            <p>Partners are solely responsible for obtaining any required permits, licenses, or authorizations to conduct fitness sessions in public parks, gyms, or other venues. Prime Social LLC does not verify whether a Partner has obtained such permits. You agree to indemnify Prime Social LLC for any fines, penalties, or claims arising from a Partner's failure to obtain required permits.</p>
+          </section>
+
+          {/* 36. Waiver of Jury Trial */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">36. Waiver of Jury Trial</h2>
+            <p>To the fullest extent permitted by law, you waive any right to a trial by jury in any dispute arising from these Terms or the App.</p>
+          </section>
+
+          {/* 37. No Third-Party Beneficiaries */}
+          <section>
+            <h2 className="text-xl font-semibold text-white mb-2">37. No Third-Party Beneficiaries</h2>
+            <p>These Terms are for the benefit of you and Prime Social LLC only. No third party (including any other user) has any right to enforce these Terms against you or the Company.</p>
+          </section>
+
           {/* Final Acknowledgment */}
           <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <p className="text-sm text-yellow-400 text-center">
-              By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, and no refund policy. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.
+              By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, and no personal liability. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.
             </p>
           </div>
 
