@@ -312,22 +312,29 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     if (num < 0) num = 0;
     if (num > 1000) num = 1000;
     
-    if (field === 'hourly' && num < 100) {
-      alert('Hourly rate must be at least $100.');
-      return;
-    }
-    
-    if (field === 'halfHour') {
-      const hourly = serviceRates[type]?.hourly || 0;
-      if (num > hourly) {
-        alert('Half‑hour rate cannot exceed hourly rate.');
-        return;
-      }
-      if (num < 50) {
-        alert('Half‑hour rate must be at least $50.');
-        return;
-      }
-    }
+    if (field === 'hourly' && num < 50) {
+  alert('Hourly rate must be at least $50.');
+  return;
+}
+if (field === 'hourly' && num > 500) {
+  alert('Hourly rate cannot exceed $500.');
+  return;
+}
+
+if (field === 'halfHour') {
+  if (num < 30) {
+    alert('Half‑hour rate must be at least $30.');
+    return;
+  }
+  if (num > 250) {
+    alert('Half‑hour rate cannot exceed $250.');
+    return;
+  }
+  if (num > hourly) {
+    alert('Half‑hour rate cannot exceed hourly rate.');
+    return;
+  }
+}
     
     setServiceRates(prev => ({
       ...prev,
