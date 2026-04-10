@@ -345,7 +345,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  // Full Terms of Service Content (37 sections - matching TermsPage.tsx)
+  // Full Terms of Service Content (37 sections - matching TermsPage.tsx with updated rates)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
 
@@ -391,7 +391,7 @@ YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH. We do NOT conduct backgroun
 Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
 
 12. Independent Contractor Status
-Partners are Independent Contractors, not employees.
+Partners are Independent Contractors, not employees, agents, joint venturers, or franchisees of Prime Social LLC. Partners are solely responsible for their own federal, state, and local taxes, business licenses, insurance, professional conduct, and compliance with all applicable laws. Nothing in these Terms creates an employment relationship. Partners set their own hourly rates (subject to minimum and maximum limits set by the Company: minimum $50 per hour, maximum $500 per hour). Half-hour session rates (if enabled) are subject to minimum $30 and maximum $250. Partners have no authority to bind the Company to any contract or obligation.
 
 13. Artificial Intelligence Use
 We may use AI for matching, content moderation, and recommendations. No liability for AI output. You may opt out of automated decisions.
