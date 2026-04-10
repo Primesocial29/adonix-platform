@@ -1,35 +1,54 @@
 import { useState, useEffect } from 'react';
 import { supabase, Profile } from '../lib/supabase';
-import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight, ChevronDown, X, Plus, AlertCircle } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 
 interface BrowsePartnersProps {
   onSelectPartner?: (partner: Profile) => void;
 }
 
-// Service type options (from your PartnerProfileSetup)
-const SERVICE_OPTIONS = [
+// Base service type options (from your PartnerProfileSetup)
+const BASE_SERVICE_OPTIONS = [
   'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
   'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
 ];
 
 // Distance options (in miles)
-const DISTANCE_OPTIONS = [1, 2, 5, 10, 15, 20, 25];
+const DISTANCE_OPTIONS = [1, 2, 5, 10, 15, 20, 25, 50];
+
+// Blocked words for custom services
+const BLOCKED_WORDS = [
+  'offensive', 'profanity', 'hate', 'adult', 'explicit', 'scam', 'illegal',
+  'violence', 'abuse', 'spam', 'nude', 'porn', 'gambling', 'drugs', 'crypto',
+  'bitcoin', 'darkweb', 'escort', 'sexual', 'xxx', 'fuck', 'shit', 'bitch',
+  'asshole', 'naked', 'whore', 'sex', 'anal', 'orgy', 'incest', 'pedo',
+  'molest', 'trafficking', 'weapon', 'murder', 'heroin', 'cocaine', 'meth',
+  'slut', 'cunt', 'dick', 'cock', 'pussy', 'bastard', 'racist', 'nigger', 'faggot'
+];
 
 export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps) {
   const [partners, setPartners] = useState<Profile[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+  const [customServices, setCustomServices] = useState<string[]>([]);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customServiceName, setCustomServiceName] = useState('');
+  const [customError, setCustomError] = useState('');
   const [distance, setDistance] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+  const [locationError, setLocationError] = useState<string | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  // All services (base + custom)
+  const allServiceOptions = [...BASE_SERVICE_OPTIONS, ...customServices];
+  const MAX_CUSTOM_SERVICES = 2;
 
   // Helper function to calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -43,20 +62,42 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     return R * c;
   };
 
-  // Try to get user's location
+  // Try to get user's location (with better error handling)
   useEffect(() => {
     if (navigator.geolocation) {
+      setLocationLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
+          setLocationError(null);
+          setLocationLoading(false);
         },
         (error) => {
           console.warn('Location permission denied:', error);
+          let errorMsg = 'Unable to get your location. ';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Please enable location access to filter by distance.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'Location information unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Location request timed out.';
+              break;
+            default:
+              errorMsg += 'Using default distance filter.';
+          }
+          setLocationError(errorMsg);
+          setLocationLoading(false);
         }
       );
+    } else {
+      setLocationError('Geolocation is not supported by your browser.');
+      setLocationLoading(false);
     }
   }, []);
 
@@ -68,7 +109,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   // Apply filters whenever filters change
   useEffect(() => {
     applyFilters();
-  }, [partners, searchTerm, selectedServices, distance, userLocation]);
+  }, [partners, searchTerm, selectedServices, distance, userLocation, customServices]);
 
   const fetchPartners = async () => {
     setLoading(true);
@@ -97,6 +138,58 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     setCurrentPage(1);
   };
 
+  // Check if a service name contains blocked words
+  const containsBlockedWord = (name: string): boolean => {
+    const lowerName = name.toLowerCase().trim();
+    return BLOCKED_WORDS.some(word => lowerName.includes(word.toLowerCase()));
+  };
+
+  // Add custom service
+  const addCustomService = () => {
+    const name = customServiceName.trim();
+    
+    // Reset error
+    setCustomError('');
+    
+    // Check limit
+    if (customServices.length >= MAX_CUSTOM_SERVICES) {
+      setCustomError(`You can only add up to ${MAX_CUSTOM_SERVICES} custom services.`);
+      return;
+    }
+    
+    // Check empty
+    if (!name) {
+      setCustomError('Please enter a service name.');
+      return;
+    }
+    
+    // Check blocked words
+    if (containsBlockedWord(name)) {
+      setCustomError(`"${name}" contains inappropriate language. Please use a professional service name.`);
+      return;
+    }
+    
+    // Check duplicate (case insensitive)
+    if (allServiceOptions.some(s => s.toLowerCase() === name.toLowerCase())) {
+      setCustomError(`"${name}" already exists in the list.`);
+      return;
+    }
+    
+    // Add custom service
+    setCustomServices([...customServices, name]);
+    setCustomServiceName('');
+    setShowCustomInput(false);
+    setCurrentPage(1);
+  };
+
+  // Remove custom service
+  const removeCustomService = (serviceToRemove: string) => {
+    setCustomServices(customServices.filter(s => s !== serviceToRemove));
+    // Also remove from selected services if it was selected
+    setSelectedServices(prev => prev.filter(s => s !== serviceToRemove));
+    setCurrentPage(1);
+  };
+
   const clearFilters = () => {
     setSelectedServices([]);
     setDistance(10);
@@ -120,9 +213,9 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     if (selectedServices.length > 0) {
       filtered = filtered.filter(partner => {
         const services = (partner as any).service_types || [];
-        const customServices = (partner as any).custom_service_types || [];
-        const allServices = [...services, ...customServices];
-        return selectedServices.some(service => allServices.includes(service));
+        const customPartnerServices = (partner as any).custom_service_types || [];
+        const allPartnerServices = [...services, ...customPartnerServices];
+        return selectedServices.some(service => allPartnerServices.includes(service));
       });
     }
 
@@ -165,8 +258,8 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
 
   const PartnerCard = ({ partner }: { partner: Profile }) => {
     const services = (partner as any).service_types || [];
-    const customServices = (partner as any).custom_service_types || [];
-    const allServices = [...services, ...customServices];
+    const customPartnerServices = (partner as any).custom_service_types || [];
+    const allServices = [...services, ...customPartnerServices];
     const primaryService = allServices[0] || 'Fitness Training';
     const rate = partner.hourly_rate || 0;
     const distance = (partner as any)._distance;
@@ -219,7 +312,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 text-gray-500" />
               <span className="text-xs text-gray-400">
-                {distance !== null ? `${Math.round(distance)} mi` : 'Near you'}
+                {distance !== null ? `${Math.round(distance)} mi` : (userLocation ? 'Distance unknown' : 'Location off')}
               </span>
             </div>
           </div>
@@ -246,45 +339,39 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <p className="text-gray-400">Discover fitness partners who match your vibe</p>
           </div>
 
+          {/* Location Status Bar */}
+          <div className="mb-4 flex items-center gap-2 text-sm">
+            {locationLoading ? (
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500"></div>
+                <span>Getting your location...</span>
+              </div>
+            ) : userLocation ? (
+              <div className="flex items-center gap-2 text-green-400">
+                <MapPin className="w-4 h-4" />
+                <span>Location detected — showing partners within {distance} miles</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-yellow-400">
+                <AlertCircle className="w-4 h-4" />
+                <span>{locationError || 'Location unavailable — showing all partners'}</span>
+              </div>
+            )}
+          </div>
+
           {/* Filters Bar */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by name or @username..."
+                  placeholder="Search by name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
                 />
-              </div>
-
-              {/* Service Type Multi-Select */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowServiceDropdown(!showServiceDropdown)}
-                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-left text-white flex justify-between items-center"
-                >
-                  <span>{selectedServices.length > 0 ? `${selectedServices.length} selected` : 'All Services'}</span>
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                {showServiceDropdown && (
-                  <div className="absolute z-10 mt-1 w-full bg-zinc-800 border border-white/10 rounded-lg max-h-60 overflow-y-auto">
-                    {SERVICE_OPTIONS.map(service => (
-                      <label key={service} className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedServices.includes(service)}
-                          onChange={() => toggleService(service)}
-                          className="w-4 h-4 accent-red-500"
-                        />
-                        <span className="text-white text-sm">{service}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
               </div>
 
               {/* Distance Filter */}
@@ -292,9 +379,10 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                 value={distance}
                 onChange={(e) => setDistance(parseInt(e.target.value))}
                 className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+                disabled={!userLocation}
               >
                 {DISTANCE_OPTIONS.map(miles => (
-                  <option key={miles} value={miles}>Within {miles} miles</option>
+                  <option key={miles} value={miles}>Within {miles} miles{!userLocation && ' (enable location)'}</option>
                 ))}
               </select>
 
@@ -303,8 +391,98 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                 onClick={clearFilters}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
               >
-                Clear Filters
+                Clear All Filters
               </button>
+            </div>
+
+            {/* Service Selection - CLICKABLE BOXES GRID (replaces dropdown) */}
+            <div className="border-t border-white/10 pt-4">
+              <label className="block text-sm text-gray-400 mb-3">
+                Select services you're looking for:
+                {selectedServices.length > 0 && (
+                  <span className="ml-2 text-red-400">({selectedServices.length} selected)</span>
+                )}
+              </label>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
+                {allServiceOptions.map(service => (
+                  <button
+                    key={service}
+                    onClick={() => toggleService(service)}
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer relative group
+                      ${selectedServices.includes(service) 
+                        ? 'bg-red-500 text-white shadow-lg scale-[1.02]' 
+                        : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:scale-[1.01]'
+                      }
+                    `}
+                  >
+                    {service}
+                    {selectedServices.includes(service) && <span className="ml-1">✓</span>}
+                    
+                    {/* Remove button for custom services */}
+                    {customServices.includes(service) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeCustomService(service);
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs hover:bg-red-600 hidden group-hover:flex items-center justify-center"
+                        title="Remove custom service"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Add Custom Service Button & Input */}
+              {!showCustomInput ? (
+                <button
+                  onClick={() => setShowCustomInput(true)}
+                  disabled={customServices.length >= MAX_CUSTOM_SERVICES}
+                  className={`mt-2 text-sm flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors
+                    ${customServices.length >= MAX_CUSTOM_SERVICES 
+                      ? 'text-gray-500 cursor-not-allowed' 
+                      : 'text-red-400 hover:text-red-300 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add custom service {customServices.length >= MAX_CUSTOM_SERVICES && `(max ${MAX_CUSTOM_SERVICES})`}
+                </button>
+              ) : (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={customServiceName}
+                    onChange={(e) => setCustomServiceName(e.target.value)}
+                    placeholder="e.g., Kickboxing, Parkour, Dance"
+                    className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:border-red-500 focus:outline-none"
+                    autoFocus
+                    onKeyPress={(e) => e.key === 'Enter' && addCustomService()}
+                  />
+                  <button
+                    onClick={addCustomService}
+                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCustomInput(false);
+                      setCustomError('');
+                      setCustomServiceName('');
+                    }}
+                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  {customError && (
+                    <span className="text-red-400 text-xs">{customError}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -327,7 +505,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                   </button>
                 </span>
               ))}
-              {distance !== 10 && (
+              {distance !== 10 && userLocation && (
                 <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
                   Within {distance} miles
                   <button onClick={() => setDistance(10)} className="hover:text-white">
@@ -341,6 +519,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
           {/* Results Count */}
           <div className="mb-4 text-sm text-gray-400">
             Found {filteredPartners.length} partner{filteredPartners.length !== 1 ? 's' : ''}
+            {userLocation && distance && ` within ${distance} miles`}
           </div>
 
           {/* Partners Grid */}
