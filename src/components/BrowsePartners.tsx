@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase, Profile } from '../lib/supabase';
-import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 
 interface BrowsePartnersProps {
@@ -14,22 +14,51 @@ const SERVICE_OPTIONS = [
 ];
 
 // Distance options (in miles)
-const DISTANCE_OPTIONS = [2, 5, 10, 15, 20, 25];
+const DISTANCE_OPTIONS = [1, 2, 5, 10, 15, 20, 25];
 
 export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps) {
   const [partners, setPartners] = useState<Profile[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedService, setSelectedService] = useState('');
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [distance, setDistance] = useState(10);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 12;
+
+  // Helper function to calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Try to get user's location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn('Location permission denied:', error);
+        }
+      );
+    }
+  }, []);
 
   // Fetch all partners on mount
   useEffect(() => {
@@ -39,7 +68,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   // Apply filters whenever filters change
   useEffect(() => {
     applyFilters();
-  }, [partners, selectedService, distance, minPrice, maxPrice, searchTerm]);
+  }, [partners, searchTerm, selectedServices, distance, userLocation]);
 
   const fetchPartners = async () => {
     setLoading(true);
@@ -61,54 +90,72 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     }
   };
 
+  const toggleService = (service: string) => {
+    setSelectedServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    );
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSelectedServices([]);
+    setDistance(10);
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   const applyFilters = () => {
     let filtered = [...partners];
 
-    // Filter by search term (username or bio)
+    // Filter by search term (username)
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase().replace('@', '');
       filtered = filtered.filter(partner => 
-        partner.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        partner.bio?.toLowerCase().includes(searchTerm.toLowerCase())
+        partner.first_name?.toLowerCase().includes(searchLower) ||
+        partner.bio?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Filter by service type (check if partner offers this service)
-    if (selectedService) {
+    // Filter by services (partner must offer at least ONE of the selected services)
+    if (selectedServices.length > 0) {
       filtered = filtered.filter(partner => {
         const services = (partner as any).service_types || [];
         const customServices = (partner as any).custom_service_types || [];
         const allServices = [...services, ...customServices];
-        return allServices.includes(selectedService);
+        return selectedServices.some(service => allServices.includes(service));
       });
     }
 
-    // Filter by price range (using hourly_rate)
-    if (minPrice) {
-      filtered = filtered.filter(partner => 
-        (partner.hourly_rate || 0) >= parseInt(minPrice)
-      );
+    // Filter by distance (if we have user location)
+    if (userLocation) {
+      filtered = filtered.filter(partner => {
+        // If partner has coordinates stored, calculate distance
+        if ((partner as any).service_areas_center_lat && (partner as any).service_areas_center_lng) {
+          const dist = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            (partner as any).service_areas_center_lat,
+            (partner as any).service_areas_center_lng
+          );
+          (partner as any)._distance = dist;
+          return dist <= distance;
+        }
+        // If no coordinates, show but mark distance as unknown
+        (partner as any)._distance = null;
+        return true;
+      });
+    } else {
+      // No location, just show all
+      filtered.forEach(partner => {
+        (partner as any)._distance = null;
+      });
     }
-    if (maxPrice) {
-      filtered = filtered.filter(partner => 
-        (partner.hourly_rate || 0) <= parseInt(maxPrice)
-      );
-    }
-
-    // Note: Distance filtering would require geolocation
-    // For now, we'll skip actual distance calculation
-    // You can add this later with user's saved location
 
     setFilteredPartners(filtered);
     setCurrentPage(1);
   };
 
-  const clearFilters = () => {
-    setSelectedService('');
-    setDistance(10);
-    setMinPrice('');
-    setMaxPrice('');
-    setSearchTerm('');
-  };
+  const activeFilterCount = (searchTerm ? 1 : 0) + selectedServices.length + (distance !== 10 ? 1 : 0);
 
   // Pagination
   const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
@@ -122,6 +169,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
     const allServices = [...services, ...customServices];
     const primaryService = allServices[0] || 'Fitness Training';
     const rate = partner.hourly_rate || 0;
+    const distance = (partner as any)._distance;
 
     return (
       <div 
@@ -148,7 +196,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
           <div className="flex items-start justify-between mb-2">
             <div>
               <h3 className="text-xl font-bold text-white">{partner.first_name || 'Partner'}</h3>
-              <p className="text-sm text-gray-400">{primaryService}</p>
+              <p className="text-sm text-gray-400">@{partner.first_name?.toLowerCase().replace(/\s/g, '_') || 'partner'}</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-bold text-red-500">${rate}</p>
@@ -156,18 +204,25 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             </div>
           </div>
 
-          {/* Rating placeholder */}
-          <div className="flex items-center gap-1 mt-2">
-            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-            <span className="text-xs text-gray-400">New</span>
+          {/* Primary Service */}
+          <div className="flex items-center gap-1 mt-1">
+            <Dumbbell className="w-3 h-3 text-gray-500" />
+            <span className="text-xs text-gray-400">{primaryService}</span>
           </div>
 
-          {/* Bio preview */}
-          {partner.bio && (
-            <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-              {partner.bio}
-            </p>
-          )}
+          {/* Rating & Distance */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+              <span className="text-xs text-gray-400">New</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-gray-500" />
+              <span className="text-xs text-gray-400">
+                {distance !== null ? `${Math.round(distance)} mi` : 'Near you'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -193,30 +248,44 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
 
           {/* Filters Bar */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by name or bio..."
+                  placeholder="Search by name or @username..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
                 />
               </div>
 
-              {/* Service Type Filter */}
-              <select
-                value={selectedService}
-                onChange={(e) => setSelectedService(e.target.value)}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
-              >
-                <option value="">All Services</option>
-                {SERVICE_OPTIONS.map(service => (
-                  <option key={service} value={service}>{service}</option>
-                ))}
-              </select>
+              {/* Service Type Multi-Select */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowServiceDropdown(!showServiceDropdown)}
+                  className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-left text-white flex justify-between items-center"
+                >
+                  <span>{selectedServices.length > 0 ? `${selectedServices.length} selected` : 'All Services'}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                {showServiceDropdown && (
+                  <div className="absolute z-10 mt-1 w-full bg-zinc-800 border border-white/10 rounded-lg max-h-60 overflow-y-auto">
+                    {SERVICE_OPTIONS.map(service => (
+                      <label key={service} className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(service)}
+                          onChange={() => toggleService(service)}
+                          className="w-4 h-4 accent-red-500"
+                        />
+                        <span className="text-white text-sm">{service}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Distance Filter */}
               <select
@@ -229,24 +298,6 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
                 ))}
               </select>
 
-              {/* Price Range */}
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Min $"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Max $"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                />
-              </div>
-
               {/* Clear Filters */}
               <button
                 onClick={clearFilters}
@@ -256,6 +307,36 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
               </button>
             </div>
           </div>
+
+          {/* Active Filters Tags */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {searchTerm && (
+                <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
+                  Search: {searchTerm}
+                  <button onClick={() => setSearchTerm('')} className="hover:text-white">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {selectedServices.map(service => (
+                <span key={service} className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
+                  {service}
+                  <button onClick={() => toggleService(service)} className="hover:text-white">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {distance !== 10 && (
+                <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
+                  Within {distance} miles
+                  <button onClick={() => setDistance(10)} className="hover:text-white">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Results Count */}
           <div className="mb-4 text-sm text-gray-400">
