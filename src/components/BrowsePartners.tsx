@@ -273,6 +273,10 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentPartners.map(partner => (
                 <PartnerCard key={partner.id} partner={partner} />
+            <div 
+  onClick={() => setSelectedPartner(partner)}
+  className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/50 hover:scale-[1.02] transition-all cursor-pointer group"
+>
               ))}
             </div>
 
