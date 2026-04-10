@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Dumbbell, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Dumbbell, LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import TrainerDashboard from "./TrainerDashboard";
@@ -88,9 +88,6 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
     </div>
   );
 }
-
-// Import X icon for the modal
-import { X } from 'lucide-react';
 
 export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
@@ -189,53 +186,48 @@ export default function PublicHome() {
     );
   }
 
-  // Full Terms of Service Content (matching your TermsPage.tsx)
+  // Full Terms of Service Content (short version for modal)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
 
 1. Acceptance of Terms
-By accessing Adonix (also referred to as Adonix Fit) (the "App"), you agree to these Terms. The App is operated by Prime Social LLC ("Company", "we", "us").
-
-Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
+By accessing Adonix (Adonix Fit), you agree to these Terms. Adonix Fit is strictly a fitness and wellness platform. It is not a dating app or escort service.
 
 2. USA-Only Service & 18+ Eligibility
-Location: Available only within the United States of America, including its territories and possessions. VPN use to bypass this restriction is prohibited.
-Human-Only: Use of Artificial Intelligence (AI) to act as a user, generate fake personas, or automate chat is strictly prohibited.
-Age: You must be at least 18 years old. Underage accounts are deleted within 24 hours.
-Age Verification Methods: We use commercially reasonable age verification methods including birth date collection, the right to request government-issued identification, and the right to use facial age estimation technology.
+Available only within the USA. You must be at least 18 years old.
 
 3. Biometric Information (Illinois BIPA)
-If facial age estimation is used, we obtain separate written consent. Biometric data is used only for age verification and is deleted immediately.
+If facial age estimation is used, we obtain separate written consent.
 
 4. Username Policy
 Usernames must be 3-20 characters (letters, numbers, underscore, period only).
 
 5. Prohibited Conduct (Zero-Tolerance)
-Immediate permanent ban for: nudity/explicit content, cross-promotion of social media, screenshots without permission, AI impersonation, AI-generated profile content, deepfakes, harassment, impersonation, automated tools, and external payment apps.
+Immediate permanent ban for nudity, cross-promotion, external payments, AI impersonation, harassment.
 
 6. Chat & Security Monitoring
-We monitor communications for safety. Do not share personal contact info or discuss payments outside the App.
+We monitor communications for safety.
 
-7. Payment System & Multi-Vendor Fee Disclosure
-All transactions must be processed via Stripe. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
+7. Payment System
+ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
 
-8. Location Tracking, QR-Code & Signal Disclaimer
-GPS is mandatory to verify both parties are within 0.75 miles of the agreed location.
+8. Location Tracking
+GPS is mandatory to verify both parties are within 0.75 miles.
 
 9. Public Locations Only
-Public venues only (parks, gyms, studios). Private residences are prohibited.
+Public venues only. Private residences prohibited.
 
 10. In-Person Safety & Assumption of Risk
-YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH. We do NOT conduct background checks.
+YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH.
 
 11. Wellness & Medical Disclaimer
-Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
+Consult a physician before beginning any exercise program.
 
 12. Independent Contractor Status
-Partners are Independent Contractors, not employees.
+Partners are Independent Contractors.
 
 13. Artificial Intelligence Use
-We may use AI for matching, content moderation, and recommendations.
+We may use AI for matching and content moderation.
 
 14. User Content and License
 You grant us a license to use content you upload.
@@ -247,10 +239,10 @@ Send notices to primesocial@primesocial.xyz.
 You have rights to access, delete, correct, and opt-out.
 
 17. Use of Information for Marketing
-We may use your data for marketing. You may opt out.
+You may opt out of marketing.
 
 18. No Refunds (Reiterated)
-ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
+ALL PAYMENTS ARE FINAL.
 
 19. Indemnification
 You agree to indemnify Prime Social LLC.
@@ -258,50 +250,20 @@ You agree to indemnify Prime Social LLC.
 20. Limitation of Liability
 Our total liability shall not exceed $100.
 
-21. Dispute Resolution – Binding Arbitration & Class Action Waiver
+21. Dispute Resolution – Binding Arbitration
 All disputes resolved through binding arbitration. You waive class action rights.
 
 22. Force Majeure
 We are not liable for delays outside our control.
 
-23. Beta Testing Terms
-Beta testers must keep information confidential.
-
-24. Referral Program Terms
-Referral rewards are non-cash credits.
-
-25. Gift Card / Credit Terms
-Credits expire 12 months after issuance.
-
-26. Accessibility Statement
-We strive to make the App accessible.
-
-27. Severability
-If any provision is unenforceable, the rest remain.
-
-28. Entire Agreement
-These Terms constitute the entire agreement.
-
-29. Consent to Electronic Signatures
-By clicking 'I agree,' you consent to electronic signatures.
-
-30. Right to Change Terms
-We may update these Terms.
-
-31. Termination
-We may terminate your account at any time.
-
-32. Contact Information
-Email: primesocial@primesocial.xyz
-
-33. Other State Laws (All 50 States + Territories)
-We comply with all applicable state laws.
+23-33. Additional Terms
+See full Terms of Service for complete details.
 
 34. No Personal Liability
-Recourse limited to Company assets. No personal liability for members or managers.
+Recourse limited to Company assets.
 
 35. Two-Person Only Sessions
-Sessions limited to client and partner only. No friends, family, or spectators.
+Sessions limited to client and partner only.
 
 36. Waiver of Jury Trial
 You waive any right to a trial by jury.
@@ -314,49 +276,27 @@ By creating an account, you agree to these Terms.`;
   const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
 Effective: April 9, 2026 | Last updated: April 9, 2026
 
-1. Information We Collect: Identifiers, demographic info, fitness info, user content, payment info (via Stripe), location data, and biometric data (with consent).
+1. Information We Collect: Email, username, age (deleted immediately), city, fitness goals, photos, bio, chat messages, location data, and biometric data (with consent).
 
-2. Location Data: GPS used to verify both parties within 0.75 miles. Not sold, used only for session verification and SOS.
+2. Location Data: GPS used to verify both parties within 0.75 miles. Not sold.
 
-3. Age Verification & Biometric Data: Birth date collected to verify age 18+ and deleted immediately. Facial age estimation requires separate consent.
+3. Age Verification & Biometric Data: Birth date collected to verify age 18+ and deleted immediately.
 
-4. How We Use Your Information: To operate the App, verify age, process payments, enforce Terms, protect safety, and prevent fraud.
+4. How We Use Your Information: To operate the App, verify age, process payments, enforce Terms, protect safety.
 
-5. Sharing of Information: We do not sell your data. Shared with other users, Stripe, emergency services, law enforcement, AI providers, and marketing partners (opt-out available).
+5. Sharing of Information: We do not sell your data.
 
 6. Data Retention: Age verification data deleted immediately. Account data: until deletion + 30 days.
 
-7. Security: We use reasonable security measures but cannot guarantee 100% security.
+7. Security: We use reasonable security measures.
 
-8. Children's Privacy: Strictly 18+. Underage accounts deleted within 24 hours.
+8. Children's Privacy: Strictly 18+.
 
-9. Your Rights: You have rights to know, delete, portability, correct, opt-out, and appeal.
+9. Your Rights: You have rights to know, delete, correct, and opt-out.
 
-10. State-Specific Rights: California (CCPA/CPRA), Colorado, Connecticut, Virginia, Utah, Washington, Nevada, Illinois, Florida, Texas residents have additional rights.
+10. State-Specific Rights: California, Colorado, Virginia, Utah, Washington, Nevada, Illinois, Florida, Texas residents have additional rights.
 
-11. Artificial Intelligence Use: We use AI for matching and content moderation.
-
-12. Marketing & Remarketing Pixels: We use pixels for targeted ads. You may opt out.
-
-13. Cookies: We use cookies for authentication and preferences.
-
-14. Data Broker Registration: We are not a data broker.
-
-15. International Data Transfers: USA only.
-
-16. Third-Party Links: Not responsible for third-party content.
-
-17. No Medical Advice: Consult a physician before exercise.
-
-18. No Verification of Users: We do not conduct background checks.
-
-19. No Guaranteed Results: Results vary by individual.
-
-20. Consent to Electronic Signatures: By creating an account, you consent.
-
-21. Changes to This Policy: We may update this policy.
-
-22. Contact Us: primesocial@primesocial.xyz
+11-22. Additional Terms: See full Privacy Policy for complete details.
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
