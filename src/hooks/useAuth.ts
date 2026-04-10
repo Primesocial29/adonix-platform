@@ -23,6 +23,20 @@ export function useAuth() {
       }
     });
 
+    // After successful sign-up, save the birth date
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      role: selectedRole,
+      username: username.toLowerCase(),
+      birth_date: `${birthYear}-${birthMonth}-${birthDay}`, // Format: YYYY-MM-DD
+      profile_complete: false,
+    },
+  },
+});
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
