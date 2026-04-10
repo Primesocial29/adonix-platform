@@ -10,6 +10,7 @@ import PrivacyPage from './components/PrivacyPage';
 import ContactPage from './components/ContactPage';
 import Settings from './components/Settings';
 import AccessibilityPage from './components/AccessibilityPage';
+import BrowsePartners from './components/BrowsePartners';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -26,6 +27,11 @@ function App() {
   if (currentRoute === '/dashboard') {
     // You can add role-based logic here later
     return <PublicHome />; // Temporary - will show role-specific dashboard
+  }
+
+  // Browse Partners (Client discovery page)
+  if (currentRoute === '/browse') {
+    return <BrowsePartners />;
   }
 
   // Admin routes
@@ -51,7 +57,7 @@ function App() {
   // Client routes
   if (currentRoute === '/client-setup') {
     return <ClientProfileSetup onComplete={() => {
-      window.location.href = '/dashboard';
+      window.location.href = '/browse'; // Redirect to browse instead of dashboard
     }} />;
   }
 
