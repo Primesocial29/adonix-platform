@@ -8,7 +8,38 @@ import CheckoutScreen from './CheckoutScreen';
 import AuthModal from './AuthModal';
 import MyBookings from './MyBookings';
 
-// Terms Modal Component
+// Simple View-Only Modal (no scroll requirement, just a close button)
+function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
+          {content}
+        </div>
+        
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Terms Modal Component with scroll-to-bottom requirement (for legal agreement)
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -447,7 +478,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Terms Modal - requires scrolling to bottom (for legal agreement) */}
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
@@ -456,28 +487,26 @@ We are actively working to improve accessibility. If you experience any issues, 
         onAgree={() => setShowTermsModal(null)}
       />
 
-      <TermsModal
+      {/* Simple Modals - no scroll requirement (view only) */}
+      <SimpleModal
         isOpen={showTermsModal === 'privacy'}
         onClose={() => setShowTermsModal(null)}
         title="Privacy Policy"
         content={fullPrivacyContent}
-        onAgree={() => setShowTermsModal(null)}
       />
 
-      <TermsModal
+      <SimpleModal
         isOpen={showTermsModal === 'contact'}
         onClose={() => setShowTermsModal(null)}
         title="Contact Us"
         content={contactContent}
-        onAgree={() => setShowTermsModal(null)}
       />
 
-      <TermsModal
+      <SimpleModal
         isOpen={showTermsModal === 'accessibility'}
         onClose={() => setShowTermsModal(null)}
         title="Accessibility Statement"
         content={accessibilityContent}
-        onAgree={() => setShowTermsModal(null)}
       />
     </div>
   );
