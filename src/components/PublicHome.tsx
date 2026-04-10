@@ -143,6 +143,7 @@ export default function PublicHome() {
 
   const handleLogout = async () => {
     await signOut();
+    window.location.href = '/';
   };
 
   // Client notifications for booking status changes
@@ -188,6 +189,12 @@ export default function PublicHome() {
 
     fetchClientBookings();
   }, [user, role]);
+
+  // Redirect to browse if client is logged in (they should see browse page, not homepage)
+  if (!loading && user && role === 'client' && profile?.profile_complete) {
+    window.location.href = '/browse';
+    return null;
+  }
 
   // Don't render anything while loading
   if (loading) {
@@ -379,6 +386,12 @@ We are actively working to improve accessibility. If you experience any issues, 
                 <span className="text-gray-300 text-sm">
                   Welcome, {profile?.first_name || (role === 'trainer' ? 'Trainer' : 'Fitness Enthusiast')}!
                 </span>
+                {/* Browse Partners link - visible for clients */}
+                {role === 'client' && (
+                  <a href="/browse" className="text-gray-400 hover:text-white transition-colors">
+                    Browse Partners
+                  </a>
+                )}
                 {role === 'trainer' && (
                   <a href="/partner-dashboard" className="text-gray-400 hover:text-white transition-colors">
                     Partner Dashboard
@@ -407,21 +420,22 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
+      {/* Homepage content for non-logged-in users or trainers */}
       <div className="pt-20 max-w-7xl mx-auto px-6 py-12">
-        {/* ========== CLIENT VIEW ========== */}
-        {role === 'client' && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Browse Fitness Partners</h1>
-              <p className="text-gray-400 text-lg">Find your perfect workout buddy</p>
-            </div>
-            <TrainerDashboard onBookTrainer={handleBookTrainer} />
-            <MyBookings />
-          </>
-        )}
-
-        {/* ========== TRAINER VIEW ========== */}
-        {role === 'trainer' && (
+        {!user ? (
+          // Landing page for non-logged-in users
+          <div className="text-center py-20">
+            <h1 className="text-5xl font-bold mb-4">Find Your Perfect Workout Buddy</h1>
+            <p className="text-xl text-gray-400 mb-8">Connect with fitness partners who match your vibe</p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition"
+            >
+              Get Started
+            </button>
+          </div>
+        ) : role === 'trainer' ? (
+          // Trainer view
           <>
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">Trainer Dashboard</h1>
@@ -429,7 +443,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             <TrainerDashboard />
           </>
-        )}
+        ) : null}
       </div>
 
       {selectedPartner && (
