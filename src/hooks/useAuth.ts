@@ -23,20 +23,6 @@ export function useAuth() {
       }
     });
 
-    // After successful sign-up, save the birth date
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: {
-      role: selectedRole,
-      username: username.toLowerCase(),
-      birth_date: `${birthYear}-${birthMonth}-${birthDay}`, // Format: YYYY-MM-DD
-      profile_complete: false,
-    },
-  },
-});
-
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -92,25 +78,28 @@ export function useAuth() {
     return data;
   };
 
-  const signUp = async (email: string, password: string, role: 'member' | 'partner') => {
+  const signUp = async (email: string, password: string, role: 'member' | 'partner', username: string, birthDate: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           role: role,
+          username: username,
+          birth_date: birthDate,
           profile_complete: false,
         },
       },
     });
     if (error) throw error;
     
-    // Also update profiles table
     if (data?.user) {
       await supabase
         .from('profiles')
         .update({
           role: role,
+          username: username,
+          birth_date: birthDate,
           profile_complete: false,
         })
         .eq('id', data.user.id);
@@ -144,31 +133,3 @@ export function useAuth() {
     refreshProfile 
   };
 }
-
-const signUp = async (email: string, password: string, role: 'member' | 'partner', username: string) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        role: role,
-        username: username,
-        profile_complete: false,
-      },
-    },
-  });
-  if (error) throw error;
-  
-  if (data?.user) {
-    await supabase
-      .from('profiles')
-      .update({
-        role: role,
-        username: username,
-        profile_complete: false,
-      })
-      .eq('id', data.user.id);
-  }
-  
-  return data;
-};
