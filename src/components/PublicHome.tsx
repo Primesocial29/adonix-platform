@@ -8,7 +8,7 @@ import CheckoutScreen from './CheckoutScreen';
 import AuthModal from './AuthModal';
 import MyBookings from './MyBookings';
 
-// Terms Modal Component (reused from AuthModal)
+// Terms Modal Component
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -256,9 +256,6 @@ All disputes resolved through binding arbitration. You waive class action rights
 22. Force Majeure
 We are not liable for delays outside our control.
 
-23-33. Additional Terms
-See full Terms of Service for complete details.
-
 34. No Personal Liability
 Recourse limited to Company assets.
 
@@ -296,9 +293,46 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 10. State-Specific Rights: California, Colorado, Virginia, Utah, Washington, Nevada, Illinois, Florida, Texas residents have additional rights.
 
-11-22. Additional Terms: See full Privacy Policy for complete details.
-
 By using Adonix Fit, you agree to this Privacy Policy.`;
+
+  const contactContent = `ADONIX FIT - CONTACT INFORMATION
+
+Prime Social LLC
+
+Email: primesocial@primesocial.xyz
+
+Jurisdiction: Orange County, Florida
+
+For support inquiries, please email us with your account email and a description of the issue.
+
+For legal inquiries, privacy requests, DMCA notices, or arbitration opt-outs, please use the same email address.
+
+Response Time: We will respond to all inquiries within 2-3 business days. For privacy requests, we respond within 45 days as required by law.`;
+
+  const accessibilityContent = `ADONIX FIT - ACCESSIBILITY STATEMENT
+
+Our Commitment
+Adonix Fit is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying relevant accessibility standards.
+
+Conformance Status
+We strive to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 Level AA. These guidelines explain how to make web content more accessible for people with disabilities.
+
+Accessibility Features
+• High contrast color scheme for better readability
+• Keyboard navigable interface
+• Screen reader compatible text
+• Resizable text (up to 200% without loss of content)
+• Alternative text for images
+
+Feedback and Support
+We welcome your feedback on the accessibility of Adonix Fit. If you encounter any accessibility barriers or have suggestions for improvement, please contact us at:
+
+Email: primesocial@primesocial.xyz
+
+Limitations and Alternatives
+Despite our best efforts to ensure accessibility, some pages or features may not be fully accessible. If you need assistance accessing any content, please contact us and we will provide an alternative.
+
+We are actively working to improve accessibility. If you experience any issues, please contact us immediately.`;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -434,7 +468,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
         isOpen={showTermsModal === 'contact'}
         onClose={() => setShowTermsModal(null)}
         title="Contact Us"
-        content="For questions, support, or inquiries, please email us at: primesocial@primesocial.xyz"
+        content={contactContent}
         onAgree={() => setShowTermsModal(null)}
       />
 
@@ -442,7 +476,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
         isOpen={showTermsModal === 'accessibility'}
         onClose={() => setShowTermsModal(null)}
         title="Accessibility Statement"
-        content="Adonix Fit is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone. If you have difficulty accessing any feature, please contact us at primesocial@primesocial.xyz."
+        content={accessibilityContent}
         onAgree={() => setShowTermsModal(null)}
       />
     </div>
