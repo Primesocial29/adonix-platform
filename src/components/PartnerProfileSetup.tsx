@@ -140,6 +140,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [halfHourEnabled, setHalfHourEnabled] = useState(false);
   const [serviceAreas, setServiceAreas] = useState<{ name: string; lat: number | null; lng: number | null }[]>([]);
   const [newArea, setNewArea] = useState('');
+  // NEW: Store the primary location for distance searching
+  const [serviceAreasCenterLat, setServiceAreasCenterLat] = useState<number | null>(null);
+  const [serviceAreasCenterLng, setServiceAreasCenterLng] = useState<number | null>(null);
   const [availability, setAvailability] = useState<{day: string; times: string[]}[]>([
     { day: 'Monday', times: [] },
     { day: 'Tuesday', times: [] },
@@ -277,6 +280,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         setMinAdvanceNotice(data.min_advance_notice ?? 72);
         setCancellationWindow(data.cancellation_window ?? 24);
         setCertifications(data.certifications || []);
+        // NEW: Load center coordinates
+        setServiceAreasCenterLat(data.service_areas_center_lat || null);
+        setServiceAreasCenterLng(data.service_areas_center_lng || null);
         let parsedAreas: { name: string; lat: number | null; lng: number | null }[] = [];
         if (data.service_areas) {
           const raw = Array.isArray(data.service_areas) ? data.service_areas : [];
@@ -395,6 +401,12 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     };
     if (!serviceAreas.some(a => a.name === newAreaObj.name)) {
       setServiceAreas([...serviceAreas, newAreaObj]);
+      
+      // NEW: If this is the first service area with coordinates, set it as the center for distance searches
+      if (serviceAreas.length === 0 && newAreaObj.lat && newAreaObj.lng) {
+        setServiceAreasCenterLat(newAreaObj.lat);
+        setServiceAreasCenterLng(newAreaObj.lng);
+      }
     }
     setAddressQuery('');
     setAddressSearchResults([]);
@@ -424,7 +436,27 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
 
   const removeServiceArea = (index: number) => {
+    const isRemovingFirst = (index === 0 && serviceAreas.length > 0);
+    const wasCenter = isRemovingFirst && 
+      serviceAreas[0]?.lat === serviceAreasCenterLat && 
+      serviceAreas[0]?.lng === serviceAreasCenterLng;
+    
     setServiceAreas(serviceAreas.filter((_, i) => i !== index));
+    
+    // NEW: If we removed the center location, update to the new first location (if any)
+    if (wasCenter && serviceAreas.length > 1) {
+      const newFirst = serviceAreas[1];
+      if (newFirst?.lat && newFirst?.lng) {
+        setServiceAreasCenterLat(newFirst.lat);
+        setServiceAreasCenterLng(newFirst.lng);
+      } else {
+        setServiceAreasCenterLat(null);
+        setServiceAreasCenterLng(null);
+      }
+    } else if (serviceAreas.length === 1) {
+      setServiceAreasCenterLat(null);
+      setServiceAreasCenterLng(null);
+    }
   };
 
   const toggleTimeSlot = (day: string, timeValue: string) => {
@@ -707,6 +739,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         certifications: certifications,
         is_partner: true,
         updated_at: new Date().toISOString(),
+        // NEW: Save the primary location for distance searching
+        service_areas_center_lat: serviceAreasCenterLat,
+        service_areas_center_lng: serviceAreasCenterLng,
       };
       
       console.log('Saving profile data for user:', user.id);
