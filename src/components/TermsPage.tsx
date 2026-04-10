@@ -337,10 +337,13 @@ export default function TermsPage() {
             <p>You agree that recourse against Prime Social LLC shall be limited to the assets of the Company. No member, manager, employee, or agent of Prime Social LLC shall have personal liability for any claim arising from these Terms or the App. This provision is intended to preserve the corporate veil and limit liability to the Company's assets only.</p>
           </section>
 
-          {/* 35. Park Permits & Public Space Compliance */}
+          {/* 35. Two-Person Only Sessions */}
           <section>
-            <h2 className="text-xl font-semibold text-white mb-2">35. Park Permits &amp; Public Space Compliance</h2>
-            <p>Partners are solely responsible for obtaining any required permits, licenses, or authorizations to conduct fitness sessions in public parks, gyms, or other venues. Prime Social LLC does not verify whether a Partner has obtained such permits. You agree to indemnify Prime Social LLC for any fines, penalties, or claims arising from a Partner's failure to obtain required permits.</p>
+            <h2 className="text-xl font-semibold text-white mb-2">35. Two-Person Only Sessions</h2>
+            <p><strong>Maximum Participants:</strong> Sessions arranged through Adonix Fit are strictly limited to two (2) participants: the client and the partner. No additional persons (including friends, family members, children, pets, other trainers, or spectators) are permitted to attend or observe the session.</p>
+            <p className="mt-2"><strong>No Spectators:</strong> The client and partner agree that no third party shall be present during the session, whether as a participant, observer, or spectator.</p>
+            <p className="mt-2"><strong>Exception for Service Animals:</strong> Service animals as defined by the Americans with Disabilities Act (ADA) are permitted.</p>
+            <p className="mt-2"><strong>Violation:</strong> Any violation of this two-person only requirement may result in immediate account termination and forfeiture of any payments for the session.</p>
           </section>
 
           {/* 36. Waiver of Jury Trial */}
@@ -358,7 +361,7 @@ export default function TermsPage() {
           {/* Final Acknowledgment */}
           <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
             <p className="text-sm text-yellow-400 text-center">
-              By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, and no personal liability. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.
+              By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, no personal liability, and two-person only session requirement. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.
             </p>
           </div>
 
