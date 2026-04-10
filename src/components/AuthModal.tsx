@@ -345,31 +345,35 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  // Full Terms of Service Content
+  // Full Terms of Service Content (37 sections - matching TermsPage.tsx)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
-Last updated: April 9, 2026
+Effective: April 9, 2026 | Last updated: April 9, 2026
 
 1. Acceptance of Terms
-By accessing Adonix (Adonix Fit), you agree to these Terms. The App is operated by Prime Social LLC.
+By accessing Adonix (also referred to as Adonix Fit) (the "App"), you agree to these Terms. The App is operated by Prime Social LLC ("Company", "we", "us").
+
+Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
 
 2. USA-Only Service & 18+ Eligibility
-Location: Available only within the United States of America, including its territories. VPN use to bypass this is prohibited.
-Human-Only: Use of AI to act as a user or generate fake personas is strictly prohibited.
-Age: You must be at least 18 years old. Underage accounts are deleted within 24 hours.
-Age Verification: We collect birth date at account creation to verify age. Data is deleted immediately after verification.
-Florida SB 1722, Texas AGE APT Act, Utah App Store Act, Louisiana Act 172, California CAADCA compliance included.
+Location: Available only within the United States of America, including its territories and possessions (Puerto Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa). VPN use to bypass this restriction is prohibited and may result in account termination.
+Human-Only: Use of Artificial Intelligence (AI) to act as a user, generate fake personas, or automate chat is strictly prohibited. Violation results in immediate permanent ban.
+Age: You must be at least 18 years old. Underage accounts are deleted within 24 hours of discovery per Florida SB 1722.
+Age Verification Methods: We use commercially reasonable age verification methods including birth date collection, the right to request government-issued identification, and the right to use facial age estimation technology (with separate written consent).
+Purpose Limitation: Age verification data is used ONLY to confirm you are 18 or older. It is NOT used for marketing, analytics, personalization, or any other purpose.
+Data Deletion: Age verification data is deleted immediately after confirmation. We do not retain birth dates or age estimation data.
+Florida SB 1722, Texas AGE APT Act, Utah App Store Accountability Act, Louisiana Act 172, and California CAADCA compliance included.
 
 3. Biometric Information (Illinois BIPA)
-If facial age estimation is used, we obtain separate written consent. Biometric data is used only for age verification and is deleted immediately. We do not sell, share, or trade biometric data.
+If facial age estimation is used, we obtain separate written consent before collecting any biometric data. Biometric data is used only for age verification and is deleted immediately after verification. We do not sell, share, trade, or otherwise disclose biometric data to any third party. You may withdraw consent at any time.
 
 4. Username Policy
-Usernames must be 3-20 characters (letters, numbers, underscore, period only). Offensive names will be removed.
+Usernames must be 3-20 characters and may only contain letters, numbers, underscores (_), and periods (.). Emojis, spaces, and special characters are prohibited. Offensive, impersonating, or inappropriate usernames will be removed or changed.
 
 5. Prohibited Conduct (Zero-Tolerance)
-Immediate permanent ban for: nudity/explicit content, cross-promotion of social media, screenshots without permission, AI impersonation, AI-generated profile content, deepfakes, harassment, impersonation, automated tools, external payment apps (Venmo, PayPal, CashApp, Zelle, etc.).
+Immediate permanent ban for: nudity/explicit content, cross-promotion of social media, screenshots without permission, AI impersonation, AI-generated profile content, deepfakes, harassment, impersonation, automated tools, and external payment apps (Venmo, PayPal, CashApp, Zelle, etc.).
 
 6. Chat & Security Monitoring
-We monitor communications for safety. Do not share personal contact info or discuss payments outside the App.
+The Company monitors App communications for safety and fraud prevention. Do not share personal contact information in chat. Do not discuss payments outside of the App.
 
 7. Payment System & Multi-Vendor Fee Disclosure
 All transactions must be processed via Stripe. External payment apps are prohibited. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. Payment is authorized but not captured until QR scan or no-show occurs.
@@ -452,7 +456,19 @@ Email: primesocial@primesocial.xyz | Orange County, Florida
 33. Other State Laws (All 50 States + Territories)
 We comply with all applicable state privacy laws including CCPA/CPRA, VCDPA, ColoPA, CTDPA, UCPA, and others.
 
-By creating an account, you agree to these Terms of Service, including arbitration, class action waiver, assumption of risk, and no refund policy.`;
+34. No Personal Liability
+Recourse against Prime Social LLC shall be limited to the assets of the Company. No member, manager, employee, or agent shall have personal liability.
+
+35. Two-Person Only Sessions
+Sessions are strictly limited to two (2) participants: the client and the partner. No additional persons (including friends, family, children, pets, other trainers, or spectators) are permitted. Service animals as defined by the ADA are permitted. Violation may result in account termination and forfeiture of payments.
+
+36. Waiver of Jury Trial
+To the fullest extent permitted by law, you waive any right to a trial by jury.
+
+37. No Third-Party Beneficiaries
+These Terms are for the benefit of you and Prime Social LLC only. No third party (including any other user) has any right to enforce these Terms.
+
+By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, no personal liability, and two-person only session requirement. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.`;
 
   // Full Privacy Policy Content
   const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
@@ -483,7 +499,7 @@ We do not sell your data. We share with other users (profile info), Stripe (paym
 Age verification data: deleted immediately. Account data: until deletion + 30 days. Chat messages: until deletion + 30 days. Location data: not retained. Payment info: not stored by us.
 
 7. Security & Data Breach Notification
-We use reasonable security measures but cannot guarantee 100% security. We will notify you of data breaches as required by state laws (California, Florida, Texas, New York, and others).
+We use reasonable security measures but cannot guarantee 100% security. We will notify you of data breaches as required by state laws.
 
 8. Children's Privacy
 Strictly 18+. Underage accounts deleted within 24 hours. COPPA compliant.
