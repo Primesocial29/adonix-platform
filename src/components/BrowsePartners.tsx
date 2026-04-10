@@ -125,7 +125,7 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
 
     return (
       <div 
-        onClick={() => onSelectPartner?.(partner)}
+        onClick={() => setSelectedPartner(partner)}
         className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/50 hover:scale-[1.02] transition-all cursor-pointer group"
       >
         {/* Photo */}
@@ -182,129 +182,135 @@ export default function BrowsePartners({ onSelectPartner }: BrowsePartnersProps)
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Find Your Workout Buddy</h1>
-          <p className="text-gray-400">Discover fitness partners who match your vibe</p>
-        </div>
-
-        {/* Filters Bar */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name or bio..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              />
-            </div>
-
-            {/* Service Type Filter */}
-            <select
-              value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
-            >
-              <option value="">All Services</option>
-              {SERVICE_OPTIONS.map(service => (
-                <option key={service} value={service}>{service}</option>
-              ))}
-            </select>
-
-            {/* Distance Filter */}
-            <select
-              value={distance}
-              onChange={(e) => setDistance(parseInt(e.target.value))}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
-            >
-              {DISTANCE_OPTIONS.map(miles => (
-                <option key={miles} value={miles}>Within {miles} miles</option>
-              ))}
-            </select>
-
-            {/* Price Range */}
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Min $"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              />
-              <input
-                type="number"
-                placeholder="Max $"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-              />
-            </div>
-
-            {/* Clear Filters */}
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
-            >
-              Clear Filters
-            </button>
+    <>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Find Your Workout Buddy</h1>
+            <p className="text-gray-400">Discover fitness partners who match your vibe</p>
           </div>
-        </div>
 
-        {/* Results Count */}
-        <div className="mb-4 text-sm text-gray-400">
-          Found {filteredPartners.length} partner{filteredPartners.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Partners Grid */}
-        {filteredPartners.length === 0 ? (
-          <div className="text-center py-20">
-            <Dumbbell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">No Partners Found</h3>
-            <p className="text-gray-400">Try adjusting your filters or check back later</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {currentPartners.map(partner => (
-                <PartnerCard key={partner.id} partner={partner} />
-            <div 
-  onClick={() => setSelectedPartner(partner)}
-  className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/50 hover:scale-[1.02] transition-all cursor-pointer group"
->
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="text-sm text-gray-400">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+          {/* Filters Bar */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name or bio..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
+                />
               </div>
-            )}
-          </>
-        )}
+
+              {/* Service Type Filter */}
+              <select
+                value={selectedService}
+                onChange={(e) => setSelectedService(e.target.value)}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+              >
+                <option value="">All Services</option>
+                {SERVICE_OPTIONS.map(service => (
+                  <option key={service} value={service}>{service}</option>
+                ))}
+              </select>
+
+              {/* Distance Filter */}
+              <select
+                value={distance}
+                onChange={(e) => setDistance(parseInt(e.target.value))}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+              >
+                {DISTANCE_OPTIONS.map(miles => (
+                  <option key={miles} value={miles}>Within {miles} miles</option>
+                ))}
+              </select>
+
+              {/* Price Range */}
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Min $"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
+                />
+                <input
+                  type="number"
+                  placeholder="Max $"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="w-1/2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
+                />
+              </div>
+
+              {/* Clear Filters */}
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Results Count */}
+          <div className="mb-4 text-sm text-gray-400">
+            Found {filteredPartners.length} partner{filteredPartners.length !== 1 ? 's' : ''}
+          </div>
+
+          {/* Partners Grid */}
+          {filteredPartners.length === 0 ? (
+            <div className="text-center py-20">
+              <Dumbbell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-2">No Partners Found</h3>
+              <p className="text-gray-400">Try adjusting your filters or check back later</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {currentPartners.map(partner => (
+                  <PartnerCard key={partner.id} partner={partner} />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm text-gray-400">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Partner Profile Modal */}
+      {selectedPartner && (
+        <PartnerProfileView
+          partner={selectedPartner}
+          onClose={() => setSelectedPartner(null)}
+        />
+      )}
+    </>
   );
 }
