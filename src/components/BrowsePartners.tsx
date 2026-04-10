@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, Profile } from '../lib/supabase';
 import { Search, MapPin, DollarSign, Dumbbell, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import PartnerProfileView from './PartnerProfileView';
 
 interface BrowsePartnersProps {
   onSelectPartner?: (partner: Profile) => void;
