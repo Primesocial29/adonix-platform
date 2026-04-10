@@ -315,6 +315,13 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             </p>
           </div>
 
+          {/* Two-Person Only Notice */}
+          <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+            <p className="text-xs text-purple-300 text-center">
+              👥 Two-person only: Sessions are limited to you and your partner. No friends, family, or spectators permitted.
+            </p>
+          </div>
+
           <button 
             onClick={handleProceed} 
             disabled={serviceAreas.length === 0 || !selectedService} 
