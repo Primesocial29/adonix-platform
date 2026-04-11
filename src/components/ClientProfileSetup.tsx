@@ -461,24 +461,12 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
               {termsError && <p className="text-red-400 text-sm mt-2">{termsError}</p>}
             </div>
             
-            {/* Save Button */}
-            <button
-              onClick={handleSave}
-              disabled={saving || !isProfileComplete()}
-              className={`w-full py-4 rounded-xl font-semibold text-white transition-all ${
-                saving || !isProfileComplete()
-                  ? 'bg-gray-600 cursor-not-allowed opacity-50'
-                  : 'bg-gradient-to-r from-red-600 to-orange-600 hover:scale-105'
-              }`}
-            >
-              {saving ? 'Saving...' : 'Complete Profile'}
-            </button>
-            
             <p className="text-xs text-gray-500 text-center">
               {!photo && "📸 Add a photo • "}
               {!city && "📍 Add your city • "}
               {bio.length < 20 && "📝 Complete your bio • "}
               {fitnessGoals.length === 0 && "🎯 Select or add a goal • "}
+              {!gatekeeperAccepted && "✅ Accept platform acknowledgment • "}
               {!termsAccepted && "📜 Accept Terms"}
             </p>
           </div>

@@ -65,36 +65,57 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
       setLocationLoading(false);
       return;
     }
-    
+
     setLocationLoading(true);
+    setLocationError(null);
+
+    const handleSuccess = (position: GeolocationPosition) => {
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+      setLocationError(null);
+      setLocationLoading(false);
+      setLocationPermissionAsked(true);
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      let errorMsg = '';
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMsg = 'Location access denied. Please enable location in your browser settings to find partners near you.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMsg = 'Location unavailable. Please check your device GPS settings and try again.';
+          break;
+        case error.TIMEOUT:
+          errorMsg = 'Location request timed out. Please try again.';
+          break;
+        default:
+          errorMsg = 'Unable to get your location. Please try again.';
+      }
+      setLocationError(errorMsg);
+      setLocationLoading(false);
+      setLocationPermissionAsked(true);
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-        setLocationError(null);
-        setLocationLoading(false);
-        setLocationPermissionAsked(true);
-      },
-      (error) => {
-        let errorMsg = '';
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMsg = 'Location access denied. Please enable location in your browser settings to find partners near you.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMsg = 'Location information unavailable. Please try again.';
-            break;
-          case error.TIMEOUT:
-            errorMsg = 'Location request timed out. Please try again.';
-            break;
-          default:
-            errorMsg = 'Unable to get your location.';
+      handleSuccess,
+      (err) => {
+        if (err.code === err.TIMEOUT || err.code === err.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: 300000,
+          });
+        } else {
+          handleError(err);
         }
-        setLocationError(errorMsg);
-        setLocationLoading(false);
-        setLocationPermissionAsked(true);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 60000,
       }
     );
   };

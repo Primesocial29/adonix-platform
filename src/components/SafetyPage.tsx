@@ -1,5 +1,4 @@
 import { Shield, MapPin, Users, Camera, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 export default function SafetyPage() {
   return (
@@ -80,10 +79,13 @@ export default function SafetyPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-full font-semibold transition-all">
+          <button
+            onClick={() => window.history.back()}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-full font-semibold transition-all"
+          >
             <ArrowLeft className="w-4 h-4" />
-            Back to Safety
-          </Link>
+            Go Back
+          </button>
         </div>
       </div>
     </div>
