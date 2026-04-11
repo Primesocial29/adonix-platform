@@ -400,10 +400,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       lng: area.lng ?? null,
     };
     if (!serviceAreas.some(a => a.name === newAreaObj.name)) {
-      setServiceAreas([...serviceAreas, newAreaObj]);
-      
-      // NEW: If this is the first service area with coordinates, set it as the center for distance searches
-      if (serviceAreas.length === 0 && newAreaObj.lat && newAreaObj.lng) {
+      const updatedAreas = [...serviceAreas, newAreaObj];
+      setServiceAreas(updatedAreas);
+
+      // If no center set yet and this area has coordinates, set it as center
+      if (!serviceAreasCenterLat && !serviceAreasCenterLng && newAreaObj.lat && newAreaObj.lng) {
         setServiceAreasCenterLat(newAreaObj.lat);
         setServiceAreasCenterLng(newAreaObj.lng);
       }

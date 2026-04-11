@@ -120,7 +120,8 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'trainer');
+        .eq('is_partner', true)
+        .eq('profile_complete', true);
 
       if (error) throw error;
       setPartners(data || []);
