@@ -5,6 +5,7 @@ import { Camera, X, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { validateText, containsBlockedWords } from '../lib/textSanitizer';
 import BlockedWordAlert from './BlockedWordAlert';
 import LiveCameraCapture from './LiveCameraCapture';
+import { Navigation } from 'lucide-react';
 
 interface ClientProfileSetupProps {
   onComplete: () => void;
@@ -259,17 +260,71 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
             </div>
 
             {/* ========== CITY ========== */}
-            <div className="p-4 rounded-xl bg-white/5">
-              <label className="block font-semibold mb-2 text-white">City <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g., Los Angeles, Miami, New York"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white"
-              />
-              <p className="text-xs text-gray-500 mt-1">Your city helps us find partners near you.</p>
-            </div>
+<div className="p-4 rounded-xl bg-white/5">
+  <label className="block font-semibold mb-2 text-white">Your Location <span className="text-red-500">*</span></label>
+  
+  {/* Current Location Button */}
+  <button
+    onClick={() => {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Reverse geocode to get city name from coordinates
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
+            );
+            const data = await response.json();
+            const cityName = data.address?.city || data.address?.town || data.address?.village || 'Your City';
+            setCity(cityName);
+            alert(`Location detected: ${cityName}`);
+          } catch (err) {
+            setCity('Unknown Location');
+            alert('Location detected, but could not determine city name.');
+          }
+        },
+        (error) => {
+          let errorMsg = 'Unable to get your location. ';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Please enable location access in your browser settings.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'Location information unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Location request timed out.';
+              break;
+          }
+          alert(errorMsg);
+        }
+      );
+    }}
+    className="w-full mb-3 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+  >
+    <Navigation className="w-4 h-4" />
+    Use My Current Location
+  </button>
+  
+  {/* OR Divider */}
+  <div className="flex items-center gap-2 mb-3">
+    <div className="flex-1 h-px bg-white/20"></div>
+    <span className="text-xs text-gray-500">OR</span>
+    <div className="flex-1 h-px bg-white/20"></div>
+  </div>
+  
+  <input
+    type="text"
+    value={city}
+    onChange={(e) => setCity(e.target.value)}
+    placeholder="e.g., Los Angeles, Miami, New York"
+    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white"
+  />
+  <p className="text-xs text-gray-500 mt-1">Your city helps us find partners near you.</p>
+</div>
             
             {/* ========== BIO ========== */}
             <div className="p-4 rounded-xl bg-white/5">
