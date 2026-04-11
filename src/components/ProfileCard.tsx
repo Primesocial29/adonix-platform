@@ -52,7 +52,7 @@ export function ProfileCard({ profile, onBookSession }: ProfileCardProps) {
         )}
         <div>
           <h2 className="text-2xl font-bold">{profile.first_name || 'Anonymous'}</h2>
-          <p className="text-gray-600">{profile.role === 'trainer' ? '🏋️ Professional Trainer' : '💪 Fitness Enthusiast'}</p>
+          <p className="text-gray-600">{profile.role === 'trainer' ? '🏋️ Fitness Partner' : '💪 Fitness Enthusiast'}</p>
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export function ProfileCard({ profile, onBookSession }: ProfileCardProps) {
         
         {profile.hourly_rate && profile.role === 'trainer' && (
           <div>
-            <h3 className="font-semibold text-gray-700">Hourly Rate</h3>
+            <h3 className="font-semibold text-gray-700">Suggested Contribution</h3>
             <p className="text-2xl font-bold text-green-600">${profile.hourly_rate}/hour</p>
           </div>
         )}
@@ -116,7 +116,7 @@ export function ProfileCard({ profile, onBookSession }: ProfileCardProps) {
               onClick={() => onBookSession(profile)}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-semibold"
             >
-              Book Session with {profile.first_name || 'Trainer'}
+              Invite to Meet with {profile.first_name || 'Partner'}
             </button>
           )}
           

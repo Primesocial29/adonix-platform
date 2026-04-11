@@ -485,6 +485,9 @@ We are actively working to improve accessibility. If you experience any issues, 
               <button onClick={() => setShowTermsModal('accessibility')} className="hover:text-white transition-colors">
                 Accessibility
               </button>
+              <a href="/safety" className="hover:text-white transition-colors">
+                Safety
+              </a>
               <span className="text-gray-600 hidden sm:inline">|</span>
               <span className="text-gray-600">Adonix Fit – Safe fitness connections</span>
             </div>

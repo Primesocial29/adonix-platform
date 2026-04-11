@@ -126,7 +126,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
                 <Dumbbell className="w-5 h-5 text-red-500" />
-                Services & Rates
+                Activities & Suggested Contributions
               </h2>
               <div className="space-y-3">
                 {allServices.map(service => {
@@ -137,10 +137,10 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                         <span className="font-semibold text-white">{service}</span>
                         <div className="text-right">
                           <span className="text-red-500 font-bold">${rates.hourly}</span>
-                          <span className="text-gray-400 text-sm"> / hour</span>
+                          <span className="text-gray-400 text-sm"> suggested / hour</span>
                           {halfHourEnabled && rates.halfHour > 0 && (
                             <div className="text-sm text-gray-400">
-                              or ${rates.halfHour} / 30 min
+                              or ${rates.halfHour} suggested / 30 min
                             </div>
                           )}
                         </div>
@@ -228,7 +228,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               onClick={handleBookClick}
               className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-full font-semibold text-white transition-all transform hover:scale-105"
             >
-              Book Session with {partner.first_name}
+              Invite to Meet with {partner.first_name}
             </button>
             <p className="text-xs text-gray-500 text-center mt-3">
               By booking, you agree to our Terms of Service and Privacy Policy

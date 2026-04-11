@@ -87,7 +87,7 @@ export default function Dashboard() {
             `}
           >
             <Calendar className="w-5 h-5" />
-            My Bookings
+            My Meetups
           </button>
         </div>
 

@@ -284,7 +284,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
       <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-zinc-900 border-b border-white/10 p-6 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold">Book Session with {partner.first_name}</h2>
+            <h2 className="text-2xl font-bold">Invite to Meet with {partner.first_name}</h2>
             {partner.live_photo_url && (
               <img src={partner.live_photo_url} alt={partner.first_name || 'Partner'} className="w-16 h-16 rounded-full mt-2" />
             )}

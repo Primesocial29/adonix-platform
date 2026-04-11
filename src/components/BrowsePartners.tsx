@@ -318,6 +318,15 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
             <p className="text-gray-400">Discover fitness partners who match your vibe</p>
           </div>
 
+          {/* AI Concierge Disclosure */}
+          <div className="mb-6 flex items-start gap-3 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400">
+            <span className="text-lg leading-none mt-0.5">🤖</span>
+            <p>
+              <span className="text-white font-medium">Adonix AI Concierge: </span>
+              You are interacting with the Adonix AI Concierge. I am an AI, not a human partner. Recommendations and filters are generated automatically. All profiles belong to real human users.
+            </p>
+          </div>
+
           {/* Location Status Card */}
           <div className="mb-6 bg-white/5 border border-white/10 rounded-2xl p-5">
             {presetCity && (

@@ -11,6 +11,7 @@ import ContactPage from './components/ContactPage';
 import Settings from './components/Settings';
 import AccessibilityPage from './components/AccessibilityPage';
 import BrowsePartners from './components/BrowsePartners';
+import SafetyPage from './components/SafetyPage';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -80,6 +81,11 @@ function App() {
   // Accessibility page
   if (currentRoute === '/accessibility') {
     return <AccessibilityPage />;
+  }
+
+  // Safety page
+  if (currentRoute === '/safety') {
+    return <SafetyPage />;
   }
 
   // Default

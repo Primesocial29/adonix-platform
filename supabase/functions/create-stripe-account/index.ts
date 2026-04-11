@@ -1,12 +1,20 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.20.0?target=deno";
+import Stripe from "npm:stripe@14.20.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") as string, {
   apiVersion: "2024-12-18.acacia",
-  httpClient: Stripe.createFetchHttpClient(),
 });
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
   try {
     const { userId, userEmail } = await req.json();
 
@@ -25,16 +33,14 @@ serve(async (req) => {
       },
     });
 
-    // In a real implementation, you would update the user's profile in Supabase here
-    // For now, just return the account ID
     return new Response(
       JSON.stringify({ accountId: account.id }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

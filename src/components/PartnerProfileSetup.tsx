@@ -676,20 +676,27 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
     }
     
+    // Validate all service areas have GPS coordinates
+    const areasWithoutCoords = serviceAreas.filter(area => !area.lat || !area.lng);
+    if (areasWithoutCoords.length > 0) {
+      alert('For community safety, select a verified public location from the map. The following locations are missing GPS coordinates: ' + areasWithoutCoords.map(a => a.name).join(', '));
+      return;
+    }
+
     // Validate all selected services have rates
     const allServices = [...serviceTypes, ...customServiceTypes];
     for (const service of allServices) {
       const rate = serviceRates[service];
       if (!rate || !rate.hourly || rate.hourly < 50 || rate.hourly > 500) {
-        alert(`Please set a valid hourly rate for "${service}" ($50-$500).`);
+        alert(`Please set a valid suggested contribution for "${service}" ($50-$500).`);
         return;
       }
       if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 30 || rate.halfHour > rate.hourly)) {
-        alert(`Please set a valid half-hour rate for "${service}" (minimum $30, cannot exceed hourly rate).`);
+        alert(`Please set a valid half-hour contribution for "${service}" (minimum $30, cannot exceed hourly rate).`);
         return;
       }
     }
-    
+
     setShowConfirmModal(true);
   };
   
@@ -1029,7 +1036,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm text-gray-300 mb-1">
-                          Hourly Rate <span className="text-red-500">*</span>
+                          Suggested Contribution (Hourly) <span className="text-red-500">*</span>
                         </label>
                         <div className="flex items-center gap-2">
                           <span className="text-red-500 font-bold">$</span>
@@ -1103,14 +1110,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             {/* Earnings Breakdown Preview */}
             {allSelectedServices.length > 0 && serviceRates[allSelectedServices[0]]?.hourly && (
               <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                <p className="text-sm font-semibold text-blue-300 mb-2">💰 Example Earnings Breakdown (based on ${sampleRate}/hour session)</p>
+                <p className="text-sm font-semibold text-blue-300 mb-2">💰 Example Earnings Breakdown (based on ${sampleRate} suggested contribution/hour)</p>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-300">Your rate:</span>
                     <span className="text-white">${sampleRate}.00</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-300">Adonix fee (15%):</span>
+                    <span className="text-gray-300">Platform Support (15%):</span>
                     <span className="text-red-400">-${earningsPreview.platformFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -1267,33 +1274,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               </div>
             )}
 
-            {/* Manual Entry Section - Only shown if they can't find a gym/park */}
-            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <p className="text-xs text-yellow-400 mb-2 flex items-center gap-1">
-                <span>⚠️</span> Can't find the gym or park you're looking for?
-              </p>
-              <p className="text-xs text-gray-400 mb-3">
-                If your preferred meeting location isn't listed above, you can add it manually. Please ensure it's a public gym, fitness center, or park.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newArea}
-                  onChange={(e) => setNewArea(e.target.value)}
-                  placeholder="Enter gym name or park address..."
-                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white"
-                  onKeyPress={(e) => e.key === 'Enter' && handleManualAddClick()}
-                />
-                <button
-                  onClick={handleManualAddClick}
-                  className="px-4 py-3 bg-orange-600 hover:bg-orange-700 rounded-xl transition-colors flex items-center gap-2"
-                >
-                  <Plus className="w-5 h-5 text-white" />
-                  <span className="text-white text-sm">Add</span>
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">
-                📍 Please enter a valid gym name or public park address
+            {/* Manual Entry Disabled for Community Safety */}
+            <div className="mt-4 p-3 bg-gray-500/10 border border-gray-500/20 rounded-xl opacity-60">
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <span>🔒</span> Manual location entry is disabled. For community safety, all meeting locations must be verified via the map search above.
               </p>
             </div>
 

@@ -56,6 +56,8 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
   // Terms acceptance
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState('');
+  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
+  const [gatekeeperError, setGatekeeperError] = useState('');
   
   // Validation states
   const [bioError, setBioError] = useState<string | null>(null);
@@ -70,12 +72,13 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
   
   // Check if all required fields are complete
   const isProfileComplete = () => {
-    return photo && 
-           bio.trim().length >= 20 && 
-           bio.trim().length <= 500 && 
+    return photo &&
+           bio.trim().length >= 20 &&
+           bio.trim().length <= 500 &&
            fitnessGoals.length > 0 &&
            city.trim().length >= 2 &&
-           termsAccepted;
+           termsAccepted &&
+           gatekeeperAccepted;
   };
 
   const addCustomGoal = () => {
@@ -119,6 +122,11 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
       return;
     }
     
+    if (!gatekeeperAccepted) {
+      setGatekeeperError('You must confirm you understand this is a social fitness platform before continuing.');
+      return;
+    }
+
     if (!termsAccepted) {
       setTermsError('You must agree to the Terms of Service and Privacy Policy before continuing.');
       return;
@@ -412,6 +420,23 @@ export default function ClientProfileSetup({ onComplete, onClose }: ClientProfil
               </p>
             </div>
             
+            {/* ========== GATEKEEPER ACKNOWLEDGMENT ========== */}
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="gatekeeperAccept"
+                  checked={gatekeeperAccepted}
+                  onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4"
+                />
+                <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
+                  I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
+                </label>
+              </div>
+              {gatekeeperError && <p className="text-red-400 text-sm mt-2">{gatekeeperError}</p>}
+            </div>
+
             {/* ========== TERMS & CONDITIONS ========== */}
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
               <div className="flex items-start gap-3">

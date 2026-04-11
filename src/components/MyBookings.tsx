@@ -73,11 +73,11 @@ export default function MyBookings() {
   if (bookings.length === 0) {
     return (
       <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">My Bookings</h2>
+        <h2 className="text-2xl font-bold mb-4">My Meetups</h2>
         <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center">
           <Calendar className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-          <p className="text-gray-400">No bookings yet.</p>
-          <p className="text-sm text-gray-500">Browse fitness partners and book your first session!</p>
+          <p className="text-gray-400">No meetups yet.</p>
+          <p className="text-sm text-gray-500">Browse fitness partners and invite one to meet!</p>
         </div>
       </div>
     );
@@ -85,7 +85,7 @@ export default function MyBookings() {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">My Bookings</h2>
+      <h2 className="text-2xl font-bold mb-4">My Meetups</h2>
       <div className="space-y-4">
         {bookings.map((booking) => (
           <div key={booking.id} className="bg-white/5 border border-white/10 rounded-xl p-4">

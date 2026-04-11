@@ -95,14 +95,14 @@ export default function FeaturedPartner({ onBook }: FeaturedPartnerProps) {
               <span className="text-5xl font-bold text-white">
                 ${partner.hourly_rate}
               </span>
-              <span className="text-gray-400 text-lg">/hour</span>
+              <span className="text-gray-400 text-lg">suggested contribution/hour</span>
             </div>
 
             <button
               onClick={() => onBook(partner)}
               className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-xl"
             >
-              Book Session - Test 15% Fee & GPS Lock
+              Invite to Meet - Test Platform Support & GPS Lock
             </button>
 
             <div className="mt-4 p-4 bg-black/30 rounded-xl border border-white/10">

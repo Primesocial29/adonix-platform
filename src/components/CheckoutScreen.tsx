@@ -67,6 +67,7 @@ export default function CheckoutScreen({ bookingDetails, onClose, onSuccess }: C
         contact_email: contactEmail,
         client_phone: contactPhone,
         selected_service: selectedService,
+        contribution_type: 'community_support',
         booking_date: isoDate,
         session_date: isoDate,
         session_duration: duration,
@@ -127,7 +128,7 @@ export default function CheckoutScreen({ bookingDetails, onClose, onSuccess }: C
               <div className="flex justify-between text-gray-300"><span>Session Rate ({hours}h × ${hourlyRate}/hr)</span><span>${subtotal.toFixed(2)}</span></div>
               <div className="border-t border-white/10 pt-2 space-y-2">
                 <div className="flex justify-between text-gray-400 text-xs"><span>Partner receives (85%)</span><span className="text-green-400 font-medium">${partnerPayout.toFixed(2)}</span></div>
-                <div className="flex justify-between text-gray-400 text-xs"><span>Platform fee (15%)</span><span>${platformFee.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gray-400 text-xs"><span>Platform Support (15%)</span><span>${platformFee.toFixed(2)}</span></div>
               </div>
               <div className="border-t border-white/10 pt-2"><div className="flex justify-between text-gray-300"><span>Intent Fee (Non-refundable)</span><span>${intentFee.toFixed(2)}</span></div></div>
               <div className="border-t border-red-500/30 pt-3 mt-3"><div className="flex justify-between text-xl font-bold"><span>Total</span><span className="text-red-500">${totalAmount.toFixed(2)}</span></div></div>
@@ -138,7 +139,7 @@ export default function CheckoutScreen({ bookingDetails, onClose, onSuccess }: C
             <div className="text-sm text-blue-200"><p className="font-medium mb-1">Safety First</p><p className="text-xs text-blue-300">You'll need to check in via GPS within 200m of the session location. Residential addresses are blocked for your safety.</p></div>
           </div>
           {error && <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3"><AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" /><p className="text-sm text-red-300">{error}</p></div>}
-          <button onClick={handleConfirmBooking} disabled={loading} className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-full font-semibold transition-all transform hover:scale-105">{loading ? 'Processing...' : `Confirm Booking - $${totalAmount.toFixed(2)}`}</button>
+          <button onClick={handleConfirmBooking} disabled={loading} className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-full font-semibold transition-all transform hover:scale-105">{loading ? 'Processing...' : `Confirm & Support - $${totalAmount.toFixed(2)}`}</button>
           <p className="text-xs text-gray-500 text-center">The $1.00 intent fee is non-refundable and helps prevent no-shows.</p>
         </div>
       </div>
