@@ -52,6 +52,7 @@ export const SOCIAL_MEDIA_PATTERNS = [
 
 // Check if text contains any banned words
 export function containsBlockedWords(text: string): boolean {
+  if (!text) return false;
   const lowerText = text.toLowerCase();
   
   for (const word of BANNED_WORDS) {
@@ -72,6 +73,7 @@ export function containsBlockedWords(text: string): boolean {
 
 // Get all banned words that appear in text
 export function getBlockedWordsInText(text: string): string[] {
+  if (!text) return [];
   const lowerText = text.toLowerCase();
   const found: string[] = [];
   
@@ -94,6 +96,7 @@ export function getBlockedWordsInText(text: string): string[] {
 
 // Replace banned words with ***
 export function sanitizeText(text: string): string {
+  if (!text) return text;
   let sanitized = text;
   
   for (const word of BANNED_WORDS) {
