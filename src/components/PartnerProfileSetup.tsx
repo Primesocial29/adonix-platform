@@ -224,9 +224,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       if (typeof blobOrDataURL === 'string') {
         jpegBlob = dataURLtoBlob(blobOrDataURL);
       } else {
-        jpegBlob = blobOrDataURL.type === 'image/jpeg'
-          ? blobOrDataURL
-          : new Blob([blobOrDataURL], { type: 'image/jpeg' });
+        jpegBlob = blobOrDataURL;
       }
       const fileName = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
@@ -241,8 +239,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
       setLivePhotoUrl(url);
     } catch (err) {
-      console.error('Photo upload error:', err);
-      alert('Failed to upload photo. Please try again.');
+      console.error('Upload error:', err);
+      alert('Failed to upload photo. Ensure your Supabase "avatars" bucket exists and policies allow INSERT.');
     } finally {
       setUploadingPhoto(false);
     }
@@ -516,8 +514,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                 {livePhotoUrl ? 'Retake Live Photo' : 'Take Live Photo'}
               </button>
               <div className="p-3 bg-red-900/40 border border-red-500/50 rounded-xl">
-                <p className="text-xs text-red-300 font-bold flex items-start gap-2">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                <p className="text-xs text-red-500 font-extrabold flex items-start gap-2">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
                   AUTHENTICITY CHECK: Live Camera Only. Use of AI-generated faces or filters is strictly prohibited and results in immediate suspension.
                 </p>
               </div>
