@@ -12,6 +12,7 @@ import Settings from './components/Settings';
 import AccessibilityPage from './components/AccessibilityPage';
 import BrowsePartners from './components/BrowsePartners';
 import SafetyPage from './components/SafetyPage';
+import CompleteProfile from './components/CompleteProfile';
 
 function App() {
   const [currentRoute, setCurrentRoute] = useState(window.location.pathname);
@@ -60,6 +61,11 @@ function App() {
     return <ClientProfileSetup onComplete={() => {
       window.location.href = '/browse'; // Redirect to browse instead of dashboard
     }} />;
+  }
+
+  // Complete profile route
+  if (currentRoute === '/complete-profile') {
+    return <CompleteProfile />;
   }
 
   // Settings route
