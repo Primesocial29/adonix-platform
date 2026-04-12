@@ -310,20 +310,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }));
   };
 
-  const ALLOWED_OSM_CATEGORIES = ['gym', 'fitness_centre', 'sports_centre', 'leisure', 'park', 'stadium', 'recreation_ground', 'pitch', 'track', 'swimming_pool', 'fitness_station'];
-  const BLOCKED_OSM_TYPES = ['hotel', 'motel', 'hostel', 'house', 'apartments', 'residential', 'lodging', 'guest_house'];
-
-  const isSafeLocation = (result: SearchResult & { type?: string; class?: string; addresstype?: string }): boolean => {
-    const t = (result.type || '').toLowerCase();
-    const c = (result.class || '').toLowerCase();
-    const a = (result.addresstype || '').toLowerCase();
-    if (BLOCKED_OSM_TYPES.some(bad => t.includes(bad) || c.includes(bad) || a.includes(bad))) return false;
-    const name = result.display_name.toLowerCase();
-    const safeKeywords = ['gym', 'fitness', 'park', 'stadium', 'recreation', 'sports', 'athletic', 'ymca', 'pool', 'court', 'field', 'track', 'centre', 'center'];
-    return safeKeywords.some(kw => name.includes(kw)) || c === 'leisure' || c === 'amenity' || ALLOWED_OSM_CATEGORIES.includes(t);
-  };
-
-  const OSM_HEADERS = { 'User-Agent': 'Adonix-App-Safety-System' };
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBscFCnb9sLo37TmcHhDZ842Fcc7wx6h5k';
 
   const searchAddress = (query: string) => {
     setAddressQuery(query);
@@ -332,11 +319,28 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     searchDebounce.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym OR park OR fitness OR recreation')}&limit=10&extratags=1&addressdetails=1`;
-        const res = await fetch(url, { headers: OSM_HEADERS });
-        const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
-        const filtered = raw.filter(isSafeLocation).slice(0, 6);
-        setAddressResults(filtered);
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=establishment&keyword=gym|park|fitness|recreation|stadium&key=${GOOGLE_MAPS_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.predictions && data.predictions.length > 0) {
+          const detailPromises = data.predictions.slice(0, 6).map(async (prediction: { place_id: string; description: string }) => {
+            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&fields=name,vicinity,geometry&key=${GOOGLE_MAPS_API_KEY}`;
+            const detailRes = await fetch(detailUrl);
+            const detailData = await detailRes.json();
+            if (detailData.result) {
+              return {
+                display_name: prediction.description,
+                lat: detailData.result.geometry.location.lat.toString(),
+                lon: detailData.result.geometry.location.lng.toString(),
+              };
+            }
+            return null;
+          });
+          const results = (await Promise.all(detailPromises)).filter(Boolean) as SearchResult[];
+          setAddressResults(results);
+        } else {
+          setAddressResults([]);
+        }
       } catch { setAddressResults([]); }
       finally { setIsSearching(false); }
     }, 500);
@@ -344,15 +348,28 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   const searchNearMe = async (lat: number, lng: number) => {
     setIsSearching(true);
+    setAddressResults([]);
     try {
-      const delta = travelRadius * 0.0145;
-      const amenityUrl = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park&limit=10&extratags=1&addressdetails=1&viewbox=${lng - delta},${lat + delta},${lng + delta},${lat - delta}&bounded=1`;
-      const res = await fetch(amenityUrl, { headers: OSM_HEADERS });
-      const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
-      const filtered = raw.filter(isSafeLocation).slice(0, 6);
-      setAddressResults(filtered);
-    } catch { setAddressResults([]); }
-    finally { setIsSearching(false); }
+      const radius = travelRadius * 1609.34;
+      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=gym&key=${GOOGLE_MAPS_API_KEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const formatted = data.results.map((place: { name: string; vicinity: string; geometry: { location: { lat: number; lng: number } } }) => ({
+          display_name: place.name + ', ' + place.vicinity,
+          lat: place.geometry.location.lat.toString(),
+          lon: place.geometry.location.lng.toString(),
+        }));
+        setAddressResults(formatted);
+      } else {
+        alert('No gyms or parks found nearby. Try increasing the radius or searching manually.');
+      }
+    } catch (error) {
+      console.error('Google Places error:', error);
+      alert('Unable to find nearby locations. Please try searching manually.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const initiateAddLocation = (result: SearchResult) => {
