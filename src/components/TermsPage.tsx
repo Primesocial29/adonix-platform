@@ -144,7 +144,7 @@ export default function TermsPage() {
               <li>Compliance with all applicable laws and regulations</li>
               <li>Equipment, transportation, and business expenses</li>
             </ul>
-            <p className="mt-2">Nothing in these Terms creates an employment relationship, partnership, or joint venture. Partners set their own hourly rates (subject to minimum and maximum limits set by the Company: minimum $50 per hour, maximum $500 per hour). Half-hour session rates (if enabled) are subject to minimum $30 and maximum $250. Partners have no authority to bind the Company to any contract or obligation.</p>
+            <p className="mt-2">Nothing in these Terms creates an employment relationship, partnership, or joint venture. Partners set their own suggested contributions (subject to minimum and maximum limits set by the Company: minimum $50, maximum $500). Half-hour meetup suggested contributions (if enabled) are subject to minimum $30 and maximum $250. Partners have no authority to bind the Company to any contract or obligation.</p>
           </section>
 
           {/* 13. Artificial Intelligence Use */}

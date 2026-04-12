@@ -43,7 +43,7 @@ export default function LandingPage({ onGetStarted, onSignIn }: LandingPageProps
             >
               Get Started
             </button>
-            <p className="text-sm text-gray-500 mt-4">18+ Only • Verified Members</p>
+            <p className="text-sm text-gray-500 mt-4">18+ Only • ID on File Members</p>
           </div>
         </div>
       </section>

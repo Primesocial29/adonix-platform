@@ -18,7 +18,7 @@ const SERVICE_TYPES = [
 ];
 
 const COMMON_CERTIFICATIONS = [
-  'CPR Certified', 'First Aid Certified', 'Certified Personal Trainer (CPT)',
+  'CPR Certified', 'First Aid Certified', 'Certified Personal Fitness Partner (CPT)',
   'Nutrition Coach', 'Yoga Instructor', 'Pilates Instructor', 'Group Fitness Instructor',
   'Strength & Conditioning Specialist', 'Corrective Exercise Specialist'
 ];
@@ -338,7 +338,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
       const hourly = serviceRates[type]?.hourly || 0;
       if (num > hourly) {
-        alert('Half‑hour rate cannot exceed hourly rate.');
+        alert('Half‑hour suggested contribution cannot exceed the hourly suggested contribution.');
         return;
       }
     }
@@ -692,7 +692,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         return;
       }
       if (halfHourEnabled && (!rate.halfHour || rate.halfHour < 30 || rate.halfHour > rate.hourly)) {
-        alert(`Please set a valid half-hour contribution for "${service}" (minimum $30, cannot exceed hourly rate).`);
+        alert(`Please set a valid half-hour suggested contribution for "${service}" (minimum $30, cannot exceed the hourly suggested contribution).`);
         return;
       }
     }
@@ -978,7 +978,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               <label className="text-base font-medium text-white">Services & Rates</label>
             </div>
             
-            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your rates (whole dollars only). Minimum hourly rate $50, maximum $500.</p>
+            <p className="text-xs text-gray-500 mb-3">Select the activities you offer and set your suggested contributions (whole dollars only). Minimum $50, maximum $500.</p>
             
             <div className="flex flex-wrap gap-2 mb-4">
               {SERVICE_TYPES.map(type => (
@@ -1074,7 +1074,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                             />
                             <span className="text-gray-400 text-sm">/ 30 min</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Minimum $30, cannot exceed hourly rate</p>
+                          <p className="text-xs text-gray-500 mt-1">Minimum $30, cannot exceed hourly suggested contribution</p>
                         </div>
                       )}
                     </div>
@@ -1093,8 +1093,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {halfHourEnabled 
-                    ? '✅ Enabled: Clients can book both 30-minute and 60-minute sessions.' 
-                    : '⭕ Disabled: Clients can only book 60-minute sessions. Toggle ON to offer half-hour options.'}
+                    ? '✅ Enabled: Members can invite to meet for both 30-minute and 60-minute sessions.'
+                    : '⭕ Disabled: Members can only invite to meet for 60-minute sessions. Toggle ON to offer half-hour options.'}
                 </p>
               </div>
               <button
@@ -1147,7 +1147,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </div>
             
             <p className="text-xs text-gray-500 mb-3">
-              Adonix Fit requires meetings in public, safe locations. Add gyms, parks, and public spaces where you're available to meet clients.
+              Adonix Fit requires meetups in public, safe locations. Add gyms, parks, and public spaces where you're available to meet members.
             </p>
 
             {/* Current Location Button */}

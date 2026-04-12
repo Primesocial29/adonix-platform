@@ -127,8 +127,8 @@ export default function PublicHome() {
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | 'contact' | 'accessibility' | null>(null);
 
-  const handleBookTrainer = (trainer: Profile) => {
-    setSelectedPartner(trainer);
+  const handleBookTrainer = (partner: Profile) => {
+    setSelectedPartner(partner);
   };
 
   const handleProceedToCheckout = (details: BookingDetails) => {
@@ -138,7 +138,7 @@ export default function PublicHome() {
 
   const handleBookingSuccess = () => {
     setBookingDetails(null);
-    alert('Booking created successfully!');
+    alert('Meetup invitation sent successfully!');
   };
 
   const handleLogout = async () => {
@@ -384,7 +384,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {user ? (
               <>
                 <span className="text-gray-300 text-sm">
-                  Welcome, {profile?.first_name || (role === 'trainer' ? 'Trainer' : 'Fitness Enthusiast')}!
+                  Welcome, {profile?.first_name || (role === 'trainer' ? 'Partner' : 'Fitness Enthusiast')}!
                 </span>
                 {/* Browse Partners link - visible for clients */}
                 {role === 'client' && (
@@ -435,11 +435,11 @@ We are actively working to improve accessibility. If you experience any issues, 
             </button>
           </div>
         ) : role === 'trainer' ? (
-          // Trainer view
+          // Partner view
           <>
             <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2">Trainer Dashboard</h1>
-              <p className="text-gray-400 text-lg">Manage your sessions, clients, and earnings</p>
+              <h1 className="text-4xl font-bold mb-2">Partner Dashboard</h1>
+              <p className="text-gray-400 text-lg">Manage your meetups, members, and earnings</p>
             </div>
             <TrainerDashboard />
           </>

@@ -193,7 +193,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
     }
     
     if (hasPendingBooking) {
-      alert('You already have a pending or confirmed booking with this partner. Please complete or cancel that session before booking another.');
+      alert('You already have a pending or confirmed meetup with this partner. Please complete or cancel that meetup before scheduling another.');
       return;
     }
     
@@ -263,10 +263,10 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
         <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-md w-full p-8 text-center">
           <div className="text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold mb-3">Pending Booking Exists</h2>
+          <h2 className="text-2xl font-bold mb-3">Pending Meetup Exists</h2>
           <p className="text-gray-400 mb-6">
-            You already have a pending or confirmed booking with {partner.first_name}. 
-            Please complete or cancel that session before booking another.
+            You already have a pending or confirmed meetup with {partner.first_name}.
+            Please complete or cancel that meetup before scheduling another.
           </p>
           <button
             onClick={onClose}
@@ -413,7 +413,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
 
           {/* Location Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3"><MapPin className="w-4 h-4 inline mr-1" /> Session Location</label>
+            <label className="block text-sm font-medium text-gray-300 mb-3"><MapPin className="w-4 h-4 inline mr-1" /> Meetup Location</label>
             {serviceAreas.length === 0 ? <p className="text-sm text-red-400">This partner hasn't added any service areas yet.</p> : (
               <select value={selectedLocationIndex ?? ''} onChange={(e) => setSelectedLocationIndex(Number(e.target.value))} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-red-500 transition-colors">
                 <option value="" disabled>Select a location</option>
@@ -427,7 +427,7 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
             <Info className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-yellow-300">
               <p className="font-medium">Cancellation Policy</p>
-              <p>You can cancel or modify your booking from your profile page. If you cancel less than {partner.cancellation_window || 24} hours before the session, the full amount will be charged.</p>
+              <p>You can cancel or modify your meetup from your profile page. If you cancel less than {partner.cancellation_window || 24} hours before the meetup, the full suggested contribution will be charged.</p>
             </div>
           </div>
 

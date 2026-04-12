@@ -95,7 +95,7 @@ export default function RoleSelection() {
             <div>
               <div className="font-bold text-xl">I want to find a fitness partner</div>
               <div className="text-gray-300 mt-1">
-                Browse trusted partners, book sessions, and work out together – in a safe, GPS‑verified environment.
+                Browse trusted partners, invite to meet, and work out together – in a safe, GPS‑verified environment.
               </div>
             </div>
           </button>

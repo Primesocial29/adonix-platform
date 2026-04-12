@@ -81,7 +81,7 @@ export function ProfileCard({ profile, onBookSession }: ProfileCardProps) {
         {profile.hourly_rate && profile.role === 'trainer' && (
           <div>
             <h3 className="font-semibold text-gray-700">Suggested Contribution</h3>
-            <p className="text-2xl font-bold text-green-600">${profile.hourly_rate}/hour</p>
+            <p className="text-2xl font-bold text-green-600">${profile.hourly_rate} suggested/hr</p>
           </div>
         )}
         
@@ -110,7 +110,7 @@ export function ProfileCard({ profile, onBookSession }: ProfileCardProps) {
       {/* Action Buttons - Only show for other users' profiles */}
       {!isOwnProfile && (
         <div className="space-y-3">
-          {/* Book Session - Only show if viewer is client and profile is trainer */}
+          {/* Invite to Meet - Only show if viewer is client and profile is partner */}
           {isClient && profile.role === 'trainer' && onBookSession && (
             <button
               onClick={() => onBookSession(profile)}

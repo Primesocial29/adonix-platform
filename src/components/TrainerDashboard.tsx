@@ -109,8 +109,8 @@ export default function TrainerDashboard() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl p-6 border border-red-500/20">
-        <h2 className="text-2xl font-bold">Welcome back, Trainer!</h2>
-        <p className="text-gray-400 mt-1">Manage your sessions, clients, and earnings</p>
+        <h2 className="text-2xl font-bold">Welcome back, Partner!</h2>
+        <p className="text-gray-400 mt-1">Manage your meetups, members, and earnings</p>
       </div>
 
       {/* Stats Cards */}
@@ -122,7 +122,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{upcomingSessions.length}</p>
-              <p className="text-sm text-gray-400">Upcoming Sessions</p>
+              <p className="text-sm text-gray-400">Upcoming Meetups</p>
             </div>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{myClients.length}</p>
-              <p className="text-sm text-gray-400">Active Clients</p>
+              <p className="text-sm text-gray-400">Active Members</p>
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function TrainerDashboard() {
           }`}
         >
           <Calendar className="w-4 h-4 inline mr-2" />
-          Session Requests
+          Meetup Requests
         </button>
         <button
           onClick={() => setActiveTab('clients')}
@@ -172,7 +172,7 @@ export default function TrainerDashboard() {
           }`}
         >
           <Users className="w-4 h-4 inline mr-2" />
-          My Clients
+          My Members
         </button>
         <button
           onClick={() => setActiveTab('earnings')}
@@ -193,8 +193,8 @@ export default function TrainerDashboard() {
           {upcomingSessions.length === 0 ? (
             <div className="text-center py-20">
               <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No Session Requests</h3>
-              <p className="text-gray-400">When clients book you, they'll appear here</p>
+              <h3 className="text-2xl font-bold mb-2">No Meetup Requests</h3>
+              <p className="text-gray-400">When members invite you to meet, they'll appear here</p>
             </div>
           ) : (
             upcomingSessions.map((session) => (
@@ -217,7 +217,7 @@ export default function TrainerDashboard() {
                           {new Date(session.booking_date).toLocaleString()}
                         </p>
                         <p className="text-sm text-red-400">
-                          ${session.hourly_rate}/hour
+                          ${session.hourly_rate} suggested contribution
                         </p>
                       </div>
                     </div>
@@ -260,8 +260,8 @@ export default function TrainerDashboard() {
           {myClients.length === 0 ? (
             <div className="col-span-full text-center py-20">
               <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No Clients Yet</h3>
-              <p className="text-gray-400">When you complete sessions, clients will appear here</p>
+              <h3 className="text-2xl font-bold mb-2">No Members Yet</h3>
+              <p className="text-gray-400">When you complete meetups, members will appear here</p>
             </div>
           ) : (
             myClients.map((client) => (

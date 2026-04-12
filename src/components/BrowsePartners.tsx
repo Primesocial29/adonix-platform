@@ -295,7 +295,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
             </div>
             <div className="text-right">
               <p className="text-lg font-bold text-red-500">${rate}</p>
-              <p className="text-xs text-gray-500">/ hour</p>
+              <p className="text-xs text-gray-500">suggested / hr</p>
             </div>
           </div>
 
