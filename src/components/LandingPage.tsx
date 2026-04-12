@@ -86,8 +86,16 @@ export default function LandingPage({ onGetStarted, onSignIn }: LandingPageProps
       </section>
 
       <footer className="py-8 px-6 border-t border-white/10">
-        <div className="max-w-7xl mx-auto text-center text-gray-500 text-sm">
-          © 2024 Hot Buddies. All rights reserved.
+        <div className="max-w-7xl mx-auto text-center space-y-3">
+          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+            <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/safety" className="hover:text-white transition-colors">Safety &amp; Zero Tolerance</a>
+            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+          </div>
+          <p className="text-xs text-gray-600">
+            © 2026 Prime Social LLC. All rights reserved. Adonix Fit is a private social networking platform, not a professional services marketplace.
+          </p>
         </div>
       </footer>
     </div>

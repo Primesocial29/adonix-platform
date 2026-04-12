@@ -7,6 +7,7 @@ import {
   Award, CheckCircle, X, ShieldCheck, Info
 } from 'lucide-react';
 import LiveCameraCapture from './LiveCameraCapture';
+import LegalModal from './LegalModal';
 
 interface SearchResult {
   display_name: string;
@@ -37,16 +38,14 @@ const PRESET_CERTIFICATIONS = [
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-const generateTimeSlots = (): string[] => {
+const generateTimeSlots = (includeHalfHour: boolean): string[] => {
   const slots: string[] = [];
   for (let h = 6; h <= 22; h++) {
     slots.push(`${h.toString().padStart(2, '0')}:00`);
-    if (h < 22) slots.push(`${h.toString().padStart(2, '0')}:30`);
+    if (includeHalfHour && h < 22) slots.push(`${h.toString().padStart(2, '0')}:30`);
   }
   return slots;
 };
-
-const TIME_SLOTS = generateTimeSlots();
 
 function formatTimeLabel(time: string): string {
   const [hour, minute] = time.split(':');
@@ -133,6 +132,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [pendingLocation, setPendingLocation] = useState<SearchResult | null>(null);
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(5);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [availability, setAvailability] = useState<{ day: string; times: string[] }[]>(
@@ -144,6 +144,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [cancellationWindow, setCancellationWindow] = useState(24);
 
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
 
@@ -209,14 +210,21 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     if (!user) return;
     setUploadingPhoto(true);
     try {
+      const jpegBlob = blob.type === 'image/jpeg' ? blob : new Blob([blob], { type: 'image/jpeg' });
       const fileName = `${user.id}/live_${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('profile-photos').upload(fileName, blob, { upsert: true });
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, jpegBlob, {
+          upsert: true,
+          contentType: 'image/jpeg',
+        });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
       const url = urlData.publicUrl;
       await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
       setLivePhotoUrl(url);
-    } catch {
+    } catch (err) {
+      console.error('Photo upload error:', err);
       alert('Failed to upload photo. Please try again.');
     } finally {
       setUploadingPhoto(false);
@@ -282,6 +290,19 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }));
   };
 
+  const ALLOWED_OSM_CATEGORIES = ['gym', 'fitness_centre', 'sports_centre', 'leisure', 'park', 'stadium', 'recreation_ground', 'pitch', 'track', 'swimming_pool', 'fitness_station'];
+  const BLOCKED_OSM_TYPES = ['hotel', 'motel', 'hostel', 'house', 'apartments', 'residential', 'lodging', 'guest_house'];
+
+  const isSafeLocation = (result: SearchResult & { type?: string; class?: string; addresstype?: string }): boolean => {
+    const t = (result.type || '').toLowerCase();
+    const c = (result.class || '').toLowerCase();
+    const a = (result.addresstype || '').toLowerCase();
+    if (BLOCKED_OSM_TYPES.some(bad => t.includes(bad) || c.includes(bad) || a.includes(bad))) return false;
+    const name = result.display_name.toLowerCase();
+    const safeKeywords = ['gym', 'fitness', 'park', 'stadium', 'recreation', 'sports', 'athletic', 'ymca', 'pool', 'court', 'field', 'track', 'centre', 'center'];
+    return safeKeywords.some(kw => name.includes(kw)) || c === 'leisure' || c === 'amenity' || ALLOWED_OSM_CATEGORIES.includes(t);
+  };
+
   const searchAddress = (query: string) => {
     setAddressQuery(query);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -289,12 +310,30 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     searchDebounce.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6`);
-        const data = await res.json();
-        setAddressResults(data);
+        const amenityFilter = '[amenity~"gym|fitness_centre|sports_centre|swimming_pool"]';
+        const leisureFilter = '[leisure~"park|stadium|recreation_ground|sports_centre|fitness_centre|pitch|track"]';
+        const radiusMeters = searchRadius * 1609.34;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym OR park OR fitness OR recreation')}&limit=10&extratags=1&addressdetails=1`;
+        const res = await fetch(url);
+        const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
+        const filtered = raw.filter(isSafeLocation).slice(0, 6);
+        setAddressResults(filtered);
       } catch { setAddressResults([]); }
       finally { setIsSearching(false); }
     }, 500);
+  };
+
+  const searchNearMe = async (lat: number, lng: number) => {
+    setIsSearching(true);
+    try {
+      const radiusMeters = Math.round(searchRadius * 1609.34);
+      const amenityUrl = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park&limit=10&extratags=1&addressdetails=1&viewbox=${lng - 0.2},${lat + 0.2},${lng + 0.2},${lat - 0.2}&bounded=1`;
+      const res = await fetch(amenityUrl);
+      const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
+      const filtered = raw.filter(isSafeLocation).slice(0, 6);
+      setAddressResults(filtered);
+    } catch { setAddressResults([]); }
+    finally { setIsSearching(false); }
   };
 
   const initiateAddLocation = (result: SearchResult) => {
@@ -321,19 +360,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const useCurrentLocation = () => {
     if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
     setIsGettingLocation(true);
+    setAddressResults([]);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude: lat, longitude: lng } = pos.coords;
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-        const data = await res.json();
-        setPendingLocation({ display_name: data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`, lat: String(lat), lon: String(lng) });
-        setShowLocationConfirm(true);
-      } catch {
-        setPendingLocation({ display_name: `Current Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`, lat: String(lat), lon: String(lng) });
-        setShowLocationConfirm(true);
-      } finally {
-        setIsGettingLocation(false);
-      }
+      setIsGettingLocation(false);
+      await searchNearMe(lat, lng);
     }, () => {
       alert('Unable to get location. Please enable location permissions.');
       setIsGettingLocation(false);
@@ -725,11 +756,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
         {/* ===== SECTION 5: SERVICE AREAS (GPS) ===== */}
         <div className={`p-6 rounded-2xl border ${isServiceAreasComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               {isServiceAreasComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
               <MapPin className="w-5 h-5 text-red-500" />
-              <h2 className="text-base font-semibold">Public Meetup Locations</h2>
+              <h2 className="text-base font-semibold">The "Don't Be Weird" Location Picker</h2>
             </div>
             <div className="flex items-center gap-1 text-xs text-green-400">
               <ShieldCheck className="w-4 h-4" />
@@ -737,21 +768,43 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-4">
-            Add public gyms, parks, or fitness centers. All locations must be selected from search results — manual entry is blocked.
+            We love a good home workout, but Adonix is for the great outdoors and public floors. Search for a local gym or park near you. Our system automatically blocks residential addresses — if you try to invite someone to your living room, the "Submit" button will ghost you. Safety first, gains second!
           </p>
 
-          <button
-            onClick={useCurrentLocation}
-            disabled={isGettingLocation}
-            className="w-full mb-4 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium"
-          >
-            {isGettingLocation
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Getting Location...</>
-              : <><Navigation className="w-4 h-4" /> Use My Current Location</>
-            }
-          </button>
+          {/* Radius Slider */}
+          <div className="mb-4 p-4 bg-black rounded-xl border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-gray-400 font-medium">Search Radius</label>
+              <span className="text-red-400 font-bold text-sm">{searchRadius} mile{searchRadius !== 1 ? 's' : ''}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="25"
+              step="1"
+              value={searchRadius}
+              onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+              className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+            />
+            <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+              <span>1 mi</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25 mi</span>
+            </div>
+          </div>
 
-          <div className="relative mb-4">
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={useCurrentLocation}
+              disabled={isGettingLocation || isSearching}
+              className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium text-sm"
+            >
+              {isGettingLocation
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Locating...</>
+                : <><Navigation className="w-4 h-4" /> Search Near Me</>
+              }
+            </button>
+          </div>
+
+          <div className="relative mb-2">
             <div className="absolute left-4 top-3.5 pointer-events-none">
               {isSearching
                 ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
@@ -762,37 +815,48 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               type="text"
               value={addressQuery}
               onChange={(e) => searchAddress(e.target.value)}
-              placeholder="Search for gyms, parks, fitness centers..."
+              placeholder="Search: gyms, parks, fitness centers, stadiums..."
               className="w-full pl-11 pr-4 py-3 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none"
             />
-            {addressResults.length > 0 && (
-              <div className="absolute w-full mt-1 bg-gray-900 border border-white/20 rounded-xl overflow-hidden shadow-2xl z-50">
-                {addressResults.map((r, i) => (
-                  <button
-                    key={i}
-                    onClick={() => initiateAddLocation(r)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/5 last:border-0 transition-colors"
-                  >
-                    <p className="text-sm text-white truncate">{r.display_name}</p>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl mb-4">
-            <p className="text-xs text-red-300 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
-              Manual location typing is disabled. You must select from search results above to capture GPS coordinates for community safety.
-            </p>
-          </div>
+          <p className="text-[10px] text-gray-600 mb-3 flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-red-400" />
+            Anti-creep filter active: Hotels, residential addresses, and private venues are automatically blocked.
+          </p>
+
+          {addressResults.length > 0 && (
+            <div className="mb-4 bg-gray-900 border border-white/20 rounded-xl overflow-hidden shadow-2xl">
+              <p className="px-4 pt-3 pb-1 text-[10px] text-gray-500 uppercase tracking-wider">
+                Safe public venues — tap to add
+              </p>
+              {addressResults.map((r, i) => (
+                <button
+                  key={i}
+                  onClick={() => initiateAddLocation(r)}
+                  className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/5 last:border-0 transition-colors flex items-center gap-3"
+                >
+                  <MapPin className="w-4 h-4 text-green-500 shrink-0" />
+                  <p className="text-sm text-white truncate">{r.display_name}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {addressQuery.length >= 3 && addressResults.length === 0 && !isSearching && (
+            <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+              <p className="text-xs text-yellow-300">
+                No safe public venues found matching your search. Try "gym", "park", or "fitness center" near your city.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             {serviceAreas.map((area, i) => (
               <div key={i} className="flex items-center justify-between bg-black p-3 rounded-xl border border-white/10">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-red-500/20 p-2 rounded-lg shrink-0">
-                    <Navigation className="w-4 h-4 text-red-500" />
+                  <div className="bg-green-500/20 p-2 rounded-lg shrink-0">
+                    <Navigation className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-white truncate">{area.name}</p>
@@ -854,7 +918,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                   {isExpanded && (
                     <div className="px-4 py-3 bg-black">
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                        {TIME_SLOTS.map(time => {
+                        {generateTimeSlots(halfHourEnabled).map(time => {
                           const active = dayAvail.times.includes(time);
                           return (
                             <button
@@ -946,9 +1010,21 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             />
             <span className="text-sm text-gray-300">
               I have read and agree to the{' '}
-              <a href="/terms" target="_blank" className="text-red-400 underline hover:text-red-300">Terms of Service</a>
+              <button
+                type="button"
+                onClick={() => setLegalModal('terms')}
+                className="text-red-400 underline hover:text-red-300 transition-colors"
+              >
+                Terms of Service
+              </button>
               {' '}and{' '}
-              <a href="/privacy" target="_blank" className="text-red-400 underline hover:text-red-300">Privacy Policy</a>.
+              <button
+                type="button"
+                onClick={() => setLegalModal('privacy')}
+                className="text-red-400 underline hover:text-red-300 transition-colors"
+              >
+                Privacy Policy
+              </button>.
               I understand this is a private social network, not a professional services platform.
             </span>
           </label>
@@ -991,6 +1067,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         onConfirm={confirmAddLocation}
         locationName={pendingLocation?.display_name || ''}
       />
+
+      {legalModal && (
+        <LegalModal
+          type={legalModal}
+          onClose={() => setLegalModal(null)}
+        />
+      )}
     </div>
   );
 }

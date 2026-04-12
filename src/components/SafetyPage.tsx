@@ -8,13 +8,13 @@ export default function SafetyPage() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold uppercase tracking-widest mb-4">
             <ShieldCheck className="w-3 h-3" />
-            Adonix Secure Protocol
+            Zero Tolerance Protocol — Prime Social LLC
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
-            Community Safety & Trust
+            Safety & Zero Tolerance
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Adonix is a private social discovery network. Our protocol is designed to protect our community through transparency and public accountability.
+            Adonix Fit (a Prime Social LLC platform) is a <strong className="text-white">private social networking application</strong> — not a fitness service provider, healthcare entity, or employer. Our Zero Tolerance Protocol protects every member through transparency and public accountability.
           </p>
         </div>
 
