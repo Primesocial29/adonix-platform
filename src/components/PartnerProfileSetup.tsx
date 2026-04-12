@@ -132,7 +132,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [pendingLocation, setPendingLocation] = useState<SearchResult | null>(null);
   const [showLocationConfirm, setShowLocationConfirm] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [searchRadius, setSearchRadius] = useState(5);
+  const [travelRadius, setTravelRadius] = useState(5);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [availability, setAvailability] = useState<{ day: string; times: string[] }[]>(
@@ -165,6 +165,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         setServiceAreas(data.service_areas || []);
         setServiceAreasCenterLat(data.service_areas_center_lat);
         setServiceAreasCenterLng(data.service_areas_center_lng);
+        setTravelRadius((data as any).travel_radius || 5);
         if (data.availability && (data.availability as any[]).length > 0) {
           const merged = DAYS_OF_WEEK.map(day => {
             const existing = (data.availability as { day: string; times: string[] }[]).find(a => a.day === day);
@@ -206,12 +207,28 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const progress = Math.round((completedSections.filter(Boolean).length / completedSections.length) * 100);
   const canSave = completedSections.every(Boolean);
 
-  const handleCameraCapture = async (blob: Blob) => {
+  const dataURLtoBlob = (dataURL: string): Blob => {
+    const [header, data] = dataURL.split(',');
+    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const binary = atob(data);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
     if (!user) return;
     setUploadingPhoto(true);
     try {
-      const jpegBlob = blob.type === 'image/jpeg' ? blob : new Blob([blob], { type: 'image/jpeg' });
-      const fileName = `${user.id}/live_${Date.now()}.jpg`;
+      let jpegBlob: Blob;
+      if (typeof blobOrDataURL === 'string') {
+        jpegBlob = dataURLtoBlob(blobOrDataURL);
+      } else {
+        jpegBlob = blobOrDataURL.type === 'image/jpeg'
+          ? blobOrDataURL
+          : new Blob([blobOrDataURL], { type: 'image/jpeg' });
+      }
+      const fileName = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
         .upload(fileName, jpegBlob, {
@@ -220,7 +237,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
-      const url = urlData.publicUrl;
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
       await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
       setLivePhotoUrl(url);
     } catch (err) {
@@ -303,6 +320,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     return safeKeywords.some(kw => name.includes(kw)) || c === 'leisure' || c === 'amenity' || ALLOWED_OSM_CATEGORIES.includes(t);
   };
 
+  const OSM_HEADERS = { 'User-Agent': 'Adonix-App-Safety-System' };
+
   const searchAddress = (query: string) => {
     setAddressQuery(query);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -310,11 +329,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     searchDebounce.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const amenityFilter = '[amenity~"gym|fitness_centre|sports_centre|swimming_pool"]';
-        const leisureFilter = '[leisure~"park|stadium|recreation_ground|sports_centre|fitness_centre|pitch|track"]';
-        const radiusMeters = searchRadius * 1609.34;
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym OR park OR fitness OR recreation')}&limit=10&extratags=1&addressdetails=1`;
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: OSM_HEADERS });
         const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
         const filtered = raw.filter(isSafeLocation).slice(0, 6);
         setAddressResults(filtered);
@@ -326,9 +342,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const searchNearMe = async (lat: number, lng: number) => {
     setIsSearching(true);
     try {
-      const radiusMeters = Math.round(searchRadius * 1609.34);
-      const amenityUrl = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park&limit=10&extratags=1&addressdetails=1&viewbox=${lng - 0.2},${lat + 0.2},${lng + 0.2},${lat - 0.2}&bounded=1`;
-      const res = await fetch(amenityUrl);
+      const delta = travelRadius * 0.0145;
+      const amenityUrl = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park&limit=10&extratags=1&addressdetails=1&viewbox=${lng - delta},${lat + delta},${lng + delta},${lat - delta}&bounded=1`;
+      const res = await fetch(amenityUrl, { headers: OSM_HEADERS });
       const raw: (SearchResult & { type?: string; class?: string; addresstype?: string })[] = await res.json();
       const filtered = raw.filter(isSafeLocation).slice(0, 6);
       setAddressResults(filtered);
@@ -402,6 +418,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         service_areas: serviceAreas,
         service_areas_center_lat: serviceAreasCenterLat,
         service_areas_center_lng: serviceAreasCenterLng,
+        travel_radius: travelRadius,
         availability,
         min_advance_notice: minAdvanceNotice,
         cancellation_window: cancellationWindow,
@@ -498,10 +515,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                 <Camera className="w-4 h-4" />
                 {livePhotoUrl ? 'Retake Live Photo' : 'Take Live Photo'}
               </button>
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                <p className="text-xs text-yellow-300 flex items-start gap-2">
-                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                  Live camera only — no gallery uploads. Do not use AI-generated or filtered photos. Your real appearance is required.
+              <div className="p-3 bg-red-900/40 border border-red-500/50 rounded-xl">
+                <p className="text-xs text-red-300 font-bold flex items-start gap-2">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                  AUTHENTICITY CHECK: Live Camera Only. Use of AI-generated faces or filters is strictly prohibited and results in immediate suspension.
                 </p>
               </div>
             </div>
@@ -774,17 +791,18 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           {/* Radius Slider */}
           <div className="mb-4 p-4 bg-black rounded-xl border border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-gray-400 font-medium">Search Radius</label>
-              <span className="text-red-400 font-bold text-sm">{searchRadius} mile{searchRadius !== 1 ? 's' : ''}</span>
+              <label className="text-xs text-gray-400 font-medium">Travel Radius</label>
+              <span className="text-red-400 font-bold text-sm">{travelRadius} mile{travelRadius !== 1 ? 's' : ''}</span>
             </div>
             <input
               type="range"
               min="1"
               max="25"
               step="1"
-              value={searchRadius}
-              onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+              value={travelRadius}
+              onChange={(e) => setTravelRadius(parseInt(e.target.value))}
               className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+              style={{ minHeight: '44px' }}
             />
             <div className="flex justify-between text-[10px] text-gray-600 mt-1">
               <span>1 mi</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25 mi</span>
@@ -796,6 +814,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               onClick={useCurrentLocation}
               disabled={isGettingLocation || isSearching}
               className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium text-sm"
+              style={{ minHeight: '44px' }}
             >
               {isGettingLocation
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Locating...</>
@@ -817,6 +836,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               onChange={(e) => searchAddress(e.target.value)}
               placeholder="Search: gyms, parks, fitness centers, stadiums..."
               className="w-full pl-11 pr-4 py-3 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none"
+              style={{ minHeight: '44px', fontSize: '16px' }}
             />
           </div>
 
