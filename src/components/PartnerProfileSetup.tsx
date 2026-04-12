@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import LiveCameraCapture from './LiveCameraCapture';
 import LegalModal from './LegalModal';
+import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 
 interface SearchResult {
   display_name: string;
@@ -111,6 +112,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   const [bio, setBio] = useState('');
   const [bioError, setBioError] = useState('');
+  const [bioBlockedWords, setBioBlockedWords] = useState<string[]>([]);
 
   const [certifications, setCertifications] = useState<string[]>([]);
   const [customCertInput, setCustomCertInput] = useState('');
@@ -182,7 +184,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   }, [user]);
 
   const isPhotoComplete = () => !!livePhotoUrl;
-  const isBioComplete = () => bio.length >= 20 && bio.length <= 500;
+  const isBioComplete = () => {
+    if (bio.length < 20 || bio.length > 500) return false;
+    if (containsBlockedWords(bio)) return false;
+    return true;
+  };
   const isServicesComplete = () => {
     if (allSelectedServices.length === 0) return false;
     return allSelectedServices.every(s => {
@@ -253,9 +259,20 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   const handleBioChange = (val: string) => {
     setBio(val);
-    if (val.length < 20) setBioError(`${20 - val.length} more characters needed`);
-    else if (val.length > 500) setBioError('Bio must be 500 characters or fewer');
-    else setBioError('');
+    if (containsBlockedWords(val)) {
+      const blocked = getBlockedWordsInText(val);
+      setBioError(`Your bio contains blocked words: ${blocked.slice(0, 3).join(', ')}. Please remove them.`);
+      setBioBlockedWords(blocked);
+    } else if (val.length < 20) {
+      setBioError(`${20 - val.length} more characters needed`);
+      setBioBlockedWords([]);
+    } else if (val.length > 500) {
+      setBioError('Bio must be 500 characters or fewer');
+      setBioBlockedWords([]);
+    } else {
+      setBioError('');
+      setBioBlockedWords([]);
+    }
   };
 
   const toggleCertification = (cert: string) => {
@@ -265,7 +282,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const addCustomCert = () => {
     const val = customCertInput.trim();
     if (!val) return;
-    if (certifications.includes(val)) { setCertError('Already added.'); return; }
+    if (containsBlockedWords(val)) {
+      setCertError('This credential contains blocked words.');
+      return;
+    }
+    if (certifications.includes(val)) {
+      setCertError('Already added.');
+      return;
+    }
     setCertifications(prev => [...prev, val]);
     setCustomCertInput('');
     setCertError('');
@@ -286,6 +310,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const addCustomService = () => {
     const val = customServiceInput.trim();
     if (!val) return;
+    if (containsBlockedWords(val)) {
+      setCustomServiceError('Activity name contains blocked words.');
+      return;
+    }
     if ([...SERVICE_TYPES, ...customServiceTypes].some(s => s.toLowerCase() === val.toLowerCase())) {
       setCustomServiceError('Activity already exists.');
       return;
@@ -310,7 +338,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }));
   };
 
-  // OpenStreetMap search - NO Google API, NO CORS issues
+  // OpenStreetMap search - NO Google API
   const searchAddress = (query: string) => {
     setAddressQuery(query);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -323,7 +351,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
         });
         const data = await response.json();
-        // Filter out residential/hotel locations
         const filtered = data.filter((result: any) => {
           const name = result.display_name.toLowerCase();
           return !name.includes('hotel') && 
@@ -343,23 +370,32 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }, 500);
   };
 
-  // Search near me using OpenStreetMap - NO Google API
+  // Search near me using OpenStreetMap with multiple terms
   const searchNearMe = async (lat: number, lng: number) => {
     setIsSearching(true);
     setAddressResults([]);
     try {
-      // Convert miles to degrees (approx)
       const radiusDegrees = travelRadius * 0.0145;
       const bbox = `${lng - radiusDegrees},${lat - radiusDegrees},${lng + radiusDegrees},${lat + radiusDegrees}`;
       
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park+recreation&limit=20&bounded=1&viewbox=${bbox}`;
-      const response = await fetch(url, { 
-        headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
-      });
-      const data = await response.json();
+      const searchTerms = ['gym', 'fitness', 'park', 'recreation', 'sports', 'yoga', 'pilates', 'crossfit'];
+      let allResults: any[] = [];
       
-      // Filter out residential/hotel locations
-      const filtered = data.filter((result: any) => {
+      for (const term of searchTerms) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${term}&limit=10&bounded=1&viewbox=${bbox}`;
+        const response = await fetch(url, { 
+          headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
+        });
+        const data = await response.json();
+        allResults = [...allResults, ...data];
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      const unique = allResults.filter((item, index, self) => 
+        index === self.findIndex(r => r.display_name === item.display_name)
+      );
+      
+      const filtered = unique.filter((result: any) => {
         const name = result.display_name.toLowerCase();
         return !name.includes('hotel') && 
                !name.includes('motel') && 
@@ -369,10 +405,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                !name.includes('home');
       });
       
-      setAddressResults(filtered.slice(0, 15));
+      setAddressResults(filtered.slice(0, 20));
       
       if (filtered.length === 0) {
-        alert(`No gyms or parks found within ${travelRadius} miles. Try increasing your radius or searching manually.`);
+        alert(`No gyms or parks found within ${travelRadius} miles. Try increasing your radius or searching for a specific gym name.`);
       }
     } catch (error) {
       console.error('Error finding nearby places:', error);
@@ -432,6 +468,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const handleSave = async () => {
     if (!user) return;
     if (!canSave) { alert('Please complete all sections before saving.'); return; }
+    if (containsBlockedWords(bio)) {
+      alert('Your bio contains blocked words. Please remove them before saving.');
+      return;
+    }
     if (serviceAreas.some(a => !a.lat || !a.lng)) {
       alert('All meetup locations must be selected from the map search. Manual entries without GPS coordinates are not allowed.');
       return;
@@ -516,6 +556,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+
         {/* SECTION 1: PROFILE PHOTO */}
         <div className={`p-6 rounded-2xl border ${isPhotoComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
@@ -555,7 +596,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* SECTION 2: BIO */}
+        {/* SECTION 2: BIO with Blocked Word Check */}
         <div className={`p-6 rounded-2xl border ${isBioComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isBioComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -570,7 +611,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           />
           <div className="flex justify-between items-center mt-2">
             {bioError ? (
-              <p className="text-xs text-yellow-400">{bioError}</p>
+              <p className="text-xs text-red-400">{bioError}</p>
             ) : bio.length >= 20 ? (
               <p className="text-xs text-green-400">Looks good!</p>
             ) : (
@@ -580,6 +621,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               {bio.length}/500
             </span>
           </div>
+          {bioBlockedWords.length > 0 && (
+            <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <p className="text-xs text-red-400">
+                Blocked content detected: {bioBlockedWords.slice(0, 3).join(', ')}
+              </p>
+            </div>
+          )}
           <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <p className="text-xs text-blue-300">
               No explicit content, solicitation, personal contact info, or pricing in your bio.
