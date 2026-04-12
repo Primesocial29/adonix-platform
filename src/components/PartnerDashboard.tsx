@@ -26,7 +26,7 @@ interface Booking {
 }
 
 export default function PartnerDashboard() {
-  const { user, isPartner, loading: authLoading, refreshProfile } = useAuth();
+  const { user, isPartner, loading: authLoading, refreshProfile, profile } = useAuth();
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [pastBookings, setPastBookings] = useState<Booking[]>([]);
@@ -40,14 +40,24 @@ export default function PartnerDashboard() {
   const [declineClientId, setDeclineClientId] = useState<string | null>(null);
   const [activeCheckinBooking, setActiveCheckinBooking] = useState<Booking | null>(null);
 
+  // Debug logging
+  console.log('PartnerDashboard Debug:', { 
+    userId: user?.id, 
+    isPartner, 
+    authLoading, 
+    profileRole: profile?.role,
+    profileIsPartner: profile?.is_partner
+  });
+
   // ALL useEffects MUST be BEFORE any conditional returns
   useEffect(() => {
-    if (user && isPartner) {
+    if (user) {
       fetchBookings();
     }
-  }, [user, isPartner]);
+  }, [user]);
 
   const fetchBookings = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const { data: bookingsData, error: bookingsError } = await supabase
@@ -117,12 +127,15 @@ export default function PartnerDashboard() {
     );
   }
 
-  // Role guard - redirect if not a partner (moved AFTER hooks)
-  if (!isPartner) {
+  // Role guard - allow access if user is partner OR has trainer role OR is_partner flag is true
+  const hasAccess = isPartner || profile?.role === 'trainer' || profile?.is_partner === true;
+  
+  if (!hasAccess) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 mb-4">You don't have access to this page.</p>
+          <p className="text-sm text-gray-500 mb-4">Role: {profile?.role || 'none'} | Is Partner: {String(profile?.is_partner || false)}</p>
           <a href="/" className="text-red-500 hover:underline">Return to Home</a>
         </div>
       </div>
