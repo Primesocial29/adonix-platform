@@ -440,15 +440,15 @@ export default function BookingFlow({ partner, onClose, onProceedToCheckout }: B
           </div>
 
           <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-            <p className="text-xs text-purple-300 text-center">👥 Two-person only: Sessions are limited to you and your partner. No friends, family, or spectators permitted.</p>
+            <p className="text-xs text-purple-300 text-center">👥 Two-person only: Meetups are limited to you and your partner. No friends, family, or spectators permitted.</p>
           </div>
 
-          <button 
-            onClick={handleProceed} 
-            disabled={serviceAreas.length === 0 || !selectedService || !selectedTimeBlock || !selectedDate || hasPendingBooking} 
+          <button
+            onClick={handleProceed}
+            disabled={serviceAreas.length === 0 || !selectedService || !selectedTimeBlock || !selectedDate || hasPendingBooking}
             className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-semibold transition-all"
           >
-            Proceed to Checkout
+            Send Invitation
           </button>
         </div>
       </div>
