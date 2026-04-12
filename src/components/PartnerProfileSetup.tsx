@@ -310,7 +310,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }));
   };
 
-  // IMPROVED: OpenStreetMap search with no CORS issues
+  // OpenStreetMap search - NO Google API, NO CORS issues
   const searchAddress = (query: string) => {
     setAddressQuery(query);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -318,7 +318,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     searchDebounce.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym OR fitness OR park OR recreation')}&limit=10&addressdetails=1`;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym fitness park')}&limit=10`;
         const response = await fetch(url, { 
           headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
         });
@@ -331,8 +331,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                  !name.includes('apartment') && 
                  !name.includes('residential') &&
                  !name.includes('house') &&
-                 !name.includes('home') &&
-                 !name.includes('private');
+                 !name.includes('home');
         });
         setAddressResults(filtered.slice(0, 10));
       } catch (error) {
@@ -344,40 +343,30 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }, 500);
   };
 
-  // IMPROVED: Search near me using OpenStreetMap (no CORS issues)
+  // Search near me using OpenStreetMap - NO Google API
   const searchNearMe = async (lat: number, lng: number) => {
     setIsSearching(true);
     setAddressResults([]);
     try {
-      const radius = travelRadius * 0.0145; // Convert miles to degrees
-      const searchTerms = ['gym', 'fitness', 'park', 'recreation', 'sports center', 'yoga studio', 'fitness center'];
-      let allResults: any[] = [];
+      // Convert miles to degrees (approx)
+      const radiusDegrees = travelRadius * 0.0145;
+      const bbox = `${lng - radiusDegrees},${lat - radiusDegrees},${lng + radiusDegrees},${lat + radiusDegrees}`;
       
-      for (const term of searchTerms) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${term}&limit=15&viewbox=${lng - radius},${lat + radius},${lng + radius},${lat - radius}&bounded=1`;
-        const response = await fetch(url, { 
-          headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
-        });
-        const data = await response.json();
-        allResults = [...allResults, ...data];
-        await new Promise(resolve => setTimeout(resolve, 200)); // Rate limiting
-      }
-      
-      // Remove duplicates
-      const unique = allResults.filter((item, index, self) => 
-        index === self.findIndex(r => r.display_name === item.display_name)
-      );
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=gym+fitness+park+recreation&limit=20&bounded=1&viewbox=${bbox}`;
+      const response = await fetch(url, { 
+        headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
+      });
+      const data = await response.json();
       
       // Filter out residential/hotel locations
-      const filtered = unique.filter((result: any) => {
+      const filtered = data.filter((result: any) => {
         const name = result.display_name.toLowerCase();
         return !name.includes('hotel') && 
                !name.includes('motel') && 
                !name.includes('apartment') && 
                !name.includes('residential') &&
                !name.includes('house') &&
-               !name.includes('home') &&
-               !name.includes('private');
+               !name.includes('home');
       });
       
       setAddressResults(filtered.slice(0, 15));
@@ -471,7 +460,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       await refreshProfile();
       if (onComplete) onComplete();
       else window.location.href = '/dashboard';
-    } catch {
+    } catch (err) {
+      console.error('Save error:', err);
       alert('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
@@ -526,8 +516,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-
-        {/* ===== SECTION 1: PROFILE PHOTO ===== */}
+        {/* SECTION 1: PROFILE PHOTO */}
         <div className={`p-6 rounded-2xl border ${isPhotoComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isPhotoComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -566,7 +555,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* ===== SECTION 2: BIO ===== */}
+        {/* SECTION 2: BIO */}
         <div className={`p-6 rounded-2xl border ${isBioComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isBioComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -598,7 +587,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* ===== SECTION 3: CERTIFICATIONS ===== */}
+        {/* SECTION 3: CERTIFICATIONS */}
         <div className="p-6 rounded-2xl border border-white/10 bg-white/5">
           <div className="flex items-center gap-2 mb-2">
             <Award className="w-5 h-5 text-red-500" />
@@ -651,7 +640,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           )}
         </div>
 
-        {/* ===== SECTION 4: SERVICES & RATES ===== */}
+        {/* SECTION 4: SERVICES & RATES */}
         <div className={`p-6 rounded-2xl border ${isServicesComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-2">
             {isServicesComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -812,7 +801,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           )}
         </div>
 
-        {/* ===== SECTION 5: SERVICE AREAS (GPS) ===== */}
+        {/* SECTION 5: SERVICE AREAS (GPS) */}
         <div className={`p-6 rounded-2xl border ${isServiceAreasComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -939,7 +928,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* ===== SECTION 6: AVAILABILITY ===== */}
+        {/* SECTION 6: AVAILABILITY */}
         <div className={`p-6 rounded-2xl border ${isAvailabilityComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isAvailabilityComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -1014,7 +1003,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* ===== SECTION 7: MEETUP SETTINGS ===== */}
+        {/* SECTION 7: MEETUP SETTINGS */}
         <div className="p-6 rounded-2xl border border-white/10 bg-white/5">
           <h2 className="text-base font-semibold mb-4">Meetup Settings</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1045,7 +1034,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* ===== SECTION 8: TERMS ===== */}
+        {/* SECTION 8: TERMS */}
         <div className={`p-6 rounded-2xl border ${isTermsComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isTermsComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -1093,7 +1082,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
       </div>
 
-      {/* ===== FIXED SAVE BUTTON ===== */}
+      {/* FIXED SAVE BUTTON */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent z-40">
         <div className="max-w-3xl mx-auto">
           {!canSave && (
