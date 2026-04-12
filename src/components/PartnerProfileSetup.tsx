@@ -310,8 +310,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }));
   };
 
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBscFCnb9sLo37TmcHhDZ842Fcc7wx6h5k';
-
+  // IMPROVED: OpenStreetMap search with no CORS issues
   const searchAddress = (query: string) => {
     setAddressQuery(query);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
@@ -319,53 +318,75 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     searchDebounce.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=establishment&keyword=gym|park|fitness|recreation|stadium&key=${GOOGLE_MAPS_API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.predictions && data.predictions.length > 0) {
-          const detailPromises = data.predictions.slice(0, 6).map(async (prediction: { place_id: string; description: string }) => {
-            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&fields=name,vicinity,geometry&key=${GOOGLE_MAPS_API_KEY}`;
-            const detailRes = await fetch(detailUrl);
-            const detailData = await detailRes.json();
-            if (detailData.result) {
-              return {
-                display_name: prediction.description,
-                lat: detailData.result.geometry.location.lat.toString(),
-                lon: detailData.result.geometry.location.lng.toString(),
-              };
-            }
-            return null;
-          });
-          const results = (await Promise.all(detailPromises)).filter(Boolean) as SearchResult[];
-          setAddressResults(results);
-        } else {
-          setAddressResults([]);
-        }
-      } catch { setAddressResults([]); }
-      finally { setIsSearching(false); }
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym OR fitness OR park OR recreation')}&limit=10&addressdetails=1`;
+        const response = await fetch(url, { 
+          headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
+        });
+        const data = await response.json();
+        // Filter out residential/hotel locations
+        const filtered = data.filter((result: any) => {
+          const name = result.display_name.toLowerCase();
+          return !name.includes('hotel') && 
+                 !name.includes('motel') && 
+                 !name.includes('apartment') && 
+                 !name.includes('residential') &&
+                 !name.includes('house') &&
+                 !name.includes('home') &&
+                 !name.includes('private');
+        });
+        setAddressResults(filtered.slice(0, 10));
+      } catch (error) {
+        console.error('Search error:', error);
+        setAddressResults([]);
+      } finally {
+        setIsSearching(false);
+      }
     }, 500);
   };
 
+  // IMPROVED: Search near me using OpenStreetMap (no CORS issues)
   const searchNearMe = async (lat: number, lng: number) => {
     setIsSearching(true);
     setAddressResults([]);
     try {
-      const radius = travelRadius * 1609.34;
-      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&type=gym&key=${GOOGLE_MAPS_API_KEY}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        const formatted = data.results.map((place: { name: string; vicinity: string; geometry: { location: { lat: number; lng: number } } }) => ({
-          display_name: place.name + ', ' + place.vicinity,
-          lat: place.geometry.location.lat.toString(),
-          lon: place.geometry.location.lng.toString(),
-        }));
-        setAddressResults(formatted);
-      } else {
-        alert('No gyms or parks found nearby. Try increasing the radius or searching manually.');
+      const radius = travelRadius * 0.0145; // Convert miles to degrees
+      const searchTerms = ['gym', 'fitness', 'park', 'recreation', 'sports center', 'yoga studio', 'fitness center'];
+      let allResults: any[] = [];
+      
+      for (const term of searchTerms) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${term}&limit=15&viewbox=${lng - radius},${lat + radius},${lng + radius},${lat - radius}&bounded=1`;
+        const response = await fetch(url, { 
+          headers: { 'User-Agent': 'Adonix-Fit/1.0' } 
+        });
+        const data = await response.json();
+        allResults = [...allResults, ...data];
+        await new Promise(resolve => setTimeout(resolve, 200)); // Rate limiting
+      }
+      
+      // Remove duplicates
+      const unique = allResults.filter((item, index, self) => 
+        index === self.findIndex(r => r.display_name === item.display_name)
+      );
+      
+      // Filter out residential/hotel locations
+      const filtered = unique.filter((result: any) => {
+        const name = result.display_name.toLowerCase();
+        return !name.includes('hotel') && 
+               !name.includes('motel') && 
+               !name.includes('apartment') && 
+               !name.includes('residential') &&
+               !name.includes('house') &&
+               !name.includes('home') &&
+               !name.includes('private');
+      });
+      
+      setAddressResults(filtered.slice(0, 15));
+      
+      if (filtered.length === 0) {
+        alert(`No gyms or parks found within ${travelRadius} miles. Try increasing your radius or searching manually.`);
       }
     } catch (error) {
-      console.error('Google Places error:', error);
+      console.error('Error finding nearby places:', error);
       alert('Unable to find nearby locations. Please try searching manually.');
     } finally {
       setIsSearching(false);
