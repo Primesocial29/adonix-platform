@@ -218,6 +218,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
     if (!user) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('You must be logged in to upload a photo.');
+      return;
+    }
     setUploadingPhoto(true);
     try {
       let jpegBlob: Blob;
