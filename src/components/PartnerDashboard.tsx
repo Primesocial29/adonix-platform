@@ -40,18 +40,7 @@ export default function PartnerDashboard() {
   const [declineClientId, setDeclineClientId] = useState<string | null>(null);
   const [activeCheckinBooking, setActiveCheckinBooking] = useState<Booking | null>(null);
 
-  // Role guard - redirect if not a partner
-  if (!authLoading && !isPartner) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-400 mb-4">You don't have access to this page.</p>
-          <a href="/" className="text-red-500 hover:underline">Return to Home</a>
-        </div>
-      </div>
-    );
-  }
-
+  // ALL useEffects MUST be BEFORE any conditional returns
   useEffect(() => {
     if (user && isPartner) {
       fetchBookings();
@@ -119,16 +108,29 @@ export default function PartnerDashboard() {
     await refreshProfile();
   };
 
-  if (!user || !isPartner) {
-    return null;
-  }
-
+  // AFTER all hooks, then handle loading states and conditional returns
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
       </div>
     );
+  }
+
+  // Role guard - redirect if not a partner (moved AFTER hooks)
+  if (!isPartner) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400 mb-4">You don't have access to this page.</p>
+          <a href="/" className="text-red-500 hover:underline">Return to Home</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (activeCheckinBooking) {
