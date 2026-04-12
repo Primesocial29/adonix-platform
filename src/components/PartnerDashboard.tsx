@@ -120,13 +120,14 @@ export default function PartnerDashboard() {
 
   // AFTER all hooks, then handle loading states and conditional returns
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
-      </div>
-    );
-  }
-
+  console.log('Loading state:', { authLoading, loading });
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+      <p className="ml-4 text-gray-400">Loading dashboard...</p>
+    </div>
+  );
+}
   // Role guard - allow access if user is partner OR has trainer role OR is_partner flag is true
   const hasAccess = true; // TEMPORARY - bypass for testing
   
