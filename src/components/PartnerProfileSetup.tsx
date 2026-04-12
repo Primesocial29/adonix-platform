@@ -230,13 +230,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
       }
       const fileName = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
-        .from('profile-photos')
+        .from('avatars')
         .upload(fileName, jpegBlob, {
           upsert: true,
           contentType: 'image/jpeg',
         });
       if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
       await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
       setLivePhotoUrl(url);
