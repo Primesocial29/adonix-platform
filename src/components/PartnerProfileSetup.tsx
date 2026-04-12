@@ -466,47 +466,80 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
 
   const handleSave = async () => {
-    if (!user) return;
-    if (!canSave) { alert('Please complete all sections before saving.'); return; }
-    if (containsBlockedWords(bio)) {
-      alert('Your bio contains blocked words. Please remove them before saving.');
-      return;
+  if (!user) {
+    console.error('No user found');
+    alert('You must be logged in to save.');
+    return;
+  }
+  
+  console.log('=== SAVING PROFILE ===');
+  console.log('canSave:', canSave);
+  console.log('bio length:', bio.length);
+  console.log('contains blocked words:', containsBlockedWords(bio));
+  console.log('serviceAreas:', serviceAreas);
+  console.log('serviceAreasCenterLat:', serviceAreasCenterLat);
+  console.log('serviceAreasCenterLng:', serviceAreasCenterLng);
+  
+  if (!canSave) { 
+    alert('Please complete all sections before saving.'); 
+    return; 
+  }
+  
+  if (containsBlockedWords(bio)) {
+    alert('Your bio contains blocked words. Please remove them before saving.');
+    return;
+  }
+  
+  if (serviceAreas.some(a => !a.lat || !a.lng)) {
+    alert('All meetup locations must be selected from the map search. Manual entries without GPS coordinates are not allowed.');
+    return;
+  }
+  
+  setSaving(true);
+  try {
+    const updateData = {
+      bio,
+      certifications,
+      service_types: serviceTypes,
+      custom_service_types: customServiceTypes,
+      service_rates: serviceRates,
+      half_hour_enabled: halfHourEnabled,
+      service_areas: serviceAreas,
+      service_areas_center_lat: serviceAreasCenterLat,
+      service_areas_center_lng: serviceAreasCenterLng,
+      travel_radius: travelRadius,
+      availability,
+      min_advance_notice: minAdvanceNotice,
+      cancellation_window: cancellationWindow,
+      is_partner: true,
+      profile_complete: true,
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('Updating profile with:', updateData);
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', user.id)
+      .select();
+    
+    if (error) {
+      console.error('Supabase error details:', error);
+      throw error;
     }
-    if (serviceAreas.some(a => !a.lat || !a.lng)) {
-      alert('All meetup locations must be selected from the map search. Manual entries without GPS coordinates are not allowed.');
-      return;
-    }
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('profiles').update({
-        bio,
-        certifications,
-        service_types: serviceTypes,
-        custom_service_types: customServiceTypes,
-        service_rates: serviceRates,
-        half_hour_enabled: halfHourEnabled,
-        service_areas: serviceAreas,
-        service_areas_center_lat: serviceAreasCenterLat,
-        service_areas_center_lng: serviceAreasCenterLng,
-        travel_radius: travelRadius,
-        availability,
-        min_advance_notice: minAdvanceNotice,
-        cancellation_window: cancellationWindow,
-        is_partner: true,
-        profile_complete: true,
-        updated_at: new Date().toISOString(),
-      }).eq('id', user.id);
-      if (error) throw error;
-      await refreshProfile();
-      if (onComplete) onComplete();
-      else window.location.href = '/dashboard';
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Failed to save profile. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
+    
+    console.log('Update successful:', data);
+    await refreshProfile();
+    if (onComplete) onComplete();
+    else window.location.href = '/dashboard';
+  } catch (err) {
+    console.error('Save error details:', err);
+    alert(`Failed to save profile: ${err.message || 'Please try again.'}`);
+  } finally {
+    setSaving(false);
+  }
+};
 
   const sampleService = allSelectedServices[0];
   const sampleRate = sampleService ? (serviceRates[sampleService]?.hourly || 100) : 100;
