@@ -48,20 +48,38 @@ export function useAuth() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      
-      setProfile(data);
-      const userRole = data?.role;
+
+      let profileData = data;
+
+      if (!profileData) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            first_name: 'New User',
+            role: 'member',
+            is_partner: false,
+            profile_complete: false,
+          })
+          .select()
+          .maybeSingle();
+
+        if (createError) throw createError;
+        profileData = newProfile;
+      }
+
+      setProfile(profileData);
+      const userRole = profileData?.role;
       setRole(userRole);
-      
-      // Handle different role naming conventions
+
       setIsTrainer(userRole === 'trainer' || userRole === 'partner');
       setIsPartner(userRole === 'partner');
       setIsClient(userRole === 'client' || userRole === 'member');
       setIsMember(userRole === 'member');
-      
+
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -96,13 +114,13 @@ export function useAuth() {
     if (data?.user) {
       await supabase
         .from('profiles')
-        .update({
-          role: role,
-          username: username,
-          birth_date: birthDate,
+        .upsert({
+          id: data.user.id,
+          first_name: 'New User',
+          role: role === 'partner' ? 'trainer' : 'member',
+          is_partner: role === 'partner',
           profile_complete: false,
-        })
-        .eq('id', data.user.id);
+        }, { onConflict: 'id' });
     }
     
     return data;

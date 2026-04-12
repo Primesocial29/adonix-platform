@@ -418,7 +418,18 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }
   };
 
+  const MAX_LOCATIONS = 10;
+
   const initiateAddLocation = (result: SearchResult) => {
+    if (serviceAreas.length >= MAX_LOCATIONS) {
+      alert(`Maximum ${MAX_LOCATIONS} locations allowed. Remove one before adding another.`);
+      return;
+    }
+    const alreadyAdded = serviceAreas.some(a => a.name === result.display_name);
+    if (alreadyAdded) {
+      alert('This location has already been added.');
+      return;
+    }
     setPendingLocation(result);
     setAddressResults([]);
     setShowLocationConfirm(true);
@@ -437,6 +448,20 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     setAddressQuery('');
     setPendingLocation(null);
     setShowLocationConfirm(false);
+  };
+
+  const removeServiceArea = (index: number) => {
+    setServiceAreas(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) {
+        setServiceAreasCenterLat(null);
+        setServiceAreasCenterLng(null);
+      } else if (index === 0 && updated.length > 0) {
+        setServiceAreasCenterLat(updated[0].lat);
+        setServiceAreasCenterLng(updated[0].lng);
+      }
+      return updated;
+    });
   };
 
   const useCurrentLocation = () => {
@@ -890,9 +915,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               <MapPin className="w-5 h-5 text-red-500" />
               <h2 className="text-base font-semibold">The "Don't Be Weird" Location Picker</h2>
             </div>
-            <div className="flex items-center gap-1 text-xs text-green-400">
-              <ShieldCheck className="w-4 h-4" />
-              GPS Secured
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-mono px-2 py-0.5 rounded-full ${serviceAreas.length >= MAX_LOCATIONS ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-gray-400'}`}>
+                {serviceAreas.length}/{MAX_LOCATIONS}
+              </span>
+              <div className="flex items-center gap-1 text-xs text-green-400">
+                <ShieldCheck className="w-4 h-4" />
+                GPS Secured
+              </div>
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-4">
@@ -982,31 +1012,35 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </div>
           )}
 
-          <div className="space-y-2">
-            {serviceAreas.map((area, i) => (
-              <div key={i} className="flex items-center justify-between bg-black p-3 rounded-xl border border-white/10">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-green-500/20 p-2 rounded-lg shrink-0">
-                    <Navigation className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{area.name}</p>
-                    {area.lat && area.lng && (
-                      <p className="text-[10px] text-gray-500 font-mono">
-                        {area.lat.toFixed(4)}, {area.lng.toFixed(4)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setServiceAreas(prev => prev.filter((_, idx) => idx !== i))}
-                  className="text-gray-500 hover:text-red-400 transition-colors ml-2 shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+          {serviceAreas.length > 0 && (
+            <div className="mb-2">
+              <p className="text-xs text-gray-500 mb-2">Selected locations — tap X to remove:</p>
+              <div className="flex flex-wrap gap-2">
+                {serviceAreas.map((area, i) => {
+                  const shortName = area.name.split(',')[0];
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5 max-w-[280px]"
+                    >
+                      <MapPin className="w-3 h-3 text-green-400 shrink-0" />
+                      <span className="text-sm text-green-300 truncate">{shortName}</span>
+                      <button
+                        onClick={() => removeServiceArea(i)}
+                        className="text-green-500 hover:text-red-400 transition-colors shrink-0 ml-0.5"
+                        aria-label={`Remove ${shortName}`}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+              {serviceAreas.length >= MAX_LOCATIONS && (
+                <p className="text-xs text-red-400 mt-2">Maximum 10 locations allowed. Remove one to add another.</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SECTION 6: AVAILABILITY */}
