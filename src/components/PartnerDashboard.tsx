@@ -79,21 +79,22 @@ export default function PartnerDashboard() {
 };
 
   const savePhotos = async (photos: string[]) => {
-    if (!user) return;
+  if (!user) return;
+  await supabase
+    .from('profiles')
+    .update({ photos: photos })
+    .eq('id', user.id);
+  setAllPhotos(photos);
+  
+  // Update primary profile photo (first photo)
+  if (photos[0] !== profile?.live_photo_url) {
     await supabase
       .from('profiles')
-      .update({ photos: photos })
+      .update({ live_photo_url: photos[0] })
       .eq('id', user.id);
-    setAllPhotos(photos);
-    // Update primary profile photo if first photo changed
-    if (photos[0] !== profile?.live_photo_url) {
-      await supabase
-        .from('profiles')
-        .update({ live_photo_url: photos[0] })
-        .eq('id', user.id);
-      await refreshProfile();
-    }
-  };
+    await refreshProfile();
+  }
+};
 
   const dataURLtoBlob = (dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
