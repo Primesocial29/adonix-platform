@@ -21,17 +21,71 @@ interface Booking {
   };
 }
 
+interface ServiceArea {
+  name: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+interface Availability {
+  day: string;
+  times: string[];
+}
+
+const SERVICE_TYPES = [
+  'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
+  'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
+];
+
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const generateTimeSlots = (includeHalfHour: boolean): string[] => {
+  const slots: string[] = [];
+  for (let h = 6; h <= 22; h++) {
+    slots.push(`${h.toString().padStart(2, '0')}:00`);
+    if (includeHalfHour && h < 22) slots.push(`${h.toString().padStart(2, '0')}:30`);
+  }
+  return slots;
+};
+
+function formatTimeLabel(time: string): string {
+  const [hour, minute] = time.split(':');
+  const h = parseInt(hour);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const display = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${display}:${minute} ${period}`;
+}
+
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [pastBookings, setPastBookings] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showClientModal, setShowClientModal] = useState(false);
-  const [totalEarnings, setTotalEarnings] = useState(0);
+  const [totalContributions, setTotalContributions] = useState(0);
   const [showEditBio, setShowEditBio] = useState(false);
   const [editBioText, setEditBioText] = useState(profile?.bio || '');
   const [bioError, setBioError] = useState('');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+  
+  // Modal states
+  const [showLocationsModal, setShowLocationsModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showServicesModal, setShowServicesModal] = useState(false);
+  const [showPastMeetupsModal, setShowPastMeetupsModal] = useState(false);
+  const [showContributionsModal, setShowContributionsModal] = useState(false);
+  
+  // Edit data states
+  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
+  const [availability, setAvailability] = useState<Availability[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<string[]>([]);
+  const [customServiceTypes, setCustomServiceTypes] = useState<string[]>([]);
+  const [serviceRates, setServiceRates] = useState<Record<string, { hourly: number; halfHour: number }>>({});
+  const [halfHourEnabled, setHalfHourEnabled] = useState(false);
+  const [newLocation, setNewLocation] = useState('');
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  const [monthlyContributions, setMonthlyContributions] = useState<{ month: string; total: number }[]>([]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,9 +102,32 @@ export default function PartnerDashboard() {
   useEffect(() => {
     if (user) {
       fetchBookings();
-      fetchEarnings();
+      fetchContributions();
+      loadProfileData();
     }
   }, [user]);
+
+  const loadProfileData = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('service_areas, availability, service_types, custom_service_types, service_rates, half_hour_enabled')
+        .eq('id', user.id)
+        .single();
+      
+      if (data) {
+        setServiceAreas(data.service_areas || []);
+        setAvailability(data.availability || DAYS_OF_WEEK.map(d => ({ day: d, times: [] })));
+        setServiceTypes(data.service_types || []);
+        setCustomServiceTypes(data.custom_service_types || []);
+        setServiceRates(data.service_rates || {});
+        setHalfHourEnabled(data.half_hour_enabled || false);
+      }
+    } catch (err) {
+      console.error('Error loading profile data:', err);
+    }
+  };
 
   const fetchBookings = async () => {
     if (!user) return;
@@ -75,30 +152,40 @@ export default function PartnerDashboard() {
 
       const pending = (bookingsData || []).filter(b => b.status === 'pending');
       const upcoming = (bookingsData || []).filter(b => b.status === 'confirmed' && new Date(b.booking_date) > new Date());
+      const past = (bookingsData || []).filter(b => b.status === 'completed' || (b.status === 'confirmed' && new Date(b.booking_date) < new Date()));
       
       setPendingBookings(pending);
       setUpcomingBookings(upcoming.sort((a, b) => new Date(a.booking_date).getTime() - new Date(b.booking_date).getTime()).slice(0, 4));
+      setPastBookings(past.sort((a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()));
     } catch (err) {
       console.error('Error fetching bookings:', err);
     }
   };
 
-  const fetchEarnings = async () => {
+  const fetchContributions = async () => {
     if (!user) return;
     
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('suggested_contribution')
+        .select('suggested_contribution, booking_date')
         .eq('partner_id', user.id)
         .eq('status', 'completed');
       
       if (error) throw error;
       
       const total = (data || []).reduce((sum, b) => sum + (b.suggested_contribution || 0), 0);
-      setTotalEarnings(total);
+      setTotalContributions(total);
+      
+      // Group by month
+      const byMonth: Record<string, number> = {};
+      (data || []).forEach(b => {
+        const month = new Date(b.booking_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+        byMonth[month] = (byMonth[month] || 0) + (b.suggested_contribution || 0);
+      });
+      setMonthlyContributions(Object.entries(byMonth).map(([month, total]) => ({ month, total })));
     } catch (err) {
-      console.error('Error fetching earnings:', err);
+      console.error('Error fetching contributions:', err);
     }
   };
 
@@ -141,6 +228,78 @@ export default function PartnerDashboard() {
       console.error('Error updating bio:', err);
       alert('Failed to update bio');
     }
+  };
+
+  const addLocation = async () => {
+    if (!newLocation.trim()) return;
+    const newArea = { name: newLocation.trim(), lat: null, lng: null };
+    const updated = [...serviceAreas, newArea];
+    setServiceAreas(updated);
+    
+    await supabase
+      .from('profiles')
+      .update({ service_areas: updated })
+      .eq('id', user?.id);
+    
+    setNewLocation('');
+  };
+
+  const removeLocation = async (index: number) => {
+    const updated = serviceAreas.filter((_, i) => i !== index);
+    setServiceAreas(updated);
+    await supabase
+      .from('profiles')
+      .update({ service_areas: updated })
+      .eq('id', user?.id);
+  };
+
+  const toggleTimeSlot = (day: string, time: string) => {
+    setAvailability(prev => prev.map(a => {
+      if (a.day !== day) return a;
+      const times = a.times.includes(time) ? a.times.filter(t => t !== time) : [...a.times, time].sort();
+      return { ...a, times };
+    }));
+  };
+
+  const saveAvailability = async () => {
+    await supabase
+      .from('profiles')
+      .update({ availability })
+      .eq('id', user?.id);
+    alert('Schedule saved!');
+    setShowScheduleModal(false);
+  };
+
+  const toggleDay = (day: string) => {
+    setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
+  };
+
+  const toggleServiceType = (service: string) => {
+    setServiceTypes(prev => 
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    );
+  };
+
+  const updateServiceRate = (service: string, field: 'hourly' | 'halfHour', value: string) => {
+    const num = parseInt(value) || 0;
+    setServiceRates(prev => ({
+      ...prev,
+      [service]: { ...(prev[service] || { hourly: 0, halfHour: 0 }), [field]: num }
+    }));
+  };
+
+  const saveServices = async () => {
+    await supabase
+      .from('profiles')
+      .update({
+        service_types: serviceTypes,
+        custom_service_types: customServiceTypes,
+        service_rates: serviceRates,
+        half_hour_enabled: halfHourEnabled
+      })
+      .eq('id', user?.id);
+    alert('Services saved!');
+    setShowServicesModal(false);
   };
 
   const calculateNetEarnings = (contribution: number) => {
@@ -186,11 +345,11 @@ export default function PartnerDashboard() {
             {showSettingsDropdown && (
               <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
                 <div className="py-2">
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">👤 Edit Profile</button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📍 My Locations</button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⏰ My Schedule</button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🔒 Safety Guidelines</button>
-                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⚖️ Legal Documents</button>
+                  <button onClick={() => { setShowLocationsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📍 My Locations</button>
+                  <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⏰ My Schedule</button>
+                  <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💪 My Services & Rates</button>
+                  <button onClick={() => { setShowPastMeetupsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📅 Past Meetups</button>
+                  <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💰 Contribution History</button>
                   <div className="border-t border-white/10 my-1"></div>
                   <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🚪 Logout</button>
                 </div>
@@ -271,7 +430,7 @@ export default function PartnerDashboard() {
                     <p className="text-gray-400 text-sm mb-3 italic">"Can't wait to move together!"</p>
                     <div className="bg-white/5 rounded-xl p-3 mb-4">
                       <p className="text-sm">Suggested Contribution: ${booking.suggested_contribution || 75}.00</p>
-                      <p className="text-sm text-green-400">Your Net Earnings: ${netEarnings.toFixed(2)}</p>
+                      <p className="text-sm text-green-400">Your Net: ${netEarnings.toFixed(2)}</p>
                     </div>
                     <div className="flex gap-3">
                       <button 
@@ -349,35 +508,35 @@ export default function PartnerDashboard() {
           )}
         </div>
 
-        {/* {/* Quick Stats Section */}
-<div className="mb-10">
-  <h2 className="text-xl font-semibold mb-4">💰 Your Net Contributions</h2>
-  <div className="grid grid-cols-2 gap-4">
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-      <p className="text-3xl font-bold text-green-400">${totalContributions}</p>
-      <p className="text-sm text-gray-400">Total Suggested Contributions</p>
-      <p className="text-xs text-gray-500">this month</p>
-      <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Details →</button>
-    </div>
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-      <p className="text-3xl font-bold text-yellow-400">{pendingBookings.length}</p>
-      <p className="text-sm text-gray-400">Pending Invitations</p>
-      <p className="text-xs text-gray-500">waiting for you</p>
-      <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Requests →</button>
-    </div>
-  </div>
-  <p className="text-xs text-gray-500 text-center mt-4">
-    ℹ️ Platform Support (15%) + processing fees are deducted. Stripe handles all payments.
-  </p>
-</div>
+        {/* Quick Stats Section */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">💰 Your Net Contributions</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+              <p className="text-3xl font-bold text-green-400">${totalContributions}</p>
+              <p className="text-sm text-gray-400">Total Suggested Contributions</p>
+              <p className="text-xs text-gray-500">all time</p>
+              <button onClick={() => setShowContributionsModal(true)} className="mt-3 text-sm text-red-400 hover:text-red-300">View Details →</button>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+              <p className="text-3xl font-bold text-yellow-400">{pendingBookings.length}</p>
+              <p className="text-sm text-gray-400">Pending Invitations</p>
+              <p className="text-xs text-gray-500">waiting for you</p>
+              <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Requests →</button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 text-center mt-4">
+            ℹ️ Platform Support (15%) + processing fees are deducted. Stripe handles all payments.
+          </p>
+        </div>
 
         {/* Quick Actions */}
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">⚙️ Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📅 Past Meetups</button>
-            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📍 My Locations</button>
-            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⏰ My Schedule</button>
+            <button onClick={() => setShowPastMeetupsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📅 Past Meetups</button>
+            <button onClick={() => setShowLocationsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📍 My Locations</button>
+            <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⏰ My Schedule</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">🔒 Safety Guidelines</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⚖️ Legal Documents</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">❓ Help & Support</button>
@@ -411,6 +570,216 @@ export default function PartnerDashboard() {
             <p className="text-xs text-gray-600">📍 Meet only at public locations. GPS check-in required.</p>
           </div>
         </div>
+
+        {/* ========== MODALS ========== */}
+
+        {/* Locations Modal */}
+        {showLocationsModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowLocationsModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">📍 My Meetup Locations</h2>
+              <p className="text-xs text-gray-400 mb-4">Add public gyms, parks, or fitness centers where you meet clients.</p>
+              
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newLocation}
+                  onChange={(e) => setNewLocation(e.target.value)}
+                  placeholder="Gym name or park address..."
+                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500"
+                />
+                <button onClick={addLocation} className="px-4 py-2 bg-green-600 rounded-lg">Add</button>
+              </div>
+              
+              <div className="space-y-2">
+                {serviceAreas.map((area, index) => (
+                  <div key={index} className="flex justify-between items-center bg-white/5 rounded-lg p-3">
+                    <span className="text-sm">{area.name}</span>
+                    <button onClick={() => removeLocation(index)} className="text-red-400 hover:text-red-300">Remove</button>
+                  </div>
+                ))}
+              </div>
+              
+              <button onClick={() => setShowLocationsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowScheduleModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">⏰ My Availability</h2>
+              <p className="text-xs text-gray-400 mb-4">Select days and times you're available for meetups.</p>
+              
+              <div className="space-y-2">
+                {availability.map((daySchedule) => (
+                  <div key={daySchedule.day} className="border border-white/10 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleDay(daySchedule.day)}
+                      className="w-full flex justify-between items-center p-3 bg-white/5 hover:bg-white/10"
+                    >
+                      <span className="font-medium">{daySchedule.day}</span>
+                      <span>{expandedDays[daySchedule.day] ? '▼' : '▶'}</span>
+                    </button>
+                    {expandedDays[daySchedule.day] && (
+                      <div className="p-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {generateTimeSlots(halfHourEnabled).map(time => (
+                            <button
+                              key={time}
+                              onClick={() => toggleTimeSlot(daySchedule.day, time)}
+                              className={`px-2 py-1 text-xs rounded-lg ${
+                                daySchedule.times.includes(time)
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                              }`}
+                            >
+                              {formatTimeLabel(time)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex gap-3 mt-4">
+                <button onClick={saveAvailability} className="flex-1 py-2 bg-green-600 rounded-lg">Save Schedule</button>
+                <button onClick={() => setShowScheduleModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Services Modal */}
+        {showServicesModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowServicesModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">💪 My Services & Suggested Contributions</h2>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {SERVICE_TYPES.map(service => (
+                  <button
+                    key={service}
+                    onClick={() => toggleServiceType(service)}
+                    className={`px-3 py-1.5 rounded-full text-sm ${
+                      serviceTypes.includes(service)
+                        ? 'bg-red-600 text-white'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    {service}
+                  </button>
+                ))}
+              </div>
+              
+              {serviceTypes.map(service => (
+                <div key={service} className="bg-white/5 rounded-xl p-3 mb-3">
+                  <p className="font-medium mb-2">{service}</p>
+                  <div className="flex gap-4">
+                    <div>
+                      <label className="text-xs text-gray-400">Hourly</label>
+                      <input
+                        type="number"
+                        value={serviceRates[service]?.hourly || ''}
+                        onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
+                        placeholder="50-500"
+                        className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                      />
+                    </div>
+                    {halfHourEnabled && (
+                      <div>
+                        <label className="text-xs text-gray-400">Half-Hour</label>
+                        <input
+                          type="number"
+                          value={serviceRates[service]?.halfHour || ''}
+                          onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
+                          placeholder="30-250"
+                          className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              <div className="flex items-center justify-between mt-4 mb-4">
+                <span className="text-sm">Enable Half-Hour Meetups</span>
+                <button
+                  onClick={() => setHalfHourEnabled(!halfHourEnabled)}
+                  className={`w-12 h-6 rounded-full transition-colors ${halfHourEnabled ? 'bg-red-600' : 'bg-gray-600'}`}
+                >
+                  <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${halfHourEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              
+              <div className="flex gap-3">
+                <button onClick={saveServices} className="flex-1 py-2 bg-green-600 rounded-lg">Save Services</button>
+                <button onClick={() => setShowServicesModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Past Meetups Modal */}
+        {showPastMeetupsModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPastMeetupsModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">📅 Past Meetups</h2>
+              
+              {pastBookings.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No past meetups yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {pastBookings.map(booking => (
+                    <div key={booking.id} className="bg-white/5 rounded-xl p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{booking.client?.first_name || 'Client'}</p>
+                          <p className="text-sm text-gray-400">{booking.activity || 'Fitness'}</p>
+                          <p className="text-xs text-gray-500">{new Date(booking.booking_date).toLocaleDateString()}</p>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded-full">Completed</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <button onClick={() => setShowPastMeetupsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+            </div>
+          </div>
+        )}
+
+        {/* Contributions History Modal */}
+        {showContributionsModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowContributionsModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">💰 Contribution History</h2>
+              
+              {monthlyContributions.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">No contributions yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {monthlyContributions.map((month, index) => (
+                    <div key={index} className="flex justify-between items-center bg-white/5 rounded-xl p-3">
+                      <span className="text-sm">{month.month}</span>
+                      <span className="text-green-400 font-medium">${month.total}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="bg-yellow-500/10 rounded-xl p-3 mt-4">
+                <p className="text-xs text-yellow-300">ℹ️ Platform Support (15%) + processing fees are deducted from each suggested contribution.</p>
+              </div>
+              
+              <button onClick={() => setShowContributionsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+            </div>
+          </div>
+        )}
 
         {/* Client Profile Modal */}
         {showClientModal && selectedBooking && (
