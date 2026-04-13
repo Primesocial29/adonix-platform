@@ -16,7 +16,8 @@ export default function PartnerDashboard() {
   
   // Photo Gallery States
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
-  const [showAddPhoto, setShowAddPhoto] = useState(false);
+  const [showPhotoGalleryModal, setShowPhotoGalleryModal] = useState(false);
+  const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
   const MAX_PHOTOS = 6;
   
   // Modal states
@@ -26,7 +27,6 @@ export default function PartnerDashboard() {
   const [showVenuesModal, setShowVenuesModal] = useState(false);
   const [showServicesModal, setShowServicesModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showPastMeetupsModal, setShowPastMeetupsModal] = useState(false);
   
   // Data for modals
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
@@ -59,19 +59,15 @@ export default function PartnerDashboard() {
       
       let photoArray: string[] = [];
       
-      // If photos array exists and has items, use it
       if (data?.photos && data.photos.length > 0) {
         photoArray = data.photos;
-      } 
-      // Otherwise, use the live_photo_url as the first photo
-      else if (data?.live_photo_url) {
+      } else if (data?.live_photo_url) {
         photoArray = [data.live_photo_url];
       }
       
       setAllPhotos(photoArray);
     } catch (err) {
       console.error('Error loading photos:', err);
-      // Fallback to just the profile photo
       if (profile?.live_photo_url) {
         setAllPhotos([profile.live_photo_url]);
       }
@@ -135,7 +131,7 @@ export default function PartnerDashboard() {
       
       const updatedPhotos = [...allPhotos, newPhotoUrl];
       await savePhotos(updatedPhotos);
-      setShowAddPhoto(false);
+      setShowAddPhotoModal(false);
       alert('Photo added!');
     } catch (err) {
       console.error('Upload error:', err);
@@ -143,51 +139,11 @@ export default function PartnerDashboard() {
     }
   };
 
-  const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
-    if (!user) return;
-    
-    const confirmed = window.confirm('Replace your current profile photo? This cannot be undone.');
-    if (!confirmed) return;
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      alert('You must be logged in to upload a photo.');
-      return;
-    }
-    
-    try {
-      let jpegBlob: Blob;
-      if (typeof blobOrDataURL === 'string') {
-        jpegBlob = dataURLtoBlob(blobOrDataURL);
-      } else {
-        jpegBlob = blobOrDataURL;
-      }
-      const fileName = `${user.id}/avatar.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, jpegBlob, { upsert: true, contentType: 'image/jpeg' });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const url = `${urlData.publicUrl}?t=${Date.now()}`;
-      
-      // Replace first photo with new one
-      const newPhotos = [url, ...allPhotos.slice(1)];
-      await savePhotos(newPhotos);
-      await refreshProfile();
-      alert('Profile photo updated!');
-    } catch (err) {
-      console.error('Upload error:', err);
-      alert('Failed to upload photo');
-    } finally {
-      setShowCamera(false);
-    }
-  };
-
-  const handleSetPrimary = async (index: number) => {
+  const handleSetPrimaryPhoto = async (index: number) => {
     if (index === 0) return;
     const newOrder = [allPhotos[index], ...allPhotos.filter((_, i) => i !== index)];
     await savePhotos(newOrder);
-    alert('Primary photo updated!');
+    alert('Profile photo updated!');
   };
 
   const handleDeletePhoto = async (index: number) => {
@@ -388,7 +344,7 @@ export default function PartnerDashboard() {
                   <button onClick={() => { setShowVenuesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📍 Verified Venues</button>
                   <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💪 Services & Rates</button>
                   <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⏰ My Schedule</button>
-                  <button onClick={() => { setShowPastMeetupsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📅 Past Meetups</button>
+                  <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📸 My Photos</button>
                   <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💰 Contribution History</button>
                   <div className="border-t border-white/10 my-1"></div>
                   <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🚪 Logout</button>
@@ -401,21 +357,21 @@ export default function PartnerDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
-                {/* Profile Section */}
+        {/* Profile Section */}
         <div className="text-center mb-8">
           {/* Primary Profile Photo - Large */}
-          <button 
-            onClick={() => setShowCamera(true)}
-            className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2 cursor-pointer hover:opacity-80 transition"
-          >
+          <div className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2">
             {allPhotos[0] ? (
               <img src={allPhotos[0]} alt="Profile" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
             )}
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-              <span className="text-white text-xs">Tap to replace</span>
-            </div>
+          </div>
+          <button 
+            onClick={() => setShowPhotoGalleryModal(true)}
+            className="text-xs text-red-400 hover:text-red-300 mb-3"
+          >
+            Change Profile Photo
           </button>
           <div className="text-xs text-red-400 mb-3">LIVE ID ✓</div>
           
@@ -446,71 +402,6 @@ export default function PartnerDashboard() {
             <p>🔹 AUTHENTICITY CHECK: Live Camera Only. AI-generated faces or filters are prohibited.</p>
             <p>🔹 This is a social meetup platform, not a professional service.</p>
           </div>
-        </div>
-
-        {/* Photo Gallery Section - Dedicated Section */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">📸 Photo Gallery</h2>
-            {allPhotos.length < MAX_PHOTOS && (
-              <button 
-                onClick={() => setShowAddPhoto(true)}
-                className="text-sm text-red-400 hover:text-red-300"
-              >
-                + Add Photo
-              </button>
-            )}
-          </div>
-          
-          {allPhotos.length === 0 ? (
-            <div className="bg-white/5 rounded-2xl p-8 text-center border border-white/10">
-              <p className="text-gray-400">No photos yet. Add your first live photo.</p>
-              <button 
-                onClick={() => setShowAddPhoto(true)}
-                className="mt-3 px-4 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700"
-              >
-                Add Photo
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-              {allPhotos.map((photo, idx) => (
-                <div key={idx} className="relative group">
-                  <div 
-                    className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
-                      idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20 hover:border-red-500/50'
-                    }`}
-                    onClick={() => handleSetPrimary(idx)}
-                  >
-                    <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
-                    {idx === 0 && (
-                      <div className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                        Primary
-                      </div>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => handleDeletePhoto(idx)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full text-white text-xs hidden group-hover:flex items-center justify-center shadow-lg"
-                  >
-                    ✕
-                  </button>
-                  {idx !== 0 && (
-                    <button 
-                      onClick={() => handleSetPrimary(idx)}
-                      className="absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition"
-                    >
-                      Set as Primary
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-xs text-gray-500 mt-3 text-center">
-            📸 Up to {MAX_PHOTOS} live photos. Tap any photo to make it your primary profile picture.
-          </p>
         </div>
 
         {/* Pending Requests Section */}
@@ -589,7 +480,7 @@ export default function PartnerDashboard() {
           <button onClick={() => setShowVenuesModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📍 Verified Venues</button>
           <button onClick={() => setShowServicesModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">💪 Services & Rates</button>
           <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⏰ My Schedule</button>
-          <button onClick={() => setShowPastMeetupsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📅 Past Meetups</button>
+          <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📸 My Photos</button>
         </div>
 
         {/* Stats Summary */}
@@ -636,20 +527,84 @@ export default function PartnerDashboard() {
 
       {/* ========== MODALS ========== */}
 
-      {/* Add Photo Modal */}
-      {showAddPhoto && (
-        <LiveCameraCapture
-          onCapture={handleAddPhoto}
-          onClose={() => setShowAddPhoto(false)}
-          aspectRatio="square"
-        />
+      {/* Photo Gallery Modal */}
+      {showPhotoGalleryModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoGalleryModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">📸 My Photos</h2>
+              {allPhotos.length < MAX_PHOTOS && (
+                <button 
+                  onClick={() => setShowAddPhotoModal(true)}
+                  className="px-3 py-1.5 bg-red-600 rounded-lg text-sm hover:bg-red-700"
+                >
+                  + Add Photo
+                </button>
+              )}
+            </div>
+            
+            {allPhotos.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 mb-4">No photos yet.</p>
+                <button 
+                  onClick={() => setShowAddPhotoModal(true)}
+                  className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700"
+                >
+                  Add Your First Photo
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {allPhotos.map((photo, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className={`aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'}`}>
+                      <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                    {idx === 0 && (
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
+                        Current Profile
+                      </div>
+                    )}
+                    <div className="absolute bottom-2 right-2 flex gap-2">
+                      {idx !== 0 && (
+                        <button 
+                          onClick={() => handleSetPrimaryPhoto(idx)}
+                          className="bg-black/70 text-white text-xs px-2 py-1 rounded-lg hover:bg-red-600 transition"
+                        >
+                          Set as Primary
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => handleDeletePhoto(idx)}
+                        className="bg-red-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-red-700 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <p className="text-xs text-gray-500 text-center mt-4">
+              📸 Up to {MAX_PHOTOS} live photos. Tap "Set as Primary" to change your profile picture.
+            </p>
+            
+            <button 
+              onClick={() => setShowPhotoGalleryModal(false)}
+              className="w-full mt-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* Camera Modal for Primary Photo Replacement */}
-      {showCamera && (
+      {/* Add Photo Modal */}
+      {showAddPhotoModal && (
         <LiveCameraCapture
-          onCapture={handleCameraCapture}
-          onClose={() => setShowCamera(false)}
+          onCapture={handleAddPhoto}
+          onClose={() => setShowAddPhotoModal(false)}
           aspectRatio="square"
         />
       )}
@@ -831,26 +786,6 @@ export default function PartnerDashboard() {
               <button onClick={saveAvailability} className="flex-1 py-2 bg-green-600 rounded-lg">Save Schedule</button>
               <button onClick={() => setShowScheduleModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Past Meetups Modal */}
-      {showPastMeetupsModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPastMeetupsModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4">📅 Past Meetups</h2>
-            {pastMeetups.length === 0 ? (
-              <p className="text-gray-400 text-center py-4">No past meetups.</p>
-            ) : (
-              pastMeetups.map(m => (
-                <div key={m.id} className="bg-white/5 rounded-lg p-3 mb-2">
-                  <p>{new Date(m.booking_date).toLocaleDateString()}</p>
-                  <p className="text-sm text-gray-400">{m.activity || 'Fitness'}</p>
-                </div>
-              ))
-            )}
-            <button onClick={() => setShowPastMeetupsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
           </div>
         </div>
       )}
