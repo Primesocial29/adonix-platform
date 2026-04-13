@@ -40,11 +40,12 @@ const FITNESS_GOALS = [
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Turnstile Site Key
+// Turnstile Site Key - only used in production
 const TURNSTILE_SITE_KEY = '0x4AAAAAAC85hzmi4sizIJ-y';
 
-// Helper to check if we're in development
-const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// DISABLE TURNSTILE COMPLETELY FOR DEVELOPMENT
+// Set to false to completely disable Turnstile
+const ENABLE_TURNSTILE = false; // 👈 CHANGE THIS TO true FOR PRODUCTION
 
 // Load Turnstile script
 declare global {
@@ -137,7 +138,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(ENABLE_TURNSTILE ? null : 'dev-token');
   const [step1Error, setStep1Error] = useState('');
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
@@ -200,9 +201,9 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return R * c;
   };
   
-  // Load Turnstile script (skip in development to avoid errors)
+  // Load Turnstile script - COMPLETELY DISABLED
   useEffect(() => {
-    if (!isDevelopment) {
+    if (ENABLE_TURNSTILE) {
       const script = document.createElement('script');
       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
       script.async = true;
@@ -214,15 +215,14 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         if (script.parentNode) script.parentNode.removeChild(script);
       };
     } else {
-      // In development, pretend Turnstile is loaded and set a dummy token
+      // Turnstile disabled - just mark as loaded
       setTurnstileLoaded(true);
-      setTurnstileToken('dev-token');
     }
   }, []);
   
-  // Render Turnstile widget (skip in development)
+  // Render Turnstile widget - COMPLETELY DISABLED
   useEffect(() => {
-    if (!isDevelopment && turnstileLoaded && turnstileRef.current && window.turnstile && step === 1) {
+    if (ENABLE_TURNSTILE && turnstileLoaded && turnstileRef.current && window.turnstile && step === 1) {
       try {
         window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
@@ -595,8 +595,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep1Error('You must acknowledge the social fitness platform agreement.');
         return;
       }
-      // Skip Turnstile check in development
-      if (!isDevelopment && !turnstileToken) {
+      // Only check Turnstile if enabled
+      if (ENABLE_TURNSTILE && !turnstileToken) {
         setStep1Error('Please complete the human verification.');
         return;
       }
@@ -669,7 +669,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/client-dashboard';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && (isDevelopment || turnstileToken);
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
   const isStep3Complete = username && city && selectedGoals.length > 0 && !containsBlockedWords(username);
   
@@ -1125,17 +1125,18 @@ California Residents:
               </label>
             </div>
             
-            {/* Turnstile Human Verification - Hidden in development */}
-            {!isDevelopment && (
+            {/* Turnstile Human Verification - COMPLETELY REMOVED IN DEV */}
+            {ENABLE_TURNSTILE && (
               <div className="mt-6">
                 <div ref={turnstileRef} className="cf-turnstile flex justify-center"></div>
               </div>
             )}
             
             {/* Development notice */}
-            {isDevelopment && (
+            {!ENABLE_TURNSTILE && (
               <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
-                <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification bypassed</p>
+                <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification is disabled</p>
+                <p className="text-xs text-gray-400 mt-1">Set ENABLE_TURNSTILE = true in code for production</p>
               </div>
             )}
             
