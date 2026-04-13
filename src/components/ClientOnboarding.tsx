@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X } from 'lucide-react'; // ✅ ADDED - fixes the X icon error
+import { X } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -42,6 +42,9 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 
 // Turnstile Site Key
 const TURNSTILE_SITE_KEY = '0x4AAAAAAC85hzmi4sizIJ-y';
+
+// Helper to check if we're in development
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // Load Turnstile script
 declare global {
@@ -197,32 +200,45 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return R * c;
   };
   
-  // Load Turnstile script
+  // Load Turnstile script (skip in development to avoid errors)
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setTurnstileLoaded(true);
-    document.head.appendChild(script);
-    
-    return () => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-    };
+    if (!isDevelopment) {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setTurnstileLoaded(true);
+      document.head.appendChild(script);
+      
+      return () => {
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+    } else {
+      // In development, pretend Turnstile is loaded and set a dummy token
+      setTurnstileLoaded(true);
+      setTurnstileToken('dev-token');
+    }
   }, []);
   
-  // Render Turnstile widget
+  // Render Turnstile widget (skip in development)
   useEffect(() => {
-    if (turnstileLoaded && turnstileRef.current && window.turnstile && step === 1) {
-      window.turnstile.render(turnstileRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        callback: (token: string) => {
-          setTurnstileToken(token);
-        },
-        'expired-callback': () => {
-          setTurnstileToken(null);
-        },
-      });
+    if (!isDevelopment && turnstileLoaded && turnstileRef.current && window.turnstile && step === 1) {
+      try {
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token: string) => {
+            setTurnstileToken(token);
+          },
+          'expired-callback': () => {
+            setTurnstileToken(null);
+          },
+          'error-callback': (error: any) => {
+            console.error('Turnstile error:', error);
+          },
+        });
+      } catch (err) {
+        console.error('Failed to render Turnstile:', err);
+      }
     }
   }, [turnstileLoaded, step]);
   
@@ -579,7 +595,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep1Error('You must acknowledge the social fitness platform agreement.');
         return;
       }
-      if (!turnstileToken) {
+      // Skip Turnstile check in development
+      if (!isDevelopment && !turnstileToken) {
         setStep1Error('Please complete the human verification.');
         return;
       }
@@ -652,7 +669,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/client-dashboard';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && turnstileToken;
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && (isDevelopment || turnstileToken);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
   const isStep3Complete = username && city && selectedGoals.length > 0 && !containsBlockedWords(username);
   
@@ -1108,10 +1125,19 @@ California Residents:
               </label>
             </div>
             
-            {/* Turnstile Human Verification */}
-            <div className="mt-6">
-              <div ref={turnstileRef} className="cf-turnstile flex justify-center"></div>
-            </div>
+            {/* Turnstile Human Verification - Hidden in development */}
+            {!isDevelopment && (
+              <div className="mt-6">
+                <div ref={turnstileRef} className="cf-turnstile flex justify-center"></div>
+              </div>
+            )}
+            
+            {/* Development notice */}
+            {isDevelopment && (
+              <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
+                <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification bypassed</p>
+              </div>
+            )}
             
             {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
           </div>
