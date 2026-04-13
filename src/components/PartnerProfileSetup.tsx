@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import {
   Plus, Trash2, MapPin, Clock, DollarSign, Camera,
   Loader2, Navigation, Search, ChevronDown, ChevronRight,
