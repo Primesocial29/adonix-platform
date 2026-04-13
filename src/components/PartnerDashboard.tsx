@@ -1,15 +1,7 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
-  const [debug, setDebug] = useState<any>({});
-
-  useEffect(() => {
-    console.log('PartnerDashboard mounted', { user, profile, loading });
-    setDebug({ userId: user?.id, role: profile?.role, isPartner: profile?.is_partner });
-  }, [user, profile, loading]);
 
   if (loading) {
     return (
@@ -54,18 +46,6 @@ export default function PartnerDashboard() {
                 <button onClick={() => refreshProfile()} className="px-3 py-1 text-sm bg-blue-600/30 rounded-full hover:bg-blue-600/50">🔄 Refresh</button>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Debug Info - Remove after testing */}
-        <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-          <h3 className="text-lg font-semibold mb-3">Debug Info</h3>
-          <div className="space-y-1 text-sm text-gray-400">
-            <p>User ID: {user.id}</p>
-            <p>Role: {profile?.role || 'undefined'}</p>
-            <p>Is Partner: {String(profile?.is_partner || 'undefined')}</p>
-            <p>Profile Complete: {String(profile?.profile_complete || 'undefined')}</p>
-            <p>Bio: {profile?.bio || '(empty)'}</p>
           </div>
         </div>
 
