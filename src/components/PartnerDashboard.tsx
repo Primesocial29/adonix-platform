@@ -49,22 +49,34 @@ export default function PartnerDashboard() {
   }, [user]);
 
   const loadPhotos = async () => {
-    if (!user) return;
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('photos')
-        .eq('id', user.id)
-        .single();
-      if (data?.photos && data.photos.length > 0) {
-        setAllPhotos(data.photos);
-      } else if (profile?.live_photo_url) {
-        setAllPhotos([profile.live_photo_url]);
-      }
-    } catch (err) {
-      console.error('Error loading photos:', err);
+  if (!user) return;
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('photos, live_photo_url')
+      .eq('id', user.id)
+      .single();
+    
+    let photoArray: string[] = [];
+    
+    // If photos array exists and has items, use it
+    if (data?.photos && data.photos.length > 0) {
+      photoArray = data.photos;
+    } 
+    // Otherwise, use the live_photo_url as the first photo
+    else if (data?.live_photo_url) {
+      photoArray = [data.live_photo_url];
     }
-  };
+    
+    setAllPhotos(photoArray);
+  } catch (err) {
+    console.error('Error loading photos:', err);
+    // Fallback to just the profile photo
+    if (profile?.live_photo_url) {
+      setAllPhotos([profile.live_photo_url]);
+    }
+  }
+};
 
   const savePhotos = async (photos: string[]) => {
     if (!user) return;
