@@ -337,39 +337,39 @@ export default function PartnerDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar with Logo */}
-      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/Screenshot_2026-04-03_221406.png" 
-              alt="Adonix Logo" 
-              className="h-8 w-auto"
-            />
-            <span className="text-xl font-bold text-red-500">ADONIX</span>
-          </div>
-          <div className="relative">
-            <button 
-              onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-              className="settings-button flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
-            >
-              <span>Settings</span>
-              <span>▼</span>
-            </button>
-            {showSettingsDropdown && (
-              <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
-                <div className="py-2">
-                  <button onClick={() => { setShowVenuesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Verified Venues</button>
-                  <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Services & Rates</button>
-                  <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Schedule</button>
-                  <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Photos</button>
-                  <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Contribution History</button>
-                </div>
-              </div>
-            )}
+      {/* Navbar with Logo and Tagline */}
+<div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+  <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div className="flex items-center gap-3">
+      <img 
+        src="/Screenshot_2026-04-03_221406.png" 
+        alt="Adonix Logo" 
+        className="h-8 w-auto"
+      />
+      <span className="text-xl font-bold text-red-500">Adonix – Social Fitness, Elevated</span>
+    </div>
+    <div className="relative">
+      <button 
+        onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+        className="settings-button flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+      >
+        <span>Settings</span>
+        <span>▼</span>
+      </button>
+      {showSettingsDropdown && (
+        <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
+          <div className="py-2">
+            <button onClick={() => { setShowVenuesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Verified Venues</button>
+            <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Services & Rates</button>
+            <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Schedule</button>
+            <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Photos</button>
+            <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Contribution History</button>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  </div>
+</div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
