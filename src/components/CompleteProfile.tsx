@@ -7,6 +7,9 @@ import { Loader2 } from 'lucide-react';
 export default function CompleteProfile() {
   const { user, profile, loading } = useAuth();
 
+  // FORCE PARTNER MODE FOR TESTING - REMOVE AFTER FIX
+  const FORCE_PARTNER_MODE = true;
+
   useEffect(() => {
     if (!loading && !user) {
       window.location.href = '/';
@@ -14,7 +17,7 @@ export default function CompleteProfile() {
   }, [user, loading]);
 
   useEffect(() => {
-    if (!loading && profile?.profile_complete) {
+    if (!loading && profile?.profile_complete && !FORCE_PARTNER_MODE) {
       if (profile.is_partner || profile.role === 'trainer') {
         window.location.href = '/partner-dashboard';
       } else {
@@ -33,6 +36,17 @@ export default function CompleteProfile() {
 
   if (!user) {
     return null;
+  }
+
+  // FORCE PARTNER PROFILE SETUP
+  if (FORCE_PARTNER_MODE) {
+    return (
+      <PartnerProfileSetup
+        onComplete={() => {
+          window.location.href = '/partner-dashboard';
+        }}
+      />
+    );
   }
 
   if (profile?.is_partner || profile?.role === 'trainer') {
