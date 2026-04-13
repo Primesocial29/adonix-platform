@@ -31,6 +31,19 @@ export default function PartnerDashboard() {
   const [showEditBio, setShowEditBio] = useState(false);
   const [editBioText, setEditBioText] = useState(profile?.bio || '');
   const [bioError, setBioError] = useState('');
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (!target.closest('.settings-dropdown') && !target.closest('.settings-button')) {
+        setShowSettingsDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -154,6 +167,39 @@ export default function PartnerDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Navbar with Settings Dropdown */}
+      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🏋️</span>
+            <span className="font-bold text-xl">Adonix Fit</span>
+          </div>
+          <div className="relative">
+            <button 
+              onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+              className="settings-button flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+            >
+              <span>⚙️</span>
+              <span>Settings</span>
+              <span>▼</span>
+            </button>
+            {showSettingsDropdown && (
+              <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
+                <div className="py-2">
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">👤 Edit Profile</button>
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📍 My Locations</button>
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⏰ My Schedule</button>
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🔒 Safety Guidelines</button>
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⚖️ Legal Documents</button>
+                  <div className="border-t border-white/10 my-1"></div>
+                  <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🚪 Logout</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* Profile Section */}
@@ -303,9 +349,9 @@ export default function PartnerDashboard() {
           )}
         </div>
 
-        {/* Quick Stats Section */}
+        {/* Quick Stats Section - Changed to "Your Earnings" */}
         <div className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">💰 Your Impact</h2>
+          <h2 className="text-xl font-semibold mb-4">💰 Your Earnings</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
               <p className="text-3xl font-bold text-green-400">${totalEarnings}</p>
@@ -339,7 +385,7 @@ export default function PartnerDashboard() {
         </div>
 
         {/* Legal Reminders */}
-        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5 mb-10">
           <h3 className="font-semibold mb-3">🛡️ Remember</h3>
           <ul className="space-y-2 text-sm text-gray-300">
             <li>• You're an independent social participant, not an employee.</li>
@@ -348,6 +394,22 @@ export default function PartnerDashboard() {
             <li>• Two-person only — no extra friends or spectators.</li>
             <li>• Report concerns immediately. We review within 24 hours.</li>
           </ul>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-8 border-t border-white/10">
+          <div className="text-center text-xs text-gray-500 space-y-3">
+            <div className="flex flex-wrap justify-center gap-4">
+              <a href="/terms" className="hover:text-white transition">Terms of Service</a>
+              <a href="/privacy" className="hover:text-white transition">Privacy Policy</a>
+              <a href="/safety" className="hover:text-white transition">Safety Guidelines</a>
+              <a href="/contact" className="hover:text-white transition">Contact</a>
+              <a href="/accessibility" className="hover:text-white transition">Accessibility</a>
+            </div>
+            <p>© 2026 Adonix Fit. All rights reserved.</p>
+            <p className="text-xs text-gray-600">Adonix Fit is a social fitness network — not a professional service marketplace.</p>
+            <p className="text-xs text-gray-600">📍 Meet only at public locations. GPS check-in required.</p>
+          </div>
         </div>
 
         {/* Client Profile Modal */}
