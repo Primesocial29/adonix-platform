@@ -349,27 +349,27 @@ export default function PartnerDashboard() {
           )}
         </div>
 
-        {/* Quick Stats Section - Changed to "Your Earnings" */}
-        <div className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">💰 Your Earnings</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-              <p className="text-3xl font-bold text-green-400">${totalEarnings}</p>
-              <p className="text-sm text-gray-400">Total Suggested Contributions</p>
-              <p className="text-xs text-gray-500">this month</p>
-              <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Details →</button>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-              <p className="text-3xl font-bold text-yellow-400">{pendingBookings.length}</p>
-              <p className="text-sm text-gray-400">Pending Invitations</p>
-              <p className="text-xs text-gray-500">waiting for you</p>
-              <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Requests →</button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 text-center mt-4">
-            ℹ️ Platform Support (15%) + processing fees are deducted. You keep the rest. Stripe handles all payments.
-          </p>
-        </div>
+        {/* {/* Quick Stats Section */}
+<div className="mb-10">
+  <h2 className="text-xl font-semibold mb-4">💰 Your Net Contributions</h2>
+  <div className="grid grid-cols-2 gap-4">
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+      <p className="text-3xl font-bold text-green-400">${totalContributions}</p>
+      <p className="text-sm text-gray-400">Total Suggested Contributions</p>
+      <p className="text-xs text-gray-500">this month</p>
+      <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Details →</button>
+    </div>
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+      <p className="text-3xl font-bold text-yellow-400">{pendingBookings.length}</p>
+      <p className="text-sm text-gray-400">Pending Invitations</p>
+      <p className="text-xs text-gray-500">waiting for you</p>
+      <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Requests →</button>
+    </div>
+  </div>
+  <p className="text-xs text-gray-500 text-center mt-4">
+    ℹ️ Platform Support (15%) + processing fees are deducted. Stripe handles all payments.
+  </p>
+</div>
 
         {/* Quick Actions */}
         <div className="mb-10">
