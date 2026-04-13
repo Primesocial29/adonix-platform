@@ -3,6 +3,7 @@ import PublicHome from './components/PublicHome';
 import AdminDashboard from './components/AdminDashboard';
 import PartnerProfileSetup from './components/PartnerProfileSetup';
 import ClientProfileSetup from './components/ClientProfileSetup';
+import ClientOnboarding from './components/ClientOnboarding';
 import PartnerDashboard from './components/PartnerDashboard';
 import TrainerDashboard from './components/TrainerDashboard';
 import TermsPage from './components/TermsPage';
@@ -56,10 +57,10 @@ function App() {
     return <TrainerDashboard />;
   }
 
-  // Client routes
+  // Client routes - UPDATED to use new ClientOnboarding
   if (currentRoute === '/client-setup') {
-    return <ClientProfileSetup onComplete={() => {
-      window.location.href = '/browse'; // Redirect to browse instead of dashboard
+    return <ClientOnboarding onComplete={() => {
+      window.location.href = '/client-dashboard';
     }} />;
   }
 
