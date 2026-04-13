@@ -43,49 +43,50 @@ export function useAuth() {
   }, []);
 
   const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    let profileData = data;
+
+    if (!profileData) {
+      const { data: newProfile, error: createError } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .insert({
+          id: userId,
+          first_name: 'New User',
+          role: 'member',
+          is_partner: false,
+          profile_complete: false,
+        })
+        .select()
         .maybeSingle();
 
-      if (error) throw error;
-
-      let profileData = data;
-
-      if (!profileData) {
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            first_name: 'New User',
-            role: 'member',
-            is_partner: false,
-            profile_complete: false,
-          })
-          .select()
-          .maybeSingle();
-
-        if (createError) throw createError;
-        profileData = newProfile;
-      }
-
-      setProfile(profileData);
-      const userRole = profileData?.role;
-      setRole(userRole);
-
-      setIsTrainer(userRole === 'trainer' || userRole === 'partner');
-      setIsPartner(userRole === 'partner');
-      setIsClient(userRole === 'client' || userRole === 'member');
-      setIsMember(userRole === 'member');
-
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
+      if (createError) throw createError;
+      profileData = newProfile;
     }
-  };
+
+    setProfile(profileData);
+    const userRole = profileData?.role;
+    setRole(userRole);
+
+    setIsTrainer(userRole === 'trainer' || userRole === 'partner');
+    // THIS IS THE ONLY LINE THAT NEEDS TO CHANGE:
+    setIsPartner(userRole === 'partner' || userRole === 'trainer' || profileData?.is_partner === true);
+    setIsClient(userRole === 'client' || userRole === 'member');
+    setIsMember(userRole === 'member');
+
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
