@@ -15,8 +15,16 @@ export default function PartnerDashboard() {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showPastMeetupsModal, setShowPastMeetupsModal] = useState(false);
   const [showContributionsModal, setShowContributionsModal] = useState(false);
+  
+  // Profile data
+  const [serviceTypes, setServiceTypes] = useState<string[]>([]);
+  const [customServiceTypes, setCustomServiceTypes] = useState<string[]>([]);
+  const [serviceRates, setServiceRates] = useState<Record<string, { hourly: number; halfHour: number }>>({});
+  const [halfHourEnabled, setHalfHourEnabled] = useState(false);
   const [serviceAreas, setServiceAreas] = useState<any[]>([]);
+  const [availability, setAvailability] = useState<any[]>([]);
   const [newLocation, setNewLocation] = useState('');
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -42,11 +50,17 @@ export default function PartnerDashboard() {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('service_areas')
+        .select('service_types, custom_service_types, service_rates, half_hour_enabled, service_areas, availability')
         .eq('id', user.id)
         .single();
+      
       if (data) {
+        setServiceTypes(data.service_types || []);
+        setCustomServiceTypes(data.custom_service_types || []);
+        setServiceRates(data.service_rates || {});
+        setHalfHourEnabled(data.half_hour_enabled || false);
         setServiceAreas(data.service_areas || []);
+        setAvailability(data.availability || []);
       }
     } catch (err) {
       console.error('Error loading profile data:', err);
@@ -135,6 +149,8 @@ export default function PartnerDashboard() {
     return rate - platformFee - processingFee;
   };
 
+  const allServices = [...serviceTypes, ...customServiceTypes];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -185,7 +201,7 @@ export default function PartnerDashboard() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* Profile Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4">
             {profile?.live_photo_url ? (
               <img src={profile.live_photo_url} alt="Profile" className="w-full h-full object-cover" />
@@ -220,7 +236,6 @@ export default function PartnerDashboard() {
           <div className="flex justify-center gap-3 mb-3">
             <button onClick={() => setShowEditBio(true)} className="px-4 py-2 bg-white/10 rounded-full text-sm">✏️ Edit Bio</button>
             <button className="px-4 py-2 bg-white/10 rounded-full text-sm">📸 Change Photo</button>
-            <button onClick={() => setShowEditProfileModal(true)} className="px-4 py-2 bg-white/10 rounded-full text-sm">⚙️ Edit Profile</button>
           </div>
           
           <div className="text-xs text-gray-500 space-y-1">
@@ -229,22 +244,69 @@ export default function PartnerDashboard() {
           </div>
         </div>
 
-        {/* Pending Invitations */}
-        {pendingBookings.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-xl font-semibold mb-4">📋 New Meetup Invitations</h2>
-            {pendingBookings.map((booking) => (
-              <div key={booking.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-3">
-                <p className="font-semibold">Client: {booking.client_id}</p>
-                <p className="text-sm text-gray-400">{new Date(booking.booking_date).toLocaleDateString()}</p>
-                <p className="text-sm text-green-400">Suggested: ${booking.hourly_rate || 75}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Services & Rates Section */}
+        <div className="mb-8 bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h2 className="text-xl font-semibold mb-4">💪 Your Services & Suggested Contributions</h2>
+          {allServices.length === 0 ? (
+            <p className="text-gray-400">No services added yet. Click Edit Profile to add services.</p>
+          ) : (
+            <div className="space-y-3">
+              {allServices.map(service => {
+                const rate = serviceRates[service];
+                return (
+                  <div key={service} className="flex justify-between items-center border-b border-white/10 pb-2">
+                    <span className="font-medium">{service}</span>
+                    <div className="text-right">
+                      <span className="text-green-400">${rate?.hourly || 0}/hr</span>
+                      {halfHourEnabled && rate?.halfHour > 0 && (
+                        <span className="text-gray-400 text-sm ml-2">(${rate.halfHour}/30min)</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <button onClick={() => setShowEditProfileModal(true)} className="mt-4 text-sm text-red-400 hover:text-red-300">Edit Services →</button>
+        </div>
+
+        {/* Locations Section */}
+        <div className="mb-8 bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h2 className="text-xl font-semibold mb-4">📍 Your Meetup Locations</h2>
+          {serviceAreas.length === 0 ? (
+            <p className="text-gray-400">No locations added yet. Click Edit Profile to add public meetup spots.</p>
+          ) : (
+            <div className="space-y-2">
+              {serviceAreas.map((area, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-gray-300">
+                  <span>📍</span>
+                  <span className="text-sm">{area.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={() => setShowEditProfileModal(true)} className="mt-4 text-sm text-red-400 hover:text-red-300">Edit Locations →</button>
+        </div>
+
+        {/* Availability Section */}
+        <div className="mb-8 bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h2 className="text-xl font-semibold mb-4">⏰ Your Availability</h2>
+          {availability.length === 0 || availability.every(d => d.times.length === 0) ? (
+            <p className="text-gray-400">No availability set. Click Edit Profile to add your schedule.</p>
+          ) : (
+            <div className="space-y-2">
+              {availability.filter(d => d.times.length > 0).slice(0, 5).map(day => (
+                <div key={day.day} className="text-sm text-gray-300">
+                  <span className="font-medium">{day.day}:</span> {day.times.slice(0, 3).join(', ')}{day.times.length > 3 && '...'}
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={() => setShowEditProfileModal(true)} className="mt-4 text-sm text-red-400 hover:text-red-300">Edit Schedule →</button>
+        </div>
 
         {/* Upcoming Meetups */}
-        <div className="mb-10">
+        <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">⏰ Your Upcoming Meetups</h2>
           {upcomingBookings.length === 0 ? (
             <div className="bg-white/5 rounded-2xl p-8 text-center">
@@ -252,7 +314,7 @@ export default function PartnerDashboard() {
             </div>
           ) : (
             upcomingBookings.map((booking, idx) => (
-              <div key={booking.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-3">
+              <div key={booking.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-3">
                 <p className="font-semibold">{idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '📅 '}{new Date(booking.booking_date).toLocaleDateString()}</p>
                 <p className="text-green-400">Your Net: ${calculateNetEarnings(booking.hourly_rate || 75).toFixed(2)}</p>
               </div>
@@ -261,7 +323,7 @@ export default function PartnerDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="mb-10">
+        <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">💰 Your Net Contributions</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 rounded-2xl p-5 text-center">
@@ -285,24 +347,31 @@ export default function PartnerDashboard() {
           <p>© 2026 Adonix Fit. Social fitness network — not a professional service.</p>
         </div>
 
-        {/* Edit Profile Modal (simplified) */}
+        {/* Edit Profile Modal */}
         {showEditProfileModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowEditProfileModal(false)}>
-            <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">📍 My Locations</h2>
-              <div className="flex gap-2 mb-4">
-                <input type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="Gym or park name..." className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white" />
-                <button onClick={addLocation} className="px-4 py-2 bg-green-600 rounded-lg">Add</button>
-              </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowEditProfileModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">✏️ Edit Profile</h2>
+              
+              {/* Locations Tab */}
+              <div className="mb-6">
+                <h3 className="font-semibold mb-2">📍 Locations</h3>
+                <div className="flex gap-2 mb-3">
+                  <input type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="Gym or park name..." className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm" />
+                  <button onClick={addLocation} className="px-3 py-2 bg-green-600 rounded-lg text-sm">Add</button>
+                </div>
                 {serviceAreas.map((area, i) => (
-                  <div key={i} className="flex justify-between items-center bg-white/5 rounded-lg p-3">
+                  <div key={i} className="flex justify-between items-center bg-white/5 rounded-lg p-2 mb-1">
                     <span className="text-sm">{area.name}</span>
-                    <button onClick={() => removeLocation(i)} className="text-red-400">Remove</button>
+                    <button onClick={() => removeLocation(i)} className="text-red-400 text-sm">Remove</button>
                   </div>
                 ))}
               </div>
-              <button onClick={() => setShowEditProfileModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+              
+              <div className="border-t border-white/10 pt-4 mt-2">
+                <p className="text-xs text-gray-400">For full profile editing (services, rates, schedule), please visit the profile setup page.</p>
+                <button onClick={() => setShowEditProfileModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+              </div>
             </div>
           </div>
         )}
