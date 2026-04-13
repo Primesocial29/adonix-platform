@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 import { X } from 'lucide-react';
-import PartnerProfileView from './PartnerProfileView'; 
+import PartnerProfileView from './PartnerProfileView';
 
 interface Partner {
   id: string;
@@ -155,6 +155,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Step 3: Your Vibe
   const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const usernameDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [city, setCity] = useState('');
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -246,6 +250,60 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       }
     }
   }, [turnstileLoaded, step]);
+  
+  // Check username availability
+  const checkUsernameAvailability = async (value: string) => {
+    if (!value || value.length < 4) {
+      setUsernameAvailable(null);
+      return;
+    }
+    
+    setCheckingUsername(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', value.toLowerCase())
+        .maybeSingle();
+      
+      if (error) throw error;
+      setUsernameAvailable(!data);
+    } catch (err) {
+      console.error('Error checking username:', err);
+      setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+  
+  // Validate username format
+  const validateUsernameFormat = (value: string): string | null => {
+    if (!value) return null;
+    if (value.length < 4) return 'Username must be at least 4 characters';
+    if (value.includes(' ')) return 'Username cannot contain spaces';
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) return 'Use only letters, numbers, and underscores';
+    if (containsBlockedWords(value)) return 'Username contains blocked words';
+    return null;
+  };
+  
+  // Handle username change with debounced availability check
+  const handleUsernameChange = (value: string) => {
+    const cleanValue = value.toLowerCase().replace(/\s/g, '');
+    setUsername(cleanValue);
+    
+    const formatError = validateUsernameFormat(cleanValue);
+    if (formatError) {
+      setUsernameError(formatError);
+      setUsernameAvailable(null);
+      return;
+    }
+    setUsernameError('');
+    
+    if (usernameDebounce.current) clearTimeout(usernameDebounce.current);
+    usernameDebounce.current = setTimeout(() => {
+      checkUsernameAvailability(cleanValue);
+    }, 500);
+  };
   
   // Search city with OpenStreetMap
   const searchCity = async (query: string) => {
@@ -608,8 +666,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       setStep1Error('');
       setLoading(true);
       try {
-        const username = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', username, new Date().toISOString());
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        await signUp(email, password, 'member', autoUsername, new Date().toISOString());
         setStep(2);
       } catch (err: any) {
         setStep1Error(err.message || 'Failed to create account. Please try again.');
@@ -641,16 +699,21 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep3Error('Please enter a username.');
         return;
       }
+      const formatError = validateUsernameFormat(username);
+      if (formatError) {
+        setStep3Error(formatError);
+        return;
+      }
+      if (usernameAvailable === false) {
+        setStep3Error('Username is already taken. Please choose another.');
+        return;
+      }
       if (!city) {
         setStep3Error('Please enter your city.');
         return;
       }
       if (selectedGoals.length === 0) {
         setStep3Error('Please select at least one fitness goal.');
-        return;
-      }
-      if (containsBlockedWords(username)) {
-        setStep3Error('Username contains blocked words.');
         return;
       }
       setStep3Error('');
@@ -676,7 +739,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
-  const isStep3Complete = username && city && selectedGoals.length > 0 && !containsBlockedWords(username);
+  const isStep3Complete = username && !usernameError && usernameAvailable === true && city && selectedGoals.length > 0;
   
   // Pagination
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
@@ -731,7 +794,7 @@ California Residents:
     <div className="space-y-6">
       {/* Activities Selection */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">Select Your Activities</h2>
+        <h2 className="text-xl font-semibold mb-4">What Gets You Moving?</h2>
         <div className="flex flex-wrap gap-2 mb-4">
           {SERVICE_TYPES.map(service => (
             <button
@@ -773,7 +836,7 @@ California Residents:
       
       {/* Day Selection */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">What days work for you?</h2>
+        <h2 className="text-xl font-semibold mb-4">When Can You Sweat?</h2>
         <div className="flex flex-wrap gap-2">
           {DAYS_OF_WEEK.map(day => (
             <button
@@ -793,7 +856,7 @@ California Residents:
       
       {/* Search Preferences */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">Search Area</h2>
+        <h2 className="text-xl font-semibold mb-4">Near You</h2>
         
         <button
           onClick={getCurrentLocation}
@@ -831,7 +894,7 @@ California Residents:
       
       {/* Partners Results */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">Partners Ready to Move</h2>
+        <h2 className="text-xl font-semibold mb-2">🔥 Partners Ready to Move</h2>
         <p className="text-sm text-gray-400 mb-6">
           Based on your vibe, free days, and location — here's who's ready to sweat with you. No awkward intros. Just good energy.
         </p>
@@ -846,7 +909,7 @@ California Residents:
           </div>
         ) : currentPartners.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400">No partners found. Try adjusting your activities, free days, or expanding your radius.</p>
+            <p className="text-gray-400">No matches yet. Try expanding your radius or adding more activities.</p>
           </div>
         ) : (
           <>
@@ -918,7 +981,7 @@ California Residents:
         {/* Encouragement Message */}
         {userLocation && !searching && currentPartners.length === 0 && (
           <p className="text-center text-gray-400 mt-4">
-            Not seeing your match? Try adjusting your activities, free days, or expanding your search radius. The right partner is out there.
+            No matches yet. Try expanding your radius or adding more activities.
           </p>
         )}
       </div>
@@ -1228,24 +1291,36 @@ California Residents:
           </div>
         )}
         
-        {/* Step 3: Your Vibe */}
+        {/* Step 3: Your Vibe - Username moved to top */}
         {step === 3 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
             
             <div className="space-y-6">
+              {/* Username - MOVED TO TOP */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Username</label>
+                <label className="block text-sm text-gray-400 mb-2">@ username</label>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="@username"
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  placeholder="jess_fit"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
                 />
+                <div className="mt-2 text-xs space-y-1">
+                  <p className="text-gray-500">• 4+ characters • letters, numbers, and underscores only • no spaces</p>
+                  {usernameError && <p className="text-red-400">{usernameError}</p>}
+                  {checkingUsername && <p className="text-gray-400">Checking availability...</p>}
+                  {usernameAvailable === true && !usernameError && username.length >= 4 && (
+                    <p className="text-green-400">✓ Available</p>
+                  )}
+                  {usernameAvailable === false && !usernameError && (
+                    <p className="text-red-400">✗ Username already taken</p>
+                  )}
+                </div>
               </div>
               
-              <div className="relative">
+              <div>
                 <label className="block text-sm text-gray-400 mb-2">Your City</label>
                 <input
                   type="text"
