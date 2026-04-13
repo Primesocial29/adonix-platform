@@ -1,8 +1,7 @@
 import { useAuth } from '../hooks/useAuth';
+import PartnerProfileSetup from './PartnerProfileSetup';
 import { Loader2 } from 'lucide-react';
 
-// TEMPORARY - Direct import of the partner setup component
-// We'll bypass the conditional logic entirely
 export default function CompleteProfile() {
   const { loading } = useAuth();
 
@@ -14,9 +13,7 @@ export default function CompleteProfile() {
     );
   }
 
-  // DYNAMIC IMPORT to avoid any circular dependencies
-  const PartnerProfileSetup = require('./PartnerProfileSetup').default;
-  
+  // DIRECT RENDER - No conditions
   return <PartnerProfileSetup onComplete={() => {
     window.location.href = '/partner-dashboard';
   }} />;
