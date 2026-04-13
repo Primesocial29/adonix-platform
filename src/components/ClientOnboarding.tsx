@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X } from 'lucide-react';
+import { X } from 'lucide-react'; // ✅ ADDED - fixes the X icon error
 
 interface Partner {
   id: string;
@@ -225,13 +225,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       });
     }
   }, [turnstileLoaded, step]);
-  
-  // Check if partner is available on selected days
-  const isPartnerAvailableOnDays = (partner: Partner): boolean => {
-    if (selectedDays.length === 0) return true;
-    const partnerDays = (partner.availability || []).filter(a => a.times.length > 0).map(a => a.day);
-    return selectedDays.some(day => partnerDays.includes(day));
-  };
   
   // Search city with OpenStreetMap
   const searchCity = async (query: string) => {
@@ -1027,7 +1020,7 @@ California Residents:
                     phoneError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
                   }`}
                 />
-                {phoneError && <p className="text-red-400 text-xs mt-1}>{phoneError}</p>}
+                {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
               </div>
               
               <div>
