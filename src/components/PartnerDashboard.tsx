@@ -14,6 +14,11 @@ export default function PartnerDashboard() {
   const [bioError, setBioError] = useState('');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   
+  // Photo Gallery States
+  const [allPhotos, setAllPhotos] = useState<string[]>([]);
+  const [showAddPhoto, setShowAddPhoto] = useState(false);
+  const MAX_PHOTOS = 6;
+  
   // Modal states
   const [showCamera, setShowCamera] = useState(false);
   const [showAllMeetupsModal, setShowAllMeetupsModal] = useState(false);
@@ -39,8 +44,149 @@ export default function PartnerDashboard() {
       loadProfileData();
       fetchMeetups();
       fetchContributions();
+      loadPhotos();
     }
   }, [user]);
+
+  const loadPhotos = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('photos')
+        .eq('id', user.id)
+        .single();
+      if (data?.photos && data.photos.length > 0) {
+        setAllPhotos(data.photos);
+      } else if (profile?.live_photo_url) {
+        setAllPhotos([profile.live_photo_url]);
+      }
+    } catch (err) {
+      console.error('Error loading photos:', err);
+    }
+  };
+
+  const savePhotos = async (photos: string[]) => {
+    if (!user) return;
+    await supabase
+      .from('profiles')
+      .update({ photos: photos })
+      .eq('id', user.id);
+    setAllPhotos(photos);
+    // Update primary profile photo if first photo changed
+    if (photos[0] !== profile?.live_photo_url) {
+      await supabase
+        .from('profiles')
+        .update({ live_photo_url: photos[0] })
+        .eq('id', user.id);
+      await refreshProfile();
+    }
+  };
+
+  const dataURLtoBlob = (dataURL: string): Blob => {
+    const [header, data] = dataURL.split(',');
+    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const binary = atob(data);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleAddPhoto = async (blobOrDataURL: Blob | string) => {
+    if (allPhotos.length >= MAX_PHOTOS) {
+      alert(`Maximum ${MAX_PHOTOS} photos allowed. Delete one first.`);
+      return;
+    }
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('You must be logged in to upload a photo.');
+      return;
+    }
+    
+    try {
+      let jpegBlob: Blob;
+      if (typeof blobOrDataURL === 'string') {
+        jpegBlob = dataURLtoBlob(blobOrDataURL);
+      } else {
+        jpegBlob = blobOrDataURL;
+      }
+      const timestamp = Date.now();
+      const fileName = `${user.id}/photo_${timestamp}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, jpegBlob, { upsert: true, contentType: 'image/jpeg' });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const newPhotoUrl = `${urlData.publicUrl}?t=${timestamp}`;
+      
+      const updatedPhotos = [...allPhotos, newPhotoUrl];
+      await savePhotos(updatedPhotos);
+      setShowAddPhoto(false);
+      alert('Photo added!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Failed to upload photo');
+    }
+  };
+
+  const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
+    if (!user) return;
+    
+    const confirmed = window.confirm('Replace your current profile photo? This cannot be undone.');
+    if (!confirmed) return;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('You must be logged in to upload a photo.');
+      return;
+    }
+    
+    try {
+      let jpegBlob: Blob;
+      if (typeof blobOrDataURL === 'string') {
+        jpegBlob = dataURLtoBlob(blobOrDataURL);
+      } else {
+        jpegBlob = blobOrDataURL;
+      }
+      const fileName = `${user.id}/avatar.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, jpegBlob, { upsert: true, contentType: 'image/jpeg' });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const url = `${urlData.publicUrl}?t=${Date.now()}`;
+      
+      // Replace first photo with new one
+      const newPhotos = [url, ...allPhotos.slice(1)];
+      await savePhotos(newPhotos);
+      await refreshProfile();
+      alert('Profile photo updated!');
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Failed to upload photo');
+    } finally {
+      setShowCamera(false);
+    }
+  };
+
+  const handleSetPrimary = async (index: number) => {
+    if (index === 0) return;
+    const newOrder = [allPhotos[index], ...allPhotos.filter((_, i) => i !== index)];
+    await savePhotos(newOrder);
+    alert('Primary photo updated!');
+  };
+
+  const handleDeletePhoto = async (index: number) => {
+    if (allPhotos.length === 1) {
+      alert('You must keep at least one photo.');
+      return;
+    }
+    const confirmed = window.confirm('Delete this photo? This cannot be undone.');
+    if (!confirmed) return;
+    const newPhotos = allPhotos.filter((_, i) => i !== index);
+    await savePhotos(newPhotos);
+  };
 
   const loadProfileData = async () => {
     if (!user) return;
@@ -116,61 +262,12 @@ export default function PartnerDashboard() {
     }
   };
 
-  const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
-    if (!user) return;
-    
-    // Confirm before replacing
-    const confirmed = window.confirm('Replace your current profile photo? This cannot be undone.');
-    if (!confirmed) return;
-    
-    // Rest of upload logic from PartnerProfileSetup
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      alert('You must be logged in to upload a photo.');
-      return;
-    }
-    
-    try {
-      let jpegBlob: Blob;
-      if (typeof blobOrDataURL === 'string') {
-        jpegBlob = dataURLtoBlob(blobOrDataURL);
-      } else {
-        jpegBlob = blobOrDataURL;
-      }
-      const fileName = `${user.id}/avatar.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, jpegBlob, { upsert: true, contentType: 'image/jpeg' });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const url = `${urlData.publicUrl}?t=${Date.now()}`;
-      await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
-      await refreshProfile();
-      alert('Profile photo updated!');
-    } catch (err) {
-      console.error('Upload error:', err);
-      alert('Failed to upload photo');
-    } finally {
-      setShowCamera(false);
-    }
-  };
-
-  const dataURLtoBlob = (dataURL: string): Blob => {
-    const [header, data] = dataURL.split(',');
-    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-    const binary = atob(data);
-    const arr = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-    return new Blob([arr], { type: mime });
-  };
-
   const calculatePartnerShare = (contribution: number) => {
     const platformSupport = contribution * 0.15;
     const processingFee = contribution * 0.029 + 0.30;
     return contribution - platformSupport - processingFee;
   };
 
-  // Time slots for schedule modal
   const generateTimeSlots = (includeHalfHour: boolean): string[] => {
     const slots: string[] = [];
     for (let h = 6; h <= 22; h++) {
@@ -245,7 +342,6 @@ export default function PartnerDashboard() {
     setShowServicesModal(false);
   };
 
-  const allServices = [...serviceTypes, ...customServiceTypes];
   const SERVICE_TYPES = [
     'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
     'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
@@ -292,23 +388,65 @@ export default function PartnerDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
-        {/* Profile Section */}
+        {/* Profile Section with Photo Gallery */}
         <div className="text-center mb-8">
+          {/* Primary Photo - Large */}
           <button 
             onClick={() => setShowCamera(true)}
-            className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4 cursor-pointer hover:opacity-80 transition"
+            className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2 cursor-pointer hover:opacity-80 transition"
           >
-            {profile?.live_photo_url ? (
-              <img src={profile.live_photo_url} alt="Profile" className="w-full h-full object-cover" />
+            {allPhotos[0] ? (
+              <img src={allPhotos[0]} alt="Profile" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
             )}
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition">
-              <span className="text-white text-xs">Tap to change</span>
+              <span className="text-white text-xs">Tap to replace</span>
             </div>
           </button>
-          <div className="text-xs text-red-400 mb-2">LIVE ID ✓</div>
+          <div className="text-xs text-red-400 mb-3">LIVE ID ✓</div>
           
+          {/* Photo Gallery Row */}
+          {allPhotos.length > 1 && (
+            <div className="flex justify-center gap-2 mb-4 overflow-x-auto pb-2">
+              {allPhotos.map((photo, idx) => (
+                <div key={idx} className="relative group">
+                  <img 
+                    src={photo} 
+                    alt={`Photo ${idx + 1}`}
+                    className={`w-16 h-16 rounded-lg object-cover cursor-pointer border-2 ${idx === 0 ? 'border-red-500' : 'border-white/20'} hover:opacity-80 transition`}
+                    onClick={() => handleSetPrimary(idx)}
+                  />
+                  <button 
+                    onClick={() => handleDeletePhoto(idx)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 rounded-full text-white text-xs hidden group-hover:flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                  {idx === 0 && <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-[10px] text-red-400 whitespace-nowrap">Primary</div>}
+                </div>
+              ))}
+              {allPhotos.length < MAX_PHOTOS && (
+                <button 
+                  onClick={() => setShowAddPhoto(true)}
+                  className="w-16 h-16 rounded-lg border-2 border-dashed border-white/30 flex items-center justify-center hover:border-red-500 transition"
+                >
+                  <span className="text-2xl text-gray-400">+</span>
+                </button>
+              )}
+            </div>
+          )}
+          
+          {allPhotos.length === 1 && allPhotos.length < MAX_PHOTOS && (
+            <button 
+              onClick={() => setShowAddPhoto(true)}
+              className="text-sm text-red-400 hover:text-red-300 mb-4"
+            >
+              + Add another live photo
+            </button>
+          )}
+          
+          {/* Bio */}
           {showEditBio ? (
             <div className="max-w-md mx-auto mt-4">
               <textarea
@@ -460,7 +598,16 @@ export default function PartnerDashboard() {
 
       {/* ========== MODALS ========== */}
 
-      {/* Camera Modal */}
+      {/* Add Photo Modal */}
+      {showAddPhoto && (
+        <LiveCameraCapture
+          onCapture={handleAddPhoto}
+          onClose={() => setShowAddPhoto(false)}
+          aspectRatio="square"
+        />
+      )}
+
+      {/* Camera Modal for Primary Photo Replacement */}
       {showCamera && (
         <LiveCameraCapture
           onCapture={handleCameraCapture}
