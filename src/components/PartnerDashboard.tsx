@@ -14,6 +14,11 @@ export default function PartnerDashboard() {
   const [bioError, setBioError] = useState('');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   
+  // Legal modal states
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+  
   // Photo Gallery States
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
   const [showPhotoGalleryModal, setShowPhotoGalleryModal] = useState(false);
@@ -38,6 +43,12 @@ export default function PartnerDashboard() {
   const [newLocation, setNewLocation] = useState('');
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [pastMeetups, setPastMeetups] = useState<any[]>([]);
+
+  // Logout function
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
 
   useEffect(() => {
     if (user) {
@@ -82,7 +93,6 @@ export default function PartnerDashboard() {
       .eq('id', user.id);
     setAllPhotos(photos);
     
-    // Update primary profile photo (first photo)
     if (photos[0] !== profile?.live_photo_url) {
       await supabase
         .from('profiles')
@@ -347,7 +357,7 @@ export default function PartnerDashboard() {
                   <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📸 My Photos</button>
                   <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💰 Contribution History</button>
                   <div className="border-t border-white/10 my-1"></div>
-                  <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🚪 Logout</button>
+                  <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🚪 Logout</button>
                 </div>
               </div>
             )}
@@ -359,7 +369,6 @@ export default function PartnerDashboard() {
         
         {/* Profile Section */}
         <div className="text-center mb-8">
-          {/* Primary Profile Photo - Large */}
           <div className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2">
             {allPhotos[0] ? (
               <img src={allPhotos[0]} alt="Profile" className="w-full h-full object-cover" />
@@ -375,7 +384,6 @@ export default function PartnerDashboard() {
           </button>
           <div className="text-xs text-red-400 mb-3">LIVE ID ✓</div>
           
-          {/* Bio */}
           {showEditBio ? (
             <div className="max-w-md mx-auto mt-4">
               <textarea
@@ -483,6 +491,16 @@ export default function PartnerDashboard() {
           <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📸 My Photos</button>
         </div>
 
+        {/* Bottom Logout Button */}
+        <div className="mb-6">
+          <button 
+            onClick={handleLogout}
+            className="w-full py-3 bg-red-600/20 border border-red-500/30 rounded-xl text-red-400 hover:bg-red-600/30 transition-colors font-medium"
+          >
+            🚪 Logout
+          </button>
+        </div>
+
         {/* Stats Summary */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-white/5 rounded-2xl p-5 text-center border border-white/10">
@@ -514,18 +532,85 @@ export default function PartnerDashboard() {
           </ul>
         </div>
 
-        {/* Footer */}
+        {/* Footer with Modal Links */}
         <div className="pt-8 border-t border-white/10 text-center text-xs text-gray-500">
           <div className="flex flex-wrap justify-center gap-4 mb-3">
-            <a href="/terms" className="hover:text-white">Terms of Service</a>
-            <a href="/privacy" className="hover:text-white">Privacy Policy</a>
-            <a href="/safety" className="hover:text-white">Safety Guidelines</a>
+            <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition">Terms of Service</button>
+            <button onClick={() => setShowPrivacyModal(true)} className="hover:text-white transition">Privacy Policy</button>
+            <button onClick={() => setShowSafetyModal(true)} className="hover:text-white transition">Safety Guidelines</button>
           </div>
           <p>© 2026 Adonix. All rights reserved. Elite Social Fitness Network.</p>
         </div>
       </div>
 
       {/* ========== MODALS ========== */}
+
+      {/* Terms Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowTermsModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Terms of Service</h2>
+              <button onClick={() => setShowTermsModal(false)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div className="prose prose-invert max-w-none text-gray-300 text-sm space-y-4">
+              <p>By using Adonix, you agree to the following terms:</p>
+              <p>1. Adonix is a social fitness network, not a professional service marketplace.</p>
+              <p>2. Partners are independent social participants, not employees or contractors.</p>
+              <p>3. Suggested contributions are voluntary social gifts, not professional service fees.</p>
+              <p>4. All meetups must occur at verified public locations. Private residences are strictly excluded.</p>
+              <p>5. You are responsible for your own safety and well-being during meetups.</p>
+              <p>6. Adonix is not liable for any injuries, damages, or incidents that occur during meetups.</p>
+              <p>7. Platform Support (15%) + processing fees are deducted from each suggested contribution.</p>
+              <p>8. Violation of these terms may result in permanent account suspension.</p>
+            </div>
+            <button onClick={() => setShowTermsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Modal */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPrivacyModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Privacy Policy</h2>
+              <button onClick={() => setShowPrivacyModal(false)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div className="prose prose-invert max-w-none text-gray-300 text-sm space-y-4">
+              <p>Adonix respects your privacy. This policy explains how we collect and protect your data.</p>
+              <p><strong>Information We Collect:</strong> Name, email, age, location, photos, and meetup history.</p>
+              <p><strong>How We Use Your Information:</strong> To facilitate meetups, verify identities, and improve our platform.</p>
+              <p><strong>Data Sharing:</strong> We do not sell your personal data. Payment information is processed securely through Stripe.</p>
+              <p><strong>Location Data:</strong> Used only during active meetups for GPS check-in verification.</p>
+              <p><strong>Data Retention:</strong> You may request deletion of your account and data at any time.</p>
+              <p><strong>California Residents:</strong> You have the right to opt out of data sharing under CPRA.</p>
+            </div>
+            <button onClick={() => setShowPrivacyModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Safety Modal */}
+      {showSafetyModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowSafetyModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Safety Guidelines</h2>
+              <button onClick={() => setShowSafetyModal(false)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div className="prose prose-invert max-w-none text-gray-300 text-sm space-y-4">
+              <p><strong>1. Public Locations Only</strong> - All meetups must occur at verified public gyms, parks, or recreation centers.</p>
+              <p><strong>2. You're the Decider</strong> - Trust your instincts. If something feels off, don't go.</p>
+              <p><strong>3. GPS Check-In Required</strong> - You must verify your location within 0.75 miles of the agreed venue.</p>
+              <p><strong>4. Two-Person Only</strong> - No extra friends, family, or spectators permitted.</p>
+              <p><strong>5. Report Concerns Immediately</strong> - We review all reports within 24 hours.</p>
+              <p><strong>Zero-Tolerance Policy:</strong> Private location requests, harassment, or unsafe behavior = permanent ban.</p>
+            </div>
+            <button onClick={() => setShowSafetyModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+          </div>
+        </div>
+      )}
 
       {/* Photo Gallery Modal */}
       {showPhotoGalleryModal && (
