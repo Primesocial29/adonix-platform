@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 import { X } from 'lucide-react';
+import PartnerProfileView from './partnewprofileview';
 
 interface Partner {
   id: string;
@@ -180,6 +181,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [currentPage, setCurrentPage] = useState(1);
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
+  
+  // Partner Profile Modal States
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
   
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -873,7 +878,13 @@ California Residents:
                     {daysDisplay && (
                       <p className="text-xs text-gray-400 text-center mt-1">🗓️ Free: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
                     )}
-                    <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
+                    <button 
+                      onClick={() => {
+                        setSelectedPartner(partner);
+                        setShowPartnerModal(true);
+                      }}
+                      className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition"
+                    >
                       View Profile
                     </button>
                   </div>
@@ -944,6 +955,22 @@ California Residents:
           </div>
         </div>
       </div>
+      
+      {/* Partner Profile Modal */}
+      {showPartnerModal && selectedPartner && (
+        <PartnerProfileView
+          partner={selectedPartner}
+          onClose={() => {
+            setShowPartnerModal(false);
+            setSelectedPartner(null);
+          }}
+          onBook={(partner) => {
+            setShowPartnerModal(false);
+            // TODO: Open booking flow
+            console.log('Book partner:', partner);
+          }}
+        />
+      )}
     </div>
   );
   
