@@ -32,6 +32,11 @@ interface Availability {
   times: string[];
 }
 
+interface ServiceRate {
+  hourly: number;
+  halfHour: number;
+}
+
 const SERVICE_TYPES = [
   'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
   'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
@@ -69,23 +74,21 @@ export default function PartnerDashboard() {
   const [bioError, setBioError] = useState('');
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   
-  // Modal states
-  const [showLocationsModal, setShowLocationsModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showServicesModal, setShowServicesModal] = useState(false);
-  const [showPastMeetupsModal, setShowPastMeetupsModal] = useState(false);
-  const [showContributionsModal, setShowContributionsModal] = useState(false);
+  // Edit Profile Modal states
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'locations' | 'schedule' | 'services'>('locations');
   
   // Edit data states
   const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [customServiceTypes, setCustomServiceTypes] = useState<string[]>([]);
-  const [serviceRates, setServiceRates] = useState<Record<string, { hourly: number; halfHour: number }>>({});
+  const [serviceRates, setServiceRates] = useState<Record<string, ServiceRate>>({});
   const [halfHourEnabled, setHalfHourEnabled] = useState(false);
   const [newLocation, setNewLocation] = useState('');
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [monthlyContributions, setMonthlyContributions] = useState<{ month: string; total: number }[]>([]);
+  const [saving, setSaving] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -177,7 +180,6 @@ export default function PartnerDashboard() {
       const total = (data || []).reduce((sum, b) => sum + (b.suggested_contribution || 0), 0);
       setTotalContributions(total);
       
-      // Group by month
       const byMonth: Record<string, number> = {};
       (data || []).forEach(b => {
         const month = new Date(b.booking_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
@@ -235,22 +237,12 @@ export default function PartnerDashboard() {
     const newArea = { name: newLocation.trim(), lat: null, lng: null };
     const updated = [...serviceAreas, newArea];
     setServiceAreas(updated);
-    
-    await supabase
-      .from('profiles')
-      .update({ service_areas: updated })
-      .eq('id', user?.id);
-    
     setNewLocation('');
   };
 
   const removeLocation = async (index: number) => {
     const updated = serviceAreas.filter((_, i) => i !== index);
     setServiceAreas(updated);
-    await supabase
-      .from('profiles')
-      .update({ service_areas: updated })
-      .eq('id', user?.id);
   };
 
   const toggleTimeSlot = (day: string, time: string) => {
@@ -259,15 +251,6 @@ export default function PartnerDashboard() {
       const times = a.times.includes(time) ? a.times.filter(t => t !== time) : [...a.times, time].sort();
       return { ...a, times };
     }));
-  };
-
-  const saveAvailability = async () => {
-    await supabase
-      .from('profiles')
-      .update({ availability })
-      .eq('id', user?.id);
-    alert('Schedule saved!');
-    setShowScheduleModal(false);
   };
 
   const toggleDay = (day: string) => {
@@ -288,18 +271,30 @@ export default function PartnerDashboard() {
     }));
   };
 
-  const saveServices = async () => {
-    await supabase
-      .from('profiles')
-      .update({
-        service_types: serviceTypes,
-        custom_service_types: customServiceTypes,
-        service_rates: serviceRates,
-        half_hour_enabled: halfHourEnabled
-      })
-      .eq('id', user?.id);
-    alert('Services saved!');
-    setShowServicesModal(false);
+  const saveProfileChanges = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          service_areas: serviceAreas,
+          availability: availability,
+          service_types: serviceTypes,
+          custom_service_types: customServiceTypes,
+          service_rates: serviceRates,
+          half_hour_enabled: halfHourEnabled
+        })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      alert('Profile updated successfully!');
+      setShowEditProfileModal(false);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      alert('Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const calculateNetEarnings = (contribution: number) => {
@@ -345,9 +340,7 @@ export default function PartnerDashboard() {
             {showSettingsDropdown && (
               <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
                 <div className="py-2">
-                  <button onClick={() => { setShowLocationsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📍 My Locations</button>
-                  <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⏰ My Schedule</button>
-                  <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💪 My Services & Rates</button>
+                  <button onClick={() => { setShowEditProfileModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">✏️ Edit Profile</button>
                   <button onClick={() => { setShowPastMeetupsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📅 Past Meetups</button>
                   <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">💰 Contribution History</button>
                   <div className="border-t border-white/10 my-1"></div>
@@ -398,6 +391,7 @@ export default function PartnerDashboard() {
           <div className="flex justify-center gap-3 mb-3">
             <button onClick={() => setShowEditBio(true)} className="px-4 py-2 bg-white/10 rounded-full text-sm hover:bg-white/20 transition">✏️ Edit Bio</button>
             <button className="px-4 py-2 bg-white/10 rounded-full text-sm hover:bg-white/20 transition">📸 Change Photo</button>
+            <button onClick={() => setShowEditProfileModal(true)} className="px-4 py-2 bg-white/10 rounded-full text-sm hover:bg-white/20 transition">⚙️ Edit Profile</button>
           </div>
           
           <div className="text-xs text-gray-500 space-y-1">
@@ -534,9 +528,9 @@ export default function PartnerDashboard() {
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">⚙️ Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <button onClick={() => setShowEditProfileModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">✏️ Edit Profile</button>
             <button onClick={() => setShowPastMeetupsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📅 Past Meetups</button>
-            <button onClick={() => setShowLocationsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📍 My Locations</button>
-            <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⏰ My Schedule</button>
+            <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">💰 Contribution History</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">🔒 Safety Guidelines</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⚖️ Legal Documents</button>
             <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">❓ Help & Support</button>
@@ -571,153 +565,173 @@ export default function PartnerDashboard() {
           </div>
         </div>
 
-        {/* ========== MODALS ========== */}
-
-        {/* Locations Modal */}
-        {showLocationsModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowLocationsModal(false)}>
-            <div className="bg-gray-900 rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">📍 My Meetup Locations</h2>
-              <p className="text-xs text-gray-400 mb-4">Add public gyms, parks, or fitness centers where you meet clients.</p>
+        {/* ========== EDIT PROFILE MODAL (Combined) ========== */}
+        {showEditProfileModal && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowEditProfileModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-xl font-bold mb-4">✏️ Edit Profile</h2>
               
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
-                  placeholder="Gym name or park address..."
-                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500"
-                />
-                <button onClick={addLocation} className="px-4 py-2 bg-green-600 rounded-lg">Add</button>
-              </div>
-              
-              <div className="space-y-2">
-                {serviceAreas.map((area, index) => (
-                  <div key={index} className="flex justify-between items-center bg-white/5 rounded-lg p-3">
-                    <span className="text-sm">{area.name}</span>
-                    <button onClick={() => removeLocation(index)} className="text-red-400 hover:text-red-300">Remove</button>
-                  </div>
-                ))}
-              </div>
-              
-              <button onClick={() => setShowLocationsModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
-            </div>
-          </div>
-        )}
-
-        {/* Schedule Modal */}
-        {showScheduleModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowScheduleModal(false)}>
-            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">⏰ My Availability</h2>
-              <p className="text-xs text-gray-400 mb-4">Select days and times you're available for meetups.</p>
-              
-              <div className="space-y-2">
-                {availability.map((daySchedule) => (
-                  <div key={daySchedule.day} className="border border-white/10 rounded-xl overflow-hidden">
-                    <button
-                      onClick={() => toggleDay(daySchedule.day)}
-                      className="w-full flex justify-between items-center p-3 bg-white/5 hover:bg-white/10"
-                    >
-                      <span className="font-medium">{daySchedule.day}</span>
-                      <span>{expandedDays[daySchedule.day] ? '▼' : '▶'}</span>
-                    </button>
-                    {expandedDays[daySchedule.day] && (
-                      <div className="p-3">
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                          {generateTimeSlots(halfHourEnabled).map(time => (
-                            <button
-                              key={time}
-                              onClick={() => toggleTimeSlot(daySchedule.day, time)}
-                              className={`px-2 py-1 text-xs rounded-lg ${
-                                daySchedule.times.includes(time)
-                                  ? 'bg-red-600 text-white'
-                                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                              }`}
-                            >
-                              {formatTimeLabel(time)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex gap-3 mt-4">
-                <button onClick={saveAvailability} className="flex-1 py-2 bg-green-600 rounded-lg">Save Schedule</button>
-                <button onClick={() => setShowScheduleModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Services Modal */}
-        {showServicesModal && (
-          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowServicesModal(false)}>
-            <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-xl font-bold mb-4">💪 My Services & Suggested Contributions</h2>
-              
-              <div className="flex flex-wrap gap-2 mb-4">
-                {SERVICE_TYPES.map(service => (
-                  <button
-                    key={service}
-                    onClick={() => toggleServiceType(service)}
-                    className={`px-3 py-1.5 rounded-full text-sm ${
-                      serviceTypes.includes(service)
-                        ? 'bg-red-600 text-white'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    {service}
-                  </button>
-                ))}
-              </div>
-              
-              {serviceTypes.map(service => (
-                <div key={service} className="bg-white/5 rounded-xl p-3 mb-3">
-                  <p className="font-medium mb-2">{service}</p>
-                  <div className="flex gap-4">
-                    <div>
-                      <label className="text-xs text-gray-400">Hourly</label>
-                      <input
-                        type="number"
-                        value={serviceRates[service]?.hourly || ''}
-                        onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
-                        placeholder="50-500"
-                        className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
-                      />
-                    </div>
-                    {halfHourEnabled && (
-                      <div>
-                        <label className="text-xs text-gray-400">Half-Hour</label>
-                        <input
-                          type="number"
-                          value={serviceRates[service]?.halfHour || ''}
-                          onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
-                          placeholder="30-250"
-                          className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              <div className="flex items-center justify-between mt-4 mb-4">
-                <span className="text-sm">Enable Half-Hour Meetups</span>
+              {/* Tab Buttons */}
+              <div className="flex gap-2 mb-6 border-b border-white/10 pb-2">
                 <button
-                  onClick={() => setHalfHourEnabled(!halfHourEnabled)}
-                  className={`w-12 h-6 rounded-full transition-colors ${halfHourEnabled ? 'bg-red-600' : 'bg-gray-600'}`}
+                  onClick={() => setActiveTab('locations')}
+                  className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'locations' ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
                 >
-                  <span className={`block w-5 h-5 bg-white rounded-full transition-transform ${halfHourEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                  📍 Locations
+                </button>
+                <button
+                  onClick={() => setActiveTab('schedule')}
+                  className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'schedule' ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
+                >
+                  ⏰ Schedule
+                </button>
+                <button
+                  onClick={() => setActiveTab('services')}
+                  className={`px-4 py-2 rounded-lg text-sm transition ${activeTab === 'services' ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}
+                >
+                  💪 Services & Rates
                 </button>
               </div>
               
-              <div className="flex gap-3">
-                <button onClick={saveServices} className="flex-1 py-2 bg-green-600 rounded-lg">Save Services</button>
-                <button onClick={() => setShowServicesModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
+              {/* Locations Tab */}
+              {activeTab === 'locations' && (
+                <div>
+                  <p className="text-xs text-gray-400 mb-4">Add public gyms, parks, or fitness centers where you meet clients.</p>
+                  <div className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={newLocation}
+                      onChange={(e) => setNewLocation(e.target.value)}
+                      placeholder="Gym name or park address..."
+                      className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500"
+                    />
+                    <button onClick={addLocation} className="px-4 py-2 bg-green-600 rounded-lg">Add</button>
+                  </div>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {serviceAreas.length === 0 ? (
+                      <p className="text-gray-500 text-center py-4">No locations added yet.</p>
+                    ) : (
+                      serviceAreas.map((area, index) => (
+                        <div key={index} className="flex justify-between items-center bg-white/5 rounded-lg p-3">
+                          <span className="text-sm">{area.name}</span>
+                          <button onClick={() => removeLocation(index)} className="text-red-400 hover:text-red-300 text-sm">Remove</button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Schedule Tab */}
+              {activeTab === 'schedule' && (
+                <div>
+                  <p className="text-xs text-gray-400 mb-4">Select days and times you're available for meetups.</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {availability.map((daySchedule) => (
+                      <div key={daySchedule.day} className="border border-white/10 rounded-xl overflow-hidden">
+                        <button
+                          onClick={() => toggleDay(daySchedule.day)}
+                          className="w-full flex justify-between items-center p-3 bg-white/5 hover:bg-white/10"
+                        >
+                          <span className="font-medium">{daySchedule.day}</span>
+                          <span>{expandedDays[daySchedule.day] ? '▼' : '▶'}</span>
+                        </button>
+                        {expandedDays[daySchedule.day] && (
+                          <div className="p-3">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                              {generateTimeSlots(halfHourEnabled).map(time => (
+                                <button
+                                  key={time}
+                                  onClick={() => toggleTimeSlot(daySchedule.day, time)}
+                                  className={`px-2 py-1 text-xs rounded-lg ${
+                                    daySchedule.times.includes(time)
+                                      ? 'bg-red-600 text-white'
+                                      : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                  }`}
+                                >
+                                  {formatTimeLabel(time)}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Services Tab */}
+              {activeTab === 'services' && (
+                <div>
+                  <p className="text-xs text-gray-400 mb-4">Select activities and set suggested contributions.</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {SERVICE_TYPES.map(service => (
+                      <button
+                        key={service}
+                        onClick={() => toggleServiceType(service)}
+                        className={`px-3 py-1.5 rounded-full text-sm ${
+                          serviceTypes.includes(service)
+                            ? 'bg-red-600 text-white'
+                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                        }`}
+                      >
+                        {service}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {serviceTypes.length > 0 && (
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                      {serviceTypes.map(service => (
+                        <div key={service} className="bg-white/5 rounded-xl p-3">
+                          <p className="font-medium mb-2">{service}</p>
+                          <div className="flex gap-4">
+                            <div>
+                              <label className="text-xs text-gray-400">Hourly ($50-500)</label>
+                              <input
+                                type="number"
+                                value={serviceRates[service]?.hourly || ''}
+                                onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
+                                placeholder="50"
+                                className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                              />
+                            </div>
+                            {halfHourEnabled && (
+                              <div>
+                                <label className="text-xs text-gray-400">Half-Hour ($30-250)</label>
+                                <input
+                                  type="number"
+                                  value={serviceRates[service]?.halfHour || ''}
+                                  onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
+                                  placeholder="30"
+                                  className="w-24 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
+                    <span className="text-sm">Enable Half-Hour Meetups</span>
+                    <button
+                      onClick={() => setHalfHourEnabled(!halfHourEnabled)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${halfHourEnabled ? 'bg-red-600' : 'bg-gray-600'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${halfHourEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
+                <button onClick={saveProfileChanges} disabled={saving} className="flex-1 py-2 bg-green-600 rounded-lg disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button onClick={() => setShowEditProfileModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
               </div>
             </div>
           </div>
