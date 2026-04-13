@@ -3,8 +3,6 @@ import { useAuth } from '../hooks/useAuth';
 export default function PartnerDashboard() {
   const { user, profile, loading } = useAuth();
 
-  console.log('PartnerDashboard rendering', { user, profile, loading });
-
   if (loading) {
     return <div className="text-white p-8">Loading...</div>;
   }
