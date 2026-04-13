@@ -401,9 +401,9 @@ export default function PartnerDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
-        {/* Profile Section with Photo Gallery */}
+                {/* Profile Section */}
         <div className="text-center mb-8">
-          {/* Primary Photo - Large */}
+          {/* Primary Profile Photo - Large */}
           <button 
             onClick={() => setShowCamera(true)}
             className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2 cursor-pointer hover:opacity-80 transition"
@@ -418,46 +418,6 @@ export default function PartnerDashboard() {
             </div>
           </button>
           <div className="text-xs text-red-400 mb-3">LIVE ID ✓</div>
-          
-          {/* Photo Gallery Row */}
-          {allPhotos.length > 1 && (
-            <div className="flex justify-center gap-2 mb-4 overflow-x-auto pb-2">
-              {allPhotos.map((photo, idx) => (
-                <div key={idx} className="relative group">
-                  <img 
-                    src={photo} 
-                    alt={`Photo ${idx + 1}`}
-                    className={`w-16 h-16 rounded-lg object-cover cursor-pointer border-2 ${idx === 0 ? 'border-red-500' : 'border-white/20'} hover:opacity-80 transition`}
-                    onClick={() => handleSetPrimary(idx)}
-                  />
-                  <button 
-                    onClick={() => handleDeletePhoto(idx)}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 rounded-full text-white text-xs hidden group-hover:flex items-center justify-center"
-                  >
-                    ✕
-                  </button>
-                  {idx === 0 && <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-[10px] text-red-400 whitespace-nowrap">Primary</div>}
-                </div>
-              ))}
-              {allPhotos.length < MAX_PHOTOS && (
-                <button 
-                  onClick={() => setShowAddPhoto(true)}
-                  className="w-16 h-16 rounded-lg border-2 border-dashed border-white/30 flex items-center justify-center hover:border-red-500 transition"
-                >
-                  <span className="text-2xl text-gray-400">+</span>
-                </button>
-              )}
-            </div>
-          )}
-          
-          {allPhotos.length === 1 && allPhotos.length < MAX_PHOTOS && (
-            <button 
-              onClick={() => setShowAddPhoto(true)}
-              className="text-sm text-red-400 hover:text-red-300 mb-4"
-            >
-              + Add another live photo
-            </button>
-          )}
           
           {/* Bio */}
           {showEditBio ? (
@@ -486,6 +446,71 @@ export default function PartnerDashboard() {
             <p>🔹 AUTHENTICITY CHECK: Live Camera Only. AI-generated faces or filters are prohibited.</p>
             <p>🔹 This is a social meetup platform, not a professional service.</p>
           </div>
+        </div>
+
+        {/* Photo Gallery Section - Dedicated Section */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">📸 Photo Gallery</h2>
+            {allPhotos.length < MAX_PHOTOS && (
+              <button 
+                onClick={() => setShowAddPhoto(true)}
+                className="text-sm text-red-400 hover:text-red-300"
+              >
+                + Add Photo
+              </button>
+            )}
+          </div>
+          
+          {allPhotos.length === 0 ? (
+            <div className="bg-white/5 rounded-2xl p-8 text-center border border-white/10">
+              <p className="text-gray-400">No photos yet. Add your first live photo.</p>
+              <button 
+                onClick={() => setShowAddPhoto(true)}
+                className="mt-3 px-4 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700"
+              >
+                Add Photo
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {allPhotos.map((photo, idx) => (
+                <div key={idx} className="relative group">
+                  <div 
+                    className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
+                      idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20 hover:border-red-500/50'
+                    }`}
+                    onClick={() => handleSetPrimary(idx)}
+                  >
+                    <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    {idx === 0 && (
+                      <div className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                        Primary
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => handleDeletePhoto(idx)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full text-white text-xs hidden group-hover:flex items-center justify-center shadow-lg"
+                  >
+                    ✕
+                  </button>
+                  {idx !== 0 && (
+                    <button 
+                      onClick={() => handleSetPrimary(idx)}
+                      className="absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                      Set as Primary
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <p className="text-xs text-gray-500 mt-3 text-center">
+            📸 Up to {MAX_PHOTOS} live photos. Tap any photo to make it your primary profile picture.
+          </p>
         </div>
 
         {/* Pending Requests Section */}
