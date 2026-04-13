@@ -49,52 +49,52 @@ export default function PartnerDashboard() {
   }, [user]);
 
   const loadPhotos = async () => {
-  if (!user) return;
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('photos, live_photo_url')
-      .eq('id', user.id)
-      .single();
-    
-    let photoArray: string[] = [];
-    
-    // If photos array exists and has items, use it
-    if (data?.photos && data.photos.length > 0) {
-      photoArray = data.photos;
-    } 
-    // Otherwise, use the live_photo_url as the first photo
-    else if (data?.live_photo_url) {
-      photoArray = [data.live_photo_url];
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('photos, live_photo_url')
+        .eq('id', user.id)
+        .single();
+      
+      let photoArray: string[] = [];
+      
+      // If photos array exists and has items, use it
+      if (data?.photos && data.photos.length > 0) {
+        photoArray = data.photos;
+      } 
+      // Otherwise, use the live_photo_url as the first photo
+      else if (data?.live_photo_url) {
+        photoArray = [data.live_photo_url];
+      }
+      
+      setAllPhotos(photoArray);
+    } catch (err) {
+      console.error('Error loading photos:', err);
+      // Fallback to just the profile photo
+      if (profile?.live_photo_url) {
+        setAllPhotos([profile.live_photo_url]);
+      }
     }
-    
-    setAllPhotos(photoArray);
-  } catch (err) {
-    console.error('Error loading photos:', err);
-    // Fallback to just the profile photo
-    if (profile?.live_photo_url) {
-      setAllPhotos([profile.live_photo_url]);
-    }
-  }
-};
+  };
 
   const savePhotos = async (photos: string[]) => {
-  if (!user) return;
-  await supabase
-    .from('profiles')
-    .update({ photos: photos })
-    .eq('id', user.id);
-  setAllPhotos(photos);
-  
-  // Update primary profile photo (first photo)
-  if (photos[0] !== profile?.live_photo_url) {
+    if (!user) return;
     await supabase
       .from('profiles')
-      .update({ live_photo_url: photos[0] })
+      .update({ photos: photos })
       .eq('id', user.id);
-    await refreshProfile();
-  }
-};
+    setAllPhotos(photos);
+    
+    // Update primary profile photo (first photo)
+    if (photos[0] !== profile?.live_photo_url) {
+      await supabase
+        .from('profiles')
+        .update({ live_photo_url: photos[0] })
+        .eq('id', user.id);
+      await refreshProfile();
+    }
+  };
 
   const dataURLtoBlob = (dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
