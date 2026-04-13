@@ -65,6 +65,7 @@ export default function PartnerDashboard() {
             <p>Role: {profile?.role || 'undefined'}</p>
             <p>Is Partner: {String(profile?.is_partner || 'undefined')}</p>
             <p>Profile Complete: {String(profile?.profile_complete || 'undefined')}</p>
+            <p>Bio: {profile?.bio || '(empty)'}</p>
           </div>
         </div>
 
