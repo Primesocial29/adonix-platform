@@ -337,11 +337,16 @@ export default function PartnerDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar */}
+      {/* Navbar with Logo */}
       <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-red-500">ADONIX</span>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/Screenshot_2026-04-03_221406.png" 
+              alt="Adonix Logo" 
+              className="h-8 w-auto"
+            />
+            <span className="text-xl font-bold text-red-500">ADONIX</span>
           </div>
           <div className="relative">
             <button 
@@ -482,7 +487,7 @@ export default function PartnerDashboard() {
           )}
         </div>
 
-        {/* Quick Action Buttons - Orange gradient like home page */}
+        {/* Quick Action Buttons */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           <button onClick={() => setShowAllMeetupsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">All Meetups</button>
           <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Contributions</button>
@@ -490,16 +495,6 @@ export default function PartnerDashboard() {
           <button onClick={() => setShowServicesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Services & Rates</button>
           <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Schedule</button>
           <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Photos</button>
-        </div>
-
-        {/* Bottom Logout Button - Stays at bottom */}
-        <div className="mb-6">
-          <button 
-            onClick={handleLogout}
-            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition"
-          >
-            Logout
-          </button>
         </div>
 
         {/* Stats Summary */}
@@ -531,6 +526,16 @@ export default function PartnerDashboard() {
             <li>Two-person only — no extra friends or spectators.</li>
             <li>Report concerns immediately. We review within 24 hours.</li>
           </ul>
+        </div>
+
+        {/* Logout Button - Under High-Standard Protocol Section */}
+        <div className="mb-6">
+          <button 
+            onClick={handleLogout}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition"
+          >
+            Logout
+          </button>
         </div>
 
         {/* Footer with Modal Links */}
