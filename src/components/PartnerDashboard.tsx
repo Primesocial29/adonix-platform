@@ -1,13 +1,145 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+
+interface Booking {
+  id: string;
+  contact_email: string;
+  booking_date: string;
+  status: string;
+  client_id: string;
+  location_name?: string;
+  activity?: string;
+  suggested_contribution?: number;
+  client?: {
+    first_name: string;
+    username: string;
+    live_photo_url: string;
+    bio: string;
+    fitness_goals: string[];
+    created_at: string;
+  };
+}
 
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
+  const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [totalEarnings, setTotalEarnings] = useState(0);
+  const [showEditBio, setShowEditBio] = useState(false);
+  const [editBioText, setEditBioText] = useState(profile?.bio || '');
+  const [bioError, setBioError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      fetchBookings();
+      fetchEarnings();
+    }
+  }, [user]);
+
+  const fetchBookings = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: bookingsData, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          client:profiles!bookings_client_id_fkey (
+            first_name,
+            username,
+            live_photo_url,
+            bio,
+            fitness_goals,
+            created_at
+          )
+        `)
+        .eq('partner_id', user.id);
+
+      if (error) throw error;
+
+      const pending = (bookingsData || []).filter(b => b.status === 'pending');
+      const upcoming = (bookingsData || []).filter(b => b.status === 'confirmed' && new Date(b.booking_date) > new Date());
+      
+      setPendingBookings(pending);
+      setUpcomingBookings(upcoming.sort((a, b) => new Date(a.booking_date).getTime() - new Date(b.booking_date).getTime()).slice(0, 4));
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+    }
+  };
+
+  const fetchEarnings = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('suggested_contribution')
+        .eq('partner_id', user.id)
+        .eq('status', 'completed');
+      
+      if (error) throw error;
+      
+      const total = (data || []).reduce((sum, b) => sum + (b.suggested_contribution || 0), 0);
+      setTotalEarnings(total);
+    } catch (err) {
+      console.error('Error fetching earnings:', err);
+    }
+  };
+
+  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingId);
+      
+      if (error) throw error;
+      await fetchBookings();
+    } catch (err) {
+      console.error('Error updating booking:', err);
+      alert('Failed to update. Please try again.');
+    }
+  };
+
+  const updateBio = async () => {
+    if (editBioText.length < 20) {
+      setBioError('Bio must be at least 20 characters');
+      return;
+    }
+    if (editBioText.length > 500) {
+      setBioError('Bio cannot exceed 500 characters');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ bio: editBioText })
+        .eq('id', user?.id);
+      
+      if (error) throw error;
+      await refreshProfile();
+      setShowEditBio(false);
+      setBioError('');
+    } catch (err) {
+      console.error('Error updating bio:', err);
+      alert('Failed to update bio');
+    }
+  };
+
+  const calculateNetEarnings = (contribution: number) => {
+    const platformFee = contribution * 0.15;
+    const processingFee = contribution * 0.029 + 0.30;
+    return contribution - platformFee - processingFee;
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
-        <p className="ml-4">Loading profile...</p>
       </div>
     );
   }
@@ -15,65 +147,263 @@ export default function PartnerDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-400 mb-4">No user found. Please sign in.</p>
-          <a href="/" className="text-red-500 hover:underline">Go to Home</a>
-        </div>
+        <p>Please sign in to access the partner dashboard.</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         
-        {/* Profile Header */}
-        <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center overflow-hidden">
-              {profile?.live_photo_url ? (
-                <img src={profile.live_photo_url} className="w-full h-full object-cover" alt="Profile" />
-              ) : (
-                <span className="text-3xl">👤</span>
-              )}
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">Hello, {profile?.first_name || 'Partner'}! 👋</h2>
-              <p className="text-gray-400 mt-1">{profile?.bio || 'No bio yet. Click Edit Bio to add one.'}</p>
-              <div className="flex gap-3 mt-3">
-                <button className="px-3 py-1 text-sm bg-white/10 rounded-full hover:bg-white/20">✏️ Edit Bio</button>
-                <button className="px-3 py-1 text-sm bg-white/10 rounded-full hover:bg-white/20">📸 Change Photo</button>
-                <button onClick={() => refreshProfile()} className="px-3 py-1 text-sm bg-blue-600/30 rounded-full hover:bg-blue-600/50">🔄 Refresh</button>
+        {/* Profile Section */}
+        <div className="text-center mb-12">
+          <div className="w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4">
+            {profile?.live_photo_url ? (
+              <img src={profile.live_photo_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
+            )}
+          </div>
+          
+          <h1 className="text-2xl font-bold mb-2">Hello, {profile?.first_name || 'Partner'}! 👋</h1>
+          
+          {showEditBio ? (
+            <div className="max-w-md mx-auto mb-4">
+              <textarea
+                value={editBioText}
+                onChange={(e) => setEditBioText(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white"
+                rows={4}
+                placeholder="Tell clients about yourself... (20-500 characters)"
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-400">{editBioText.length}/500 characters</p>
+                {bioError && <p className="text-xs text-red-400">{bioError}</p>}
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button onClick={updateBio} className="flex-1 px-4 py-2 bg-green-600 rounded-lg">Save</button>
+                <button onClick={() => { setShowEditBio(false); setBioError(''); }} className="flex-1 px-4 py-2 bg-gray-600 rounded-lg">Cancel</button>
               </div>
             </div>
+          ) : (
+            <p className="text-gray-300 max-w-md mx-auto mb-4">{profile?.bio || 'No bio yet. Click Edit Bio to add one.'}</p>
+          )}
+          
+          <div className="flex justify-center gap-3 mb-3">
+            <button onClick={() => setShowEditBio(true)} className="px-4 py-2 bg-white/10 rounded-full text-sm hover:bg-white/20 transition">✏️ Edit Bio</button>
+            <button className="px-4 py-2 bg-white/10 rounded-full text-sm hover:bg-white/20 transition">📸 Change Photo</button>
+          </div>
+          
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>🔹 Profile info is self-reported — not verified by Adonix Fit.</p>
+            <p>🔹 This is a social meetup platform, not a professional service.</p>
           </div>
         </div>
 
-        {/* Pending Requests - Placeholder */}
-        <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4">📋 Pending Requests</h3>
-          <p className="text-gray-400">No pending requests at this time.</p>
+        {/* Pending Invitations Section */}
+        {pendingBookings.length > 0 && (
+          <div className="mb-10">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">📋 New Meetup Invitations</h2>
+              <button className="text-sm text-red-400 hover:text-red-300">View All →</button>
+            </div>
+            <div className="space-y-4">
+              {pendingBookings.map((booking) => {
+                const netEarnings = calculateNetEarnings(booking.suggested_contribution || 75);
+                return (
+                  <div key={booking.id} className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-lg">{booking.client?.first_name || 'Client'}</p>
+                        <p className="text-sm text-gray-400">@{booking.client?.username || 'client'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-400">{booking.activity || 'Fitness'} • {new Date(booking.booking_date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-3 italic">"Can't wait to move together!"</p>
+                    <div className="bg-white/5 rounded-xl p-3 mb-4">
+                      <p className="text-sm">Suggested Contribution: ${booking.suggested_contribution || 75}.00</p>
+                      <p className="text-sm text-green-400">Your Net Earnings: ${netEarnings.toFixed(2)}</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => {
+                          setSelectedBooking(booking);
+                          setShowClientModal(true);
+                        }}
+                        className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20"
+                      >
+                        👤 View Profile
+                      </button>
+                      <button 
+                        onClick={() => updateBookingStatus(booking.id, 'confirmed')}
+                        className="px-4 py-2 bg-green-600 rounded-lg text-sm hover:bg-green-700"
+                      >
+                        ✅ Accept
+                      </button>
+                      <button 
+                        onClick={() => updateBookingStatus(booking.id, 'declined')}
+                        className="px-4 py-2 bg-red-600 rounded-lg text-sm hover:bg-red-700"
+                      >
+                        ❌ Decline
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Meetups Section */}
+        <div className="mb-10">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">⏰ Your Upcoming Meetups</h2>
+            <button className="text-sm text-red-400 hover:text-red-300">View All →</button>
+          </div>
+          
+          {upcomingBookings.length === 0 ? (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+              <p className="text-gray-400">No meetups scheduled yet. When clients invite you, they'll show up here.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingBookings.map((booking, index) => {
+                const netEarnings = calculateNetEarnings(booking.suggested_contribution || 75);
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '📅';
+                return (
+                  <div key={booking.id} className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold">{medal} {new Date(booking.booking_date).toLocaleDateString()} at {new Date(booking.booking_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                        <p className="text-lg font-medium">{booking.activity || 'Fitness'} with {booking.client?.first_name || 'Client'}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-2">📍 {booking.location_name || 'Gold\'s Gym Downtown'}</p>
+                    <p className="text-green-400 text-sm mb-4">💰 Your Net: ${netEarnings.toFixed(2)}</p>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => {
+                          setSelectedBooking(booking);
+                          setShowClientModal(true);
+                        }}
+                        className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20"
+                      >
+                        👤 View Profile
+                      </button>
+                      <button className="px-4 py-2 bg-yellow-600/30 rounded-lg text-sm hover:bg-yellow-600/50">❌ Cancel</button>
+                      <button className="px-4 py-2 bg-blue-600/30 rounded-lg text-sm hover:bg-blue-600/50">🔄 Request Change</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Upcoming Soon - Placeholder */}
-        <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4">⏰ Upcoming Soon</h3>
-          <p className="text-gray-400">No upcoming meetups scheduled.</p>
+        {/* Quick Stats Section */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">💰 Your Impact</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+              <p className="text-3xl font-bold text-green-400">${totalEarnings}</p>
+              <p className="text-sm text-gray-400">Total Suggested Contributions</p>
+              <p className="text-xs text-gray-500">this month</p>
+              <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Details →</button>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+              <p className="text-3xl font-bold text-yellow-400">{pendingBookings.length}</p>
+              <p className="text-sm text-gray-400">Pending Invitations</p>
+              <p className="text-xs text-gray-500">waiting for you</p>
+              <button className="mt-3 text-sm text-red-400 hover:text-red-300">View Requests →</button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 text-center mt-4">
+            ℹ️ Platform Support (15%) + processing fees are deducted. You keep the rest. Stripe handles all payments.
+          </p>
         </div>
 
-        {/* All Upcoming Meetups - Placeholder */}
-        <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4">📅 All Upcoming Meetups</h3>
-          <p className="text-gray-400">No meetups scheduled.</p>
+        {/* Quick Actions */}
+        <div className="mb-10">
+          <h2 className="text-xl font-semibold mb-4">⚙️ Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📅 Past Meetups</button>
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">📍 My Locations</button>
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⏰ My Schedule</button>
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">🔒 Safety Guidelines</button>
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">⚖️ Legal Documents</button>
+            <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm hover:bg-white/10">❓ Help & Support</button>
+          </div>
         </div>
 
-        {/* Earnings Summary - Placeholder */}
-        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4">💰 Earnings Summary</h3>
-          <p className="text-gray-400">Total earned this month: $0.00</p>
-          <p className="text-xs text-gray-500 mt-2">Adonix Fit uses Stripe for all payments.</p>
+        {/* Legal Reminders */}
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
+          <h3 className="font-semibold mb-3">🛡️ Remember</h3>
+          <ul className="space-y-2 text-sm text-gray-300">
+            <li>• You're an independent social participant, not an employee.</li>
+            <li>• Meet only at public locations — no private residences.</li>
+            <li>• GPS check-in required for every meetup.</li>
+            <li>• Two-person only — no extra friends or spectators.</li>
+            <li>• Report concerns immediately. We review within 24 hours.</li>
+          </ul>
         </div>
 
+        {/* Client Profile Modal */}
+        {showClientModal && selectedBooking && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowClientModal(false)}>
+            <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+              <div className="text-center mb-4">
+                <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-white/10 mb-3">
+                  {selectedBooking.client?.live_photo_url ? (
+                    <img src={selectedBooking.client.live_photo_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">👤</div>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold">{selectedBooking.client?.first_name || 'Client'}</h3>
+                <p className="text-gray-400 text-sm">@{selectedBooking.client?.username || 'client'}</p>
+                <p className="text-xs text-gray-500 mt-1">Member since: {selectedBooking.client?.created_at ? new Date(selectedBooking.client.created_at).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              
+              <div className="bg-white/5 rounded-xl p-4 mb-4">
+                <p className="text-sm text-gray-300 italic">"{selectedBooking.client?.bio || 'Looking forward to moving together!'}"</p>
+                {selectedBooking.client?.fitness_goals && selectedBooking.client.fitness_goals.length > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">Goals: {selectedBooking.client.fitness_goals.join(', ')}</p>
+                )}
+              </div>
+              
+              <div className="bg-white/5 rounded-xl p-4 mb-4">
+                <p className="text-sm font-medium mb-2">📋 Meetup Request</p>
+                <p className="text-sm">Activity: {selectedBooking.activity || 'Fitness'}</p>
+                <p className="text-sm">Date: {new Date(selectedBooking.booking_date).toLocaleDateString()}</p>
+                <p className="text-sm">Time: {new Date(selectedBooking.booking_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                <p className="text-sm">📍 {selectedBooking.location_name || 'Gold\'s Gym Downtown'}</p>
+                <div className="border-t border-white/10 my-3 pt-3">
+                  <p className="text-sm">Suggested Contribution: ${selectedBooking.suggested_contribution || 75}.00</p>
+                  <p className="text-sm text-red-400">Platform Support (15%): -${((selectedBooking.suggested_contribution || 75) * 0.15).toFixed(2)}</p>
+                  <p className="text-sm text-red-400">Processing fees: -${((selectedBooking.suggested_contribution || 75) * 0.029 + 0.30).toFixed(2)}</p>
+                  <p className="text-sm font-bold text-green-400 mt-1">Your Net: ${calculateNetEarnings(selectedBooking.suggested_contribution || 75).toFixed(2)}</p>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mb-4">
+                <p className="text-xs text-yellow-300 text-center">⚠️ This is a social meetup, not a professional service. Meet only at public locations. GPS check-in required.</p>
+              </div>
+              
+              <div className="flex gap-2">
+                <button onClick={() => updateBookingStatus(selectedBooking.id, 'confirmed')} className="flex-1 py-2 bg-green-600 rounded-lg text-sm font-medium">✅ Accept</button>
+                <button onClick={() => updateBookingStatus(selectedBooking.id, 'declined')} className="flex-1 py-2 bg-red-600 rounded-lg text-sm font-medium">❌ Decline</button>
+                <button className="px-3 py-2 bg-gray-700 rounded-lg text-sm">🚫 Report</button>
+                <button className="px-3 py-2 bg-gray-700 rounded-lg text-sm">🔒 Block</button>
+              </div>
+              
+              <button onClick={() => setShowClientModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg text-sm">Close</button>
+            </div>
+          </div>
+        )}
+        
       </div>
     </div>
   );
