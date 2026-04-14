@@ -84,6 +84,23 @@ export function useAuth() {
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    
+    // After successful sign in, fetch profile to determine redirect
+    if (data?.user) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role, is_partner')
+        .eq('id', data.user.id)
+        .single();
+      
+      // Redirect based on role
+      if (profileData?.is_partner === true || profileData?.role === 'trainer' || profileData?.role === 'partner') {
+        window.location.href = '/partner-dashboard';
+      } else {
+        window.location.href = '/browse';
+      }
+    }
+    
     return data;
   };
 
@@ -105,12 +122,20 @@ export function useAuth() {
         profile_complete: false,
         first_name: username,
       });
+      
+      // Redirect based on role after sign up
+      if (role === 'partner') {
+        window.location.href = '/partner-setup';
+      } else {
+        window.location.href = '/client-setup';
+      }
     }
     return data;
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    window.location.href = '/';
   };
 
   const refreshProfile = async () => {
