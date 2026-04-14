@@ -19,7 +19,6 @@ interface TimeSlot {
   durationMinutes: number;
 }
 
-// Duration options in minutes
 type DurationOption = 30 | 60 | 90 | 120;
 
 export default function PartnerProfileView({ partner, onClose, onBook }: PartnerProfileViewProps) {
@@ -53,38 +52,43 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const serviceAreas = (partner as any).service_areas || [];
   const certifications = (partner as any).certifications || [];
 
+  // Helper functions
+  const timeToMinutes = (time: string): number => {
+    const [hour, minute] = time.split(':').map(Number);
+    return hour * 60 + minute;
+  };
+  
+  const minutesToTime = (minutes: number): string => {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
+
   // Determine which duration options are available based on partner's settings
   const getAvailableDurationOptions = (): DurationOption[] => {
     const options: DurationOption[] = [];
     
-    // Check if partner has half-hour enabled (for 30 min sessions)
     if (halfHourEnabled) {
       options.push(30);
     }
     
-    // 1 hour is always available if partner has any availability
-    // (since availability is stored as 1-hour blocks)
     options.push(60);
     
-    // Check if partner has 1.5 hour blocks (90 min)
-    // This would be determined by checking if there are any 90-min contiguous blocks
-    // For now, we'll check if partner has at least one day with 3+ contiguous 30-min slots
-    const has90MinBlocks = checkContiguousBlocks(90);
-    if (has90MinBlocks) {
+    // Check for 90-min blocks (3 x 30-min slots)
+    if (hasExactDurationBlocks(90)) {
       options.push(90);
     }
     
-    // Check if partner has 2 hour blocks (120 min)
-    const has120MinBlocks = checkContiguousBlocks(120);
-    if (has120MinBlocks) {
+    // Check for 120-min blocks (4 x 30-min slots or 2 x 60-min slots)
+    if (hasExactDurationBlocks(120)) {
       options.push(120);
     }
     
     return options;
   };
   
-  // Helper to check if partner has contiguous blocks of a certain duration
-  const checkContiguousBlocks = (targetMinutes: number): boolean => {
+  // Check if partner has EXACT duration blocks (not longer)
+  const hasExactDurationBlocks = (targetMinutes: number): boolean => {
     for (const daySchedule of availability) {
       if (!daySchedule.times || daySchedule.times.length === 0) continue;
       
@@ -93,35 +97,34 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       const blocksNeeded = targetMinutes / slotDuration;
       
       for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
-        let isContiguous = true;
-        for (let j = 0; j < blocksNeeded - 1; j++) {
-          const currentTime = timeToMinutes(sortedTimes[i + j]);
-          const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
-          if (nextTime - currentTime !== slotDuration) {
-            isContiguous = false;
+        let isExactBlock = true;
+        
+        // Check all required slots are present and contiguous
+        for (let j = 0; j < blocksNeeded; j++) {
+          const expectedTime = timeToMinutes(sortedTimes[i]) + (j * slotDuration);
+          const actualTime = timeToMinutes(sortedTimes[i + j]);
+          if (actualTime !== expectedTime) {
+            isExactBlock = false;
             break;
           }
         }
-        if (isContiguous) return true;
+        
+        // Verify there's NOT an extra slot immediately after (would make it longer)
+        if (isExactBlock && (i + blocksNeeded) < sortedTimes.length) {
+          const nextTimeAfterBlock = timeToMinutes(sortedTimes[i + blocksNeeded]);
+          const expectedEndTime = timeToMinutes(sortedTimes[i]) + targetMinutes;
+          if (nextTimeAfterBlock === expectedEndTime) {
+            isExactBlock = false;
+          }
+        }
+        
+        if (isExactBlock) return true;
       }
     }
     return false;
   };
-  
-  // Parse time string to minutes
-  const timeToMinutes = (time: string): number => {
-    const [hour, minute] = time.split(':').map(Number);
-    return hour * 60 + minute;
-  };
-  
-  // Format minutes to time string
-  const minutesToTime = (minutes: number): string => {
-    const hour = Math.floor(minutes / 60);
-    const minute = minutes % 60;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  };
 
-  // Get available dates (next 14 days where partner has availability for selected duration)
+  // Get available dates for selected duration
   const getAvailableDates = () => {
     if (!selectedDuration) return [];
     
@@ -137,9 +140,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       const daySchedule = (availability || []).find(a => a.day === dayName);
       
       if (daySchedule && daySchedule.times && daySchedule.times.length > 0) {
-        // Check if this day has a time slot of the selected duration
-        const hasSlot = hasTimeSlotOfDuration(daySchedule.times, selectedDuration);
-        if (hasSlot) {
+        if (hasExactDurationOnDay(daySchedule.times, selectedDuration)) {
           dates.push({
             date: date.toISOString().split('T')[0],
             dayName: dayName.slice(0, 3),
@@ -152,30 +153,41 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return dates;
   };
   
-  // Check if a day has a time slot of the specified duration
-  const hasTimeSlotOfDuration = (times: string[], durationMinutes: number): boolean => {
+  // Check if a specific day has an exact duration slot
+  const hasExactDurationOnDay = (times: string[], targetMinutes: number): boolean => {
     if (!times || times.length === 0) return false;
     
     const sortedTimes = [...times].sort();
     const slotDuration = halfHourEnabled ? 30 : 60;
-    const blocksNeeded = durationMinutes / slotDuration;
+    const blocksNeeded = targetMinutes / slotDuration;
     
     for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
-      let isContiguous = true;
-      for (let j = 0; j < blocksNeeded - 1; j++) {
-        const currentTime = timeToMinutes(sortedTimes[i + j]);
-        const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
-        if (nextTime - currentTime !== slotDuration) {
-          isContiguous = false;
+      let isExactBlock = true;
+      
+      for (let j = 0; j < blocksNeeded; j++) {
+        const expectedTime = timeToMinutes(sortedTimes[i]) + (j * slotDuration);
+        const actualTime = timeToMinutes(sortedTimes[i + j]);
+        if (actualTime !== expectedTime) {
+          isExactBlock = false;
           break;
         }
       }
-      if (isContiguous) return true;
+      
+      if (isExactBlock) {
+        if ((i + blocksNeeded) < sortedTimes.length) {
+          const nextTimeAfterBlock = timeToMinutes(sortedTimes[i + blocksNeeded]);
+          const expectedEndTime = timeToMinutes(sortedTimes[i]) + targetMinutes;
+          if (nextTimeAfterBlock === expectedEndTime) {
+            isExactBlock = false;
+          }
+        }
+        if (isExactBlock) return true;
+      }
     }
     return false;
   };
   
-  // Get available time slots for selected date and duration
+  // Get available time slots for selected date and duration (EXACT duration only)
   const getAvailableTimeSlots = (): TimeSlot[] => {
     if (!selectedDate || !selectedDuration) return [];
     
@@ -191,17 +203,28 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     const slots: TimeSlot[] = [];
     
     for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
-      let isContiguous = true;
-      for (let j = 0; j < blocksNeeded - 1; j++) {
-        const currentTime = timeToMinutes(sortedTimes[i + j]);
-        const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
-        if (nextTime - currentTime !== slotDuration) {
-          isContiguous = false;
+      let isExactBlock = true;
+      
+      // Check that ALL required blocks are present and contiguous
+      for (let j = 0; j < blocksNeeded; j++) {
+        const expectedTime = timeToMinutes(sortedTimes[i]) + (j * slotDuration);
+        const actualTime = timeToMinutes(sortedTimes[i + j]);
+        if (actualTime !== expectedTime) {
+          isExactBlock = false;
           break;
         }
       }
       
-      if (isContiguous) {
+      // Verify there is NOT an extra block immediately after (would make it longer)
+      if (isExactBlock && (i + blocksNeeded) < sortedTimes.length) {
+        const nextTimeAfterBlock = timeToMinutes(sortedTimes[i + blocksNeeded]);
+        const expectedEndTime = timeToMinutes(sortedTimes[i]) + selectedDuration;
+        if (nextTimeAfterBlock === expectedEndTime) {
+          isExactBlock = false;
+        }
+      }
+      
+      if (isExactBlock) {
         const startTime = sortedTimes[i];
         const startMinutes = timeToMinutes(startTime);
         const endMinutes = startMinutes + selectedDuration;
@@ -219,20 +242,17 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return slots;
   };
 
-  // Get current rate for selected activity
   const getCurrentRate = () => {
     const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: 0 };
     return rates.hourly;
   };
 
-  // Calculate fee breakdown
   const currentRate = getCurrentRate();
   const totalContribution = selectedTimeSlot ? currentRate * selectedTimeSlot.durationHours : 0;
   const platformFee = totalContribution * 0.15;
   const processingFee = totalContribution * 0.029 + 0.30;
   const partnerReceives = totalContribution - platformFee - processingFee;
 
-  // Get location distance (mock - would need real calculation)
   const getLocationDistance = (locationName: string): number => {
     const distances: Record<string, number> = {
       'Gold\'s Gym Downtown': 2,
@@ -242,7 +262,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return distances[locationName] || 3;
   };
 
-  // Format time for display
   const formatTimeDisplay = (time: string): string => {
     const [hour, minute] = time.split(':');
     const h = parseInt(hour);
@@ -251,13 +270,11 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return `${displayHour}:${minute} ${period}`;
   };
 
-  // Format date for display
   const formatDateDisplay = (dateStr: string): string => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  // Format duration for display
   const formatDuration = (minutes: number): string => {
     if (minutes === 30) return '30 min';
     if (minutes === 60) return '1 hour';
@@ -265,7 +282,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return '2 hours';
   };
 
-  // Check if all required fields are filled
   const isFormComplete = () => {
     return selectedActivity &&
            selectedDuration &&
@@ -323,14 +339,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const avgRating = 4.8;
   const reviewCount = 24;
 
-  // Reset selections when duration changes
   const handleDurationSelect = (duration: DurationOption) => {
     setSelectedDuration(duration);
     setSelectedDate('');
     setSelectedTimeSlot(null);
   };
 
-  // Reset time slot when date changes
   const handleDateSelect = (date: string) => {
     setSelectedDate(date);
     setSelectedTimeSlot(null);
@@ -342,20 +356,17 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
         <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Header */}
           <div className="sticky top-0 bg-black/90 z-10 pb-4 flex justify-between items-center">
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div className="flex gap-2">
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button className="p-2 hover:bg-white/10 rounded-full">
                 <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
               </button>
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button className="p-2 hover:bg-white/10 rounded-full">
                 <Share2 className="w-5 h-5" />
               </button>
-              <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <button className="p-2 hover:bg-white/10 rounded-full">
                 <Flag className="w-5 h-5" />
               </button>
             </div>
@@ -367,7 +378,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               {partner.live_photo_url ? (
                 <img 
                   src={partner.live_photo_url} 
-                  alt={partner.first_name || 'Partner'} 
+                  alt={partner.first_name} 
                   className="w-full h-full object-cover cursor-pointer"
                   onClick={() => setSelectedImage(partner.live_photo_url!)}
                 />
@@ -397,10 +408,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                 {showFullBio ? partner.bio : `${partner.bio.slice(0, 150)}${partner.bio.length > 150 ? '...' : ''}`}
               </p>
               {partner.bio.length > 150 && (
-                <button 
-                  onClick={() => setShowFullBio(!showFullBio)}
-                  className="text-xs text-red-400 hover:text-red-300 mt-2"
-                >
+                <button onClick={() => setShowFullBio(!showFullBio)} className="text-xs text-red-400 hover:text-red-300 mt-2">
                   {showFullBio ? 'Show less' : 'Read more'}
                 </button>
               )}
@@ -413,7 +421,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           {/* STEP 1: Activity */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
             <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 1: WHAT GETS YOU MOVING?</h2>
-            
             <label className="block text-sm text-gray-400 mb-2">Select Activity</label>
             <div className="flex flex-wrap gap-2">
               {allServices.map(service => (
@@ -437,7 +444,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           {selectedActivity && (
             <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
               <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 2: HOW LONG?</h2>
-              
               <label className="block text-sm text-gray-400 mb-2">Select Duration</label>
               <div className="flex flex-wrap gap-3">
                 {availableDurationOptions.map(duration => (
@@ -462,7 +468,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           {selectedDuration && (
             <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
               <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 3: WHEN?</h2>
-              
               <label className="block text-sm text-gray-400 mb-2">Select Date</label>
               <div className="flex flex-wrap gap-2">
                 {availableDates.map(date => (
@@ -483,17 +488,15 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               {availableDates.length === 0 && (
                 <p className="text-gray-400 text-sm text-center py-4">
                   No available dates for {formatDuration(selectedDuration)} sessions.
-                  Try a different duration.
                 </p>
               )}
             </div>
           )}
 
-          {/* STEP 4: Start Time */}
+          {/* STEP 4: Time Slots - EXACT duration only */}
           {selectedDate && (
             <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
               <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 4: WHAT TIME?</h2>
-              
               <label className="block text-sm text-gray-400 mb-2">Select Start Time</label>
               <div className="flex flex-wrap gap-2">
                 {availableTimeSlots.map((slot, idx) => (
@@ -517,7 +520,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               {availableTimeSlots.length === 0 && (
                 <p className="text-gray-400 text-sm text-center py-4">
                   No available time slots for this date.
-                  Try a different date or duration.
                 </p>
               )}
             </div>
@@ -526,7 +528,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           {/* STEP 5: Location */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
             <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 5: WHERE TO MEET?</h2>
-            
             <div className="space-y-3">
               {serviceAreas.map((area: any, idx: number) => {
                 const distance = getLocationDistance(area.name);
@@ -557,13 +558,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                 );
               })}
             </div>
-            <p className="text-xs text-yellow-400 mt-3">⚠️ Only verified public venues. Private residences are strictly prohibited.</p>
+            <p className="text-xs text-yellow-400 mt-3">⚠️ Only verified public venues. Private residences prohibited.</p>
           </div>
 
           {/* STEP 6: Contact Info */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
             <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 6: YOUR CONTACT INFO</h2>
-            
             <div className="space-y-3">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Email Address</label>
@@ -612,39 +612,19 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             <h2 className="text-lg font-semibold mb-3 text-red-400">⚖️ LEGAL AGREEMENT</h2>
             <div className="space-y-2">
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={ageConfirmed}
-                  onChange={(e) => setAgeConfirmed(e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-red-600"
-                />
+                <input type="checkbox" checked={ageConfirmed} onChange={(e) => setAgeConfirmed(e.target.checked)} className="mt-1 w-4 h-4 accent-red-600" />
                 <span className="text-sm text-gray-300">I confirm I am at least 18 years old.</span>
               </label>
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={socialConfirmed}
-                  onChange={(e) => setSocialConfirmed(e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-red-600"
-                />
+                <input type="checkbox" checked={socialConfirmed} onChange={(e) => setSocialConfirmed(e.target.checked)} className="mt-1 w-4 h-4 accent-red-600" />
                 <span className="text-sm text-gray-300">I understand this is a social meetup, not a professional service.</span>
               </label>
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={locationConfirmed}
-                  onChange={(e) => setLocationConfirmed(e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-red-600"
-                />
+                <input type="checkbox" checked={locationConfirmed} onChange={(e) => setLocationConfirmed(e.target.checked)} className="mt-1 w-4 h-4 accent-red-600" />
                 <span className="text-sm text-gray-300">I agree to meet at the verified public location above.</span>
               </label>
               <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={gpsConfirmed}
-                  onChange={(e) => setGpsConfirmed(e.target.checked)}
-                  className="mt-1 w-4 h-4 accent-red-600"
-                />
+                <input type="checkbox" checked={gpsConfirmed} onChange={(e) => setGpsConfirmed(e.target.checked)} className="mt-1 w-4 h-4 accent-red-600" />
                 <span className="text-sm text-gray-300">I understand GPS check-in is required within 0.75 miles.</span>
               </label>
             </div>
@@ -676,19 +656,9 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
 
       {/* Image Lightbox */}
       {selectedImage && (
-        <div 
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setSelectedImage(null)}
-        >
-          <img 
-            src={selectedImage} 
-            alt="Full size" 
-            className="max-w-full max-h-full object-contain"
-          />
-          <button 
-            className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20"
-            onClick={() => setSelectedImage(null)}
-          >
+        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 cursor-pointer" onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="Full size" className="max-w-full max-h-full object-contain" />
+          <button className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20" onClick={() => setSelectedImage(null)}>
             <X className="w-6 h-6" />
           </button>
         </div>
