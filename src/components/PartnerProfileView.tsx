@@ -12,6 +12,12 @@ interface PartnerProfileViewProps {
   onBook?: (partner: Profile) => void;
 }
 
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+}
+
 export default function PartnerProfileView({ partner, onClose, onBook }: PartnerProfileViewProps) {
   const { user, profile } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -20,9 +26,8 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   
   // Selection states
   const [selectedActivity, setSelectedActivity] = useState<string>('');
-  const [selectedDuration, setSelectedDuration] = useState<1 | 2>(1);
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedStartTime, setSelectedStartTime] = useState<string>('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -75,23 +80,112 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return dates;
   };
 
-  // Get available time slots for selected date
-  const getAvailableTimeSlots = () => {
+  // Parse time string to minutes for easier comparison
+  const timeToMinutes = (time: string): number => {
+    const [hour, minute] = time.split(':').map(Number);
+    return hour * 60 + minute;
+  };
+
+  // Format minutes to time string
+  const minutesToTime = (minutes: number): string => {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
+
+  // Get available time slots with calculated durations based on partner's availability
+  const getAvailableTimeSlots = (): TimeSlot[] => {
     if (!selectedDate) return [];
+    
     const date = new Date(selectedDate);
     const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
     const daySchedule = (availability || []).find(a => a.day === dayName);
-    if (!daySchedule || !daySchedule.times) return [];
-    return daySchedule.times.sort();
+    
+    if (!daySchedule || !daySchedule.times || daySchedule.times.length === 0) return [];
+    
+    const sortedTimes = [...daySchedule.times].sort();
+    const slots: TimeSlot[] = [];
+    const maxDuration = 2; // Maximum 2 hours
+    
+    for (let i = 0; i < sortedTimes.length; i++) {
+      const startTime = sortedTimes[i];
+      const startMinutes = timeToMinutes(startTime);
+      
+      // Check how many contiguous hours are available
+      let contiguousHours = 1;
+      let endMinutes = startMinutes + 60;
+      
+      // Look ahead to see if next time slots are contiguous (60 minutes apart)
+      for (let j = i + 1; j < sortedTimes.length; j++) {
+        const nextTime = sortedTimes[j];
+        const nextMinutes = timeToMinutes(nextTime);
+        
+        if (nextMinutes === endMinutes) {
+          contiguousHours++;
+          endMinutes += 60;
+        } else {
+          break;
+        }
+      }
+      
+      // Determine available durations for this start time (1 hour always available if slot exists)
+      // Max 2 hours, but limited by contiguous availability
+      const availableDuration = Math.min(contiguousHours, maxDuration);
+      
+      if (availableDuration >= 1) {
+        const endTime = minutesToTime(startMinutes + 60);
+        slots.push({
+          startTime,
+          endTime,
+          durationHours: 1
+        });
+      }
+      
+      // If 2 hours available and partner's schedule allows (contiguous 2 hours)
+      if (availableDuration >= 2) {
+        const endTime2 = minutesToTime(startMinutes + 120);
+        // Check if the slot at +60 minutes exists (it should based on contiguous check)
+        slots.push({
+          startTime,
+          endTime: endTime2,
+          durationHours: 2
+        });
+      }
+    }
+    
+    // Remove duplicates (same start time, same duration)
+    const uniqueSlots = slots.filter((slot, index, self) =>
+      index === self.findIndex(s => s.startTime === slot.startTime && s.durationHours === slot.durationHours)
+    );
+    
+    // Sort by start time, then by duration (1hr first)
+    return uniqueSlots.sort((a, b) => {
+      if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
+      return a.durationHours - b.durationHours;
+    });
   };
 
-  // Calculate end time based on start time and duration
-  const calculateEndTime = (startTime: string, durationHours: number): string => {
-    const [hour, minute] = startTime.split(':').map(Number);
-    const totalMinutes = hour * 60 + minute + durationHours * 60;
-    const endHour = Math.floor(totalMinutes / 60);
-    const endMinute = totalMinutes % 60;
-    return `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+  // Get current rate for selected activity
+  const getCurrentRate = () => {
+    const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: 0 };
+    return rates.hourly;
+  };
+
+  // Calculate fee breakdown
+  const currentRate = getCurrentRate();
+  const totalContribution = selectedTimeSlot ? currentRate * selectedTimeSlot.durationHours : 0;
+  const platformFee = totalContribution * 0.15;
+  const processingFee = totalContribution * 0.029 + 0.30;
+  const partnerReceives = totalContribution - platformFee - processingFee;
+
+  // Get location distance (mock - would need real calculation)
+  const getLocationDistance = (locationName: string): number => {
+    const distances: Record<string, number> = {
+      'Gold\'s Gym Downtown': 2,
+      'Central Park Track': 3,
+      'LA Fitness Uptown': 5,
+    };
+    return distances[locationName] || 3;
   };
 
   // Format time for display
@@ -109,34 +203,11 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
-  // Get current rate for selected activity
-  const getCurrentRate = () => {
-    const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: 0 };
-    return rates.hourly;
-  };
-
-  // Calculate fee breakdown
-  const currentRate = getCurrentRate();
-  const totalContribution = currentRate * selectedDuration;
-  const platformFee = totalContribution * 0.15;
-  const processingFee = totalContribution * 0.029 + 0.30;
-  const partnerReceives = totalContribution - platformFee - processingFee;
-
-  // Get location distance (mock - would need real calculation)
-  const getLocationDistance = (locationName: string): number => {
-    const distances: Record<string, number> = {
-      'Gold\'s Gym Downtown': 2,
-      'Central Park Track': 3,
-      'LA Fitness Uptown': 5,
-    };
-    return distances[locationName] || 3;
-  };
-
   // Check if all required fields are filled
   const isFormComplete = () => {
     return selectedActivity &&
            selectedDate &&
-           selectedStartTime &&
+           selectedTimeSlot &&
            selectedLocation &&
            contactEmail &&
            contactPhone &&
@@ -149,8 +220,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const handleSendInvitation = async () => {
     if (!isFormComplete()) return;
     
-    const endTime = calculateEndTime(selectedStartTime, selectedDuration);
-    
     // Create booking in database
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -159,14 +228,16 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
         return;
       }
       
+      const bookingDateTime = `${selectedDate}T${selectedTimeSlot!.startTime}:00`;
+      
       const { data, error } = await supabase
         .from('bookings')
         .insert({
           partner_id: partner.id,
           client_id: currentUser.id,
           activity: selectedActivity,
-          booking_date: `${selectedDate}T${selectedStartTime}:00`,
-          duration_hours: selectedDuration,
+          booking_date: bookingDateTime,
+          duration_hours: selectedTimeSlot!.durationHours,
           suggested_contribution: totalContribution,
           location_name: selectedLocation,
           contact_email: contactEmail,
@@ -187,7 +258,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
 
   const availableDates = getAvailableDates();
   const availableTimeSlots = getAvailableTimeSlots();
-  const endTime = selectedStartTime ? calculateEndTime(selectedStartTime, selectedDuration) : '';
   const avgRating = 4.8;
   const reviewCount = 24;
 
@@ -265,12 +335,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             </div>
           )}
 
-          {/* STEP 1: Activity & Duration */}
+          {/* STEP 1: Activity */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
             <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 1: WHAT GETS YOU MOVING?</h2>
             
             <label className="block text-sm text-gray-400 mb-2">Select Activity</label>
-            <div className="flex flex-wrap gap-2 mb-5">
+            <div className="flex flex-wrap gap-2">
               {allServices.map(service => (
                 <button
                   key={service}
@@ -286,33 +356,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                 </button>
               ))}
             </div>
-
-            <label className="block text-sm text-gray-400 mb-2">Duration</label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSelectedDuration(1)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
-                  selectedDuration === 1
-                    ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
-                    : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                1 hour
-                {selectedDuration === 1 && <span className="ml-1">✓</span>}
-              </button>
-              <button
-                onClick={() => setSelectedDuration(2)}
-                className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
-                  selectedDuration === 2
-                    ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
-                    : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                2 hours (contiguous)
-                {selectedDuration === 2 && <span className="ml-1">✓</span>}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">You can only book 1 or 2 contiguous hours (back-to-back).</p>
           </div>
 
           {/* STEP 2: Date & Time */}
@@ -326,7 +369,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                   key={date.date}
                   onClick={() => {
                     setSelectedDate(date.date);
-                    setSelectedStartTime('');
+                    setSelectedTimeSlot(null);
                   }}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     selectedDate === date.date
@@ -344,22 +387,29 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               <>
                 <label className="block text-sm text-gray-400 mb-2">Select Start Time</label>
                 <div className="flex flex-wrap gap-2">
-                  {availableTimeSlots.map(time => (
+                  {availableTimeSlots.map((slot, idx) => (
                     <button
-                      key={time}
-                      onClick={() => setSelectedStartTime(time)}
+                      key={`${slot.startTime}-${slot.durationHours}`}
+                      onClick={() => setSelectedTimeSlot(slot)}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        selectedStartTime === time
+                        selectedTimeSlot?.startTime === slot.startTime && selectedTimeSlot?.durationHours === slot.durationHours
                           ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
                           : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
                       }`}
                     >
-                      {formatTimeDisplay(time)}
-                      {selectedStartTime === time && <span className="ml-1">✓</span>}
+                      {formatTimeDisplay(slot.startTime)}
+                      <span className="block text-xs opacity-80">
+                        {slot.durationHours} hour{slot.durationHours > 1 ? 's' : ''}
+                      </span>
+                      {selectedTimeSlot?.startTime === slot.startTime && selectedTimeSlot?.durationHours === slot.durationHours && (
+                        <span className="ml-1">✓</span>
+                      )}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Select a start time. End time will be calculated based on duration.</p>
+                <p className="text-xs text-gray-500 mt-3">
+                  ℹ️ You can select up to 2 contiguous hours based on the partner's availability.
+                </p>
               </>
             )}
           </div>
@@ -392,7 +442,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                       <div>
                         <p className="font-medium text-white">{area.name}</p>
                         <p className="text-xs text-gray-400">{distance} miles from you</p>
-                        {area.address && <p className="text-xs text-gray-500 mt-1">{area.address}</p>}
                       </div>
                     </div>
                   </button>
@@ -431,12 +480,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           </div>
 
           {/* YOUR SELECTED BLOCK */}
-          {selectedActivity && selectedDate && selectedStartTime && selectedLocation && (
+          {selectedActivity && selectedDate && selectedTimeSlot && selectedLocation && (
             <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl p-5 border border-red-500/30 mb-5">
               <h2 className="text-lg font-semibold mb-3 text-white">YOUR SELECTED BLOCK</h2>
               <div className="space-y-2">
-                <p className="text-white font-medium">🧘 {selectedActivity} · {selectedDuration} hour{selectedDuration > 1 ? 's' : ''}</p>
-                <p className="text-gray-300 text-sm">📅 {formatDateDisplay(selectedDate)} · {formatTimeDisplay(selectedStartTime)} - {formatTimeDisplay(endTime)}</p>
+                <p className="text-white font-medium">🧘 {selectedActivity} · {selectedTimeSlot.durationHours} hour{selectedTimeSlot.durationHours > 1 ? 's' : ''}</p>
+                <p className="text-gray-300 text-sm">📅 {formatDateDisplay(selectedDate)} · {formatTimeDisplay(selectedTimeSlot.startTime)} - {formatTimeDisplay(selectedTimeSlot.endTime)}</p>
                 <p className="text-gray-300 text-sm">📍 {selectedLocation} ({getLocationDistance(selectedLocation)} miles)</p>
                 <div className="border-t border-white/10 my-3 pt-3">
                   <p className="text-sm text-gray-300">💰 Suggested Contribution: ${totalContribution.toFixed(2)}</p>
