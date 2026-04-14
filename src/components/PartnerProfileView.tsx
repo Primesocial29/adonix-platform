@@ -16,7 +16,11 @@ interface TimeSlot {
   startTime: string;
   endTime: string;
   durationHours: number;
+  durationMinutes: number;
 }
+
+// Duration options in minutes
+type DurationOption = 30 | 60 | 90 | 120;
 
 export default function PartnerProfileView({ partner, onClose, onBook }: PartnerProfileViewProps) {
   const { user, profile } = useAuth();
@@ -26,6 +30,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   
   // Selection states
   const [selectedActivity, setSelectedActivity] = useState<string>('');
+  const [selectedDuration, setSelectedDuration] = useState<DurationOption | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
@@ -48,15 +53,78 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const serviceAreas = (partner as any).service_areas || [];
   const certifications = (partner as any).certifications || [];
 
-  // Set default selected activity when services load
-  useEffect(() => {
-    if (allServices.length > 0 && !selectedActivity) {
-      setSelectedActivity(allServices[0]);
+  // Determine which duration options are available based on partner's settings
+  const getAvailableDurationOptions = (): DurationOption[] => {
+    const options: DurationOption[] = [];
+    
+    // Check if partner has half-hour enabled (for 30 min sessions)
+    if (halfHourEnabled) {
+      options.push(30);
     }
-  }, [allServices]);
+    
+    // 1 hour is always available if partner has any availability
+    // (since availability is stored as 1-hour blocks)
+    options.push(60);
+    
+    // Check if partner has 1.5 hour blocks (90 min)
+    // This would be determined by checking if there are any 90-min contiguous blocks
+    // For now, we'll check if partner has at least one day with 3+ contiguous 30-min slots
+    const has90MinBlocks = checkContiguousBlocks(90);
+    if (has90MinBlocks) {
+      options.push(90);
+    }
+    
+    // Check if partner has 2 hour blocks (120 min)
+    const has120MinBlocks = checkContiguousBlocks(120);
+    if (has120MinBlocks) {
+      options.push(120);
+    }
+    
+    return options;
+  };
+  
+  // Helper to check if partner has contiguous blocks of a certain duration
+  const checkContiguousBlocks = (targetMinutes: number): boolean => {
+    for (const daySchedule of availability) {
+      if (!daySchedule.times || daySchedule.times.length === 0) continue;
+      
+      const sortedTimes = [...daySchedule.times].sort();
+      const slotDuration = halfHourEnabled ? 30 : 60;
+      const blocksNeeded = targetMinutes / slotDuration;
+      
+      for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
+        let isContiguous = true;
+        for (let j = 0; j < blocksNeeded - 1; j++) {
+          const currentTime = timeToMinutes(sortedTimes[i + j]);
+          const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
+          if (nextTime - currentTime !== slotDuration) {
+            isContiguous = false;
+            break;
+          }
+        }
+        if (isContiguous) return true;
+      }
+    }
+    return false;
+  };
+  
+  // Parse time string to minutes
+  const timeToMinutes = (time: string): number => {
+    const [hour, minute] = time.split(':').map(Number);
+    return hour * 60 + minute;
+  };
+  
+  // Format minutes to time string
+  const minutesToTime = (minutes: number): string => {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
 
-  // Get available dates (next 14 days where partner has availability)
+  // Get available dates (next 14 days where partner has availability for selected duration)
   const getAvailableDates = () => {
+    if (!selectedDuration) return [];
+    
     const dates: { date: string; dayName: string; dayNum: string; month: string }[] = [];
     const today = new Date();
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -66,36 +134,50 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       const dayName = dayNames[date.getDay()];
-      const hasAvailability = (availability || []).some(a => a.day === dayName && a.times && a.times.length > 0);
+      const daySchedule = (availability || []).find(a => a.day === dayName);
       
-      if (hasAvailability) {
-        dates.push({
-          date: date.toISOString().split('T')[0],
-          dayName: dayName.slice(0, 3),
-          dayNum: date.getDate().toString(),
-          month: monthNames[date.getMonth()]
-        });
+      if (daySchedule && daySchedule.times && daySchedule.times.length > 0) {
+        // Check if this day has a time slot of the selected duration
+        const hasSlot = hasTimeSlotOfDuration(daySchedule.times, selectedDuration);
+        if (hasSlot) {
+          dates.push({
+            date: date.toISOString().split('T')[0],
+            dayName: dayName.slice(0, 3),
+            dayNum: date.getDate().toString(),
+            month: monthNames[date.getMonth()]
+          });
+        }
       }
     }
     return dates;
   };
-
-  // Parse time string to minutes for easier comparison
-  const timeToMinutes = (time: string): number => {
-    const [hour, minute] = time.split(':').map(Number);
-    return hour * 60 + minute;
+  
+  // Check if a day has a time slot of the specified duration
+  const hasTimeSlotOfDuration = (times: string[], durationMinutes: number): boolean => {
+    if (!times || times.length === 0) return false;
+    
+    const sortedTimes = [...times].sort();
+    const slotDuration = halfHourEnabled ? 30 : 60;
+    const blocksNeeded = durationMinutes / slotDuration;
+    
+    for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
+      let isContiguous = true;
+      for (let j = 0; j < blocksNeeded - 1; j++) {
+        const currentTime = timeToMinutes(sortedTimes[i + j]);
+        const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
+        if (nextTime - currentTime !== slotDuration) {
+          isContiguous = false;
+          break;
+        }
+      }
+      if (isContiguous) return true;
+    }
+    return false;
   };
-
-  // Format minutes to time string
-  const minutesToTime = (minutes: number): string => {
-    const hour = Math.floor(minutes / 60);
-    const minute = minutes % 60;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  };
-
-  // Get available time slots with calculated durations based on partner's availability
+  
+  // Get available time slots for selected date and duration
   const getAvailableTimeSlots = (): TimeSlot[] => {
-    if (!selectedDate) return [];
+    if (!selectedDate || !selectedDuration) return [];
     
     const date = new Date(selectedDate);
     const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
@@ -104,65 +186,37 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     if (!daySchedule || !daySchedule.times || daySchedule.times.length === 0) return [];
     
     const sortedTimes = [...daySchedule.times].sort();
+    const slotDuration = halfHourEnabled ? 30 : 60;
+    const blocksNeeded = selectedDuration / slotDuration;
     const slots: TimeSlot[] = [];
-    const maxDuration = 2; // Maximum 2 hours
     
-    for (let i = 0; i < sortedTimes.length; i++) {
-      const startTime = sortedTimes[i];
-      const startMinutes = timeToMinutes(startTime);
-      
-      // Check how many contiguous hours are available
-      let contiguousHours = 1;
-      let endMinutes = startMinutes + 60;
-      
-      // Look ahead to see if next time slots are contiguous (60 minutes apart)
-      for (let j = i + 1; j < sortedTimes.length; j++) {
-        const nextTime = sortedTimes[j];
-        const nextMinutes = timeToMinutes(nextTime);
-        
-        if (nextMinutes === endMinutes) {
-          contiguousHours++;
-          endMinutes += 60;
-        } else {
+    for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
+      let isContiguous = true;
+      for (let j = 0; j < blocksNeeded - 1; j++) {
+        const currentTime = timeToMinutes(sortedTimes[i + j]);
+        const nextTime = timeToMinutes(sortedTimes[i + j + 1]);
+        if (nextTime - currentTime !== slotDuration) {
+          isContiguous = false;
           break;
         }
       }
       
-      // Determine available durations for this start time (1 hour always available if slot exists)
-      // Max 2 hours, but limited by contiguous availability
-      const availableDuration = Math.min(contiguousHours, maxDuration);
-      
-      if (availableDuration >= 1) {
-        const endTime = minutesToTime(startMinutes + 60);
+      if (isContiguous) {
+        const startTime = sortedTimes[i];
+        const startMinutes = timeToMinutes(startTime);
+        const endMinutes = startMinutes + selectedDuration;
+        const endTime = minutesToTime(endMinutes);
+        
         slots.push({
           startTime,
           endTime,
-          durationHours: 1
-        });
-      }
-      
-      // If 2 hours available and partner's schedule allows (contiguous 2 hours)
-      if (availableDuration >= 2) {
-        const endTime2 = minutesToTime(startMinutes + 120);
-        // Check if the slot at +60 minutes exists (it should based on contiguous check)
-        slots.push({
-          startTime,
-          endTime: endTime2,
-          durationHours: 2
+          durationHours: selectedDuration / 60,
+          durationMinutes: selectedDuration
         });
       }
     }
     
-    // Remove duplicates (same start time, same duration)
-    const uniqueSlots = slots.filter((slot, index, self) =>
-      index === self.findIndex(s => s.startTime === slot.startTime && s.durationHours === slot.durationHours)
-    );
-    
-    // Sort by start time, then by duration (1hr first)
-    return uniqueSlots.sort((a, b) => {
-      if (a.startTime !== b.startTime) return a.startTime.localeCompare(b.startTime);
-      return a.durationHours - b.durationHours;
-    });
+    return slots;
   };
 
   // Get current rate for selected activity
@@ -203,9 +257,18 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   };
 
+  // Format duration for display
+  const formatDuration = (minutes: number): string => {
+    if (minutes === 30) return '30 min';
+    if (minutes === 60) return '1 hour';
+    if (minutes === 90) return '1.5 hours';
+    return '2 hours';
+  };
+
   // Check if all required fields are filled
   const isFormComplete = () => {
     return selectedActivity &&
+           selectedDuration &&
            selectedDate &&
            selectedTimeSlot &&
            selectedLocation &&
@@ -220,7 +283,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const handleSendInvitation = async () => {
     if (!isFormComplete()) return;
     
-    // Create booking in database
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
@@ -230,7 +292,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       
       const bookingDateTime = `${selectedDate}T${selectedTimeSlot!.startTime}:00`;
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('bookings')
         .insert({
           partner_id: partner.id,
@@ -243,8 +305,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           contact_email: contactEmail,
           contact_phone: contactPhone,
           status: 'pending'
-        })
-        .select();
+        });
       
       if (error) throw error;
       
@@ -256,10 +317,24 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     }
   };
 
+  const availableDurationOptions = getAvailableDurationOptions();
   const availableDates = getAvailableDates();
   const availableTimeSlots = getAvailableTimeSlots();
   const avgRating = 4.8;
   const reviewCount = 24;
+
+  // Reset selections when duration changes
+  const handleDurationSelect = (duration: DurationOption) => {
+    setSelectedDuration(duration);
+    setSelectedDate('');
+    setSelectedTimeSlot(null);
+  };
+
+  // Reset time slot when date changes
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(null);
+  };
 
   return (
     <>
@@ -358,65 +433,99 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             </div>
           </div>
 
-          {/* STEP 2: Date & Time */}
-          <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
-            <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 2: WHEN CAN YOU SWEAT?</h2>
-            
-            <label className="block text-sm text-gray-400 mb-2">Select Date</label>
-            <div className="flex flex-wrap gap-2 mb-5">
-              {availableDates.map(date => (
-                <button
-                  key={date.date}
-                  onClick={() => {
-                    setSelectedDate(date.date);
-                    setSelectedTimeSlot(null);
-                  }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    selectedDate === date.date
-                      ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
-                      : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-                  }`}
-                >
-                  {date.dayName} {date.dayNum}<br />{date.month}
-                  {selectedDate === date.date && <span className="ml-1">✓</span>}
-                </button>
-              ))}
+          {/* STEP 2: Duration */}
+          {selectedActivity && (
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
+              <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 2: HOW LONG?</h2>
+              
+              <label className="block text-sm text-gray-400 mb-2">Select Duration</label>
+              <div className="flex flex-wrap gap-3">
+                {availableDurationOptions.map(duration => (
+                  <button
+                    key={duration}
+                    onClick={() => handleDurationSelect(duration)}
+                    className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+                      selectedDuration === duration
+                        ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
+                    }`}
+                  >
+                    {formatDuration(duration)}
+                    {selectedDuration === duration && <span className="ml-1">✓</span>}
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
 
-            {selectedDate && (
-              <>
-                <label className="block text-sm text-gray-400 mb-2">Select Start Time</label>
-                <div className="flex flex-wrap gap-2">
-                  {availableTimeSlots.map((slot, idx) => (
-                    <button
-                      key={`${slot.startTime}-${slot.durationHours}`}
-                      onClick={() => setSelectedTimeSlot(slot)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        selectedTimeSlot?.startTime === slot.startTime && selectedTimeSlot?.durationHours === slot.durationHours
-                          ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
-                          : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-                      }`}
-                    >
-                      {formatTimeDisplay(slot.startTime)}
-                      <span className="block text-xs opacity-80">
-                        {slot.durationHours} hour{slot.durationHours > 1 ? 's' : ''}
-                      </span>
-                      {selectedTimeSlot?.startTime === slot.startTime && selectedTimeSlot?.durationHours === slot.durationHours && (
-                        <span className="ml-1">✓</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  ℹ️ You can select up to 2 contiguous hours based on the partner's availability.
+          {/* STEP 3: Date */}
+          {selectedDuration && (
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
+              <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 3: WHEN?</h2>
+              
+              <label className="block text-sm text-gray-400 mb-2">Select Date</label>
+              <div className="flex flex-wrap gap-2">
+                {availableDates.map(date => (
+                  <button
+                    key={date.date}
+                    onClick={() => handleDateSelect(date.date)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      selectedDate === date.date
+                        ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
+                    }`}
+                  >
+                    {date.dayName} {date.dayNum}<br />{date.month}
+                    {selectedDate === date.date && <span className="ml-1">✓</span>}
+                  </button>
+                ))}
+              </div>
+              {availableDates.length === 0 && (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  No available dates for {formatDuration(selectedDuration)} sessions.
+                  Try a different duration.
                 </p>
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
-          {/* STEP 3: Location */}
+          {/* STEP 4: Start Time */}
+          {selectedDate && (
+            <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
+              <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 4: WHAT TIME?</h2>
+              
+              <label className="block text-sm text-gray-400 mb-2">Select Start Time</label>
+              <div className="flex flex-wrap gap-2">
+                {availableTimeSlots.map((slot, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedTimeSlot(slot)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      selectedTimeSlot?.startTime === slot.startTime
+                        ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg'
+                        : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
+                    }`}
+                  >
+                    {formatTimeDisplay(slot.startTime)}
+                    <span className="block text-xs opacity-80">
+                      {formatDuration(slot.durationMinutes)}
+                    </span>
+                    {selectedTimeSlot?.startTime === slot.startTime && <span className="ml-1">✓</span>}
+                  </button>
+                ))}
+              </div>
+              {availableTimeSlots.length === 0 && (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  No available time slots for this date.
+                  Try a different date or duration.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* STEP 5: Location */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
-            <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 3: WHERE TO MEET?</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 5: WHERE TO MEET?</h2>
             
             <div className="space-y-3">
               {serviceAreas.map((area: any, idx: number) => {
@@ -451,9 +560,9 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             <p className="text-xs text-yellow-400 mt-3">⚠️ Only verified public venues. Private residences are strictly prohibited.</p>
           </div>
 
-          {/* STEP 4: Contact Info */}
+          {/* STEP 6: Contact Info */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
-            <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 4: YOUR CONTACT INFO</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-400">STEP 6: YOUR CONTACT INFO</h2>
             
             <div className="space-y-3">
               <div>
@@ -480,11 +589,11 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
           </div>
 
           {/* YOUR SELECTED BLOCK */}
-          {selectedActivity && selectedDate && selectedTimeSlot && selectedLocation && (
+          {selectedActivity && selectedDuration && selectedDate && selectedTimeSlot && selectedLocation && (
             <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl p-5 border border-red-500/30 mb-5">
               <h2 className="text-lg font-semibold mb-3 text-white">YOUR SELECTED BLOCK</h2>
               <div className="space-y-2">
-                <p className="text-white font-medium">🧘 {selectedActivity} · {selectedTimeSlot.durationHours} hour{selectedTimeSlot.durationHours > 1 ? 's' : ''}</p>
+                <p className="text-white font-medium">🧘 {selectedActivity} · {formatDuration(selectedTimeSlot.durationMinutes)}</p>
                 <p className="text-gray-300 text-sm">📅 {formatDateDisplay(selectedDate)} · {formatTimeDisplay(selectedTimeSlot.startTime)} - {formatTimeDisplay(selectedTimeSlot.endTime)}</p>
                 <p className="text-gray-300 text-sm">📍 {selectedLocation} ({getLocationDistance(selectedLocation)} miles)</p>
                 <div className="border-t border-white/10 my-3 pt-3">
