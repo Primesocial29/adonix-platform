@@ -377,7 +377,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       <nav className="fixed top-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/adonixlogo.png" alt="Adonix" className="h-11 w-auto object-contain" />
+            <img src="/adonixlogo.png" alt="Adonix" className="h-10 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-6">
             {user ? (
@@ -385,7 +385,6 @@ We are actively working to improve accessibility. If you experience any issues, 
                 <span className="text-gray-300 text-sm">
                   Welcome, {profile?.first_name || (role === 'trainer' ? 'Partner' : 'Fitness Enthusiast')}!
                 </span>
-                {/* Browse Partners link - visible for clients */}
                 {role === 'client' && (
                   <a href="/browse" className="text-gray-400 hover:text-white transition-colors">
                     Browse Partners
@@ -410,7 +409,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors text-sm tracking-wide"
               >
                 LOGIN/SETUP
               </button>
@@ -419,8 +418,8 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Gemini Design */}
-      <div className="relative min-h-screen overflow-hidden">
+      {/* Hero Section - Exact Match to Screenshot */}
+      <div className="relative min-h-screen flex items-center justify-center">
         {/* Background Image - Girl on the right */}
         <div 
           className="absolute inset-0 z-0"
@@ -428,61 +427,57 @@ We are actively working to improve accessibility. If you experience any issues, 
             backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
             backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
-            opacity: 0.35
+            backgroundSize: 'cover',
+            opacity: 0.3
           }}
         />
         
-        {/* Gradient overlay for better text readability */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20">
-          <div className="max-w-2xl">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
+          <div className="max-w-3xl mx-auto text-center">
             {/* Main Headline */}
-            <h1 className="text-7xl md:text-8xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-7xl md:text-8xl font-bold tracking-tight mb-8 text-white">
               ADONIX
             </h1>
             
-            {/* Subheadline with crimson accent */}
+            {/* Subheadline - Exact match to screenshot */}
             <div className="mb-10">
-              <p className="text-3xl md:text-4xl font-light text-gray-200">
+              <p className="text-4xl md:text-5xl font-light text-white">
                 Verified Public
               </p>
-              <p className="text-3xl md:text-4xl font-light text-red-500 mt-1">
+              <p className="text-4xl md:text-5xl font-light text-red-500 mt-2">
                 Meetups
               </p>
-              <p className="text-xl md:text-2xl font-light text-gray-400 mt-4">
+              <p className="text-3xl md:text-4xl font-light text-white mt-6">
                 Real-World Connections
               </p>
             </div>
             
-            {/* Trust Badges */}
-            <div className="flex flex-wrap gap-3 mb-10">
-              <div className="border border-red-500/40 bg-red-500/10 rounded-full px-4 py-2 backdrop-blur-sm">
+            {/* Trust Badges - Exact match to screenshot */}
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
+              <div className="border border-red-500/40 bg-red-500/10 rounded-full px-6 py-2">
                 <span className="text-xs font-semibold text-red-400 tracking-wider">AUTHENTICITY EXCELLENCE</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm">
-                <span className="text-xs font-semibold text-gray-400 tracking-wider">CURATED MEETUPS</span>
+              <div className="border border-white/20 bg-white/5 rounded-full px-6 py-2">
+                <span className="text-xs font-semibold text-gray-300 tracking-wider">CURATED MEETUPS</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm">
-                <span className="text-xs font-semibold text-gray-400 tracking-wider">HIGH-STANDARD COMMUNITY</span>
+              <div className="border border-white/20 bg-white/5 rounded-full px-6 py-2">
+                <span className="text-xs font-semibold text-gray-300 tracking-wider">HIGH-STANDARD COMMUNITY</span>
               </div>
             </div>
             
             {/* CTA Button */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className="group relative px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30 overflow-hidden"
+              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
             >
-              <span className="relative z-10">EXPLORE CURATION</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-orange-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              EXPLORE CURATION
             </button>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
+      {/* Footer - Preserved exactly as before */}
+      <footer className="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
