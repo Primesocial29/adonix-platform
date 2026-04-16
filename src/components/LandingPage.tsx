@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Dumbbell, Users, Camera, Shield } from 'lucide-react';
+import { Home, Calendar, Users, UserCircle } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -8,106 +7,106 @@ interface LandingPageProps {
 
 export default function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-md border-b border-white/10 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="w-8 h-8 text-red-500" strokeWidth={2.5} />
-            <span className="text-2xl font-bold tracking-tight">Hot Buddies</span>
+    <div className="relative min-h-screen w-full bg-[#000000] text-white font-sans overflow-hidden flex flex-col">
+      
+      {/* 1. ELITE HEADER OVERLAY */}
+      <header className="absolute top-0 left-0 w-full z-50 flex justify-between items-center px-10 py-8">
+        {/* Left Side: Sign In Action */}
+        <button 
+          onClick={onSignIn}
+          className="text-xs font-bold tracking-[0.3em] hover:text-[#DC143C] transition-all uppercase opacity-80"
+        >
+          Login / Setup
+        </button>
+        
+        {/* Right Side: Adonix Logo */}
+        <div className="flex items-center">
+          <img 
+            src="/adonixlogo.png" 
+            alt="Adonix Logo" 
+            className="h-12 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_rgba(220,20,60,0.3)]"
+          />
+        </div>
+      </header>
+
+      {/* 2. MAIN SPLIT SECTION */}
+      <main className="flex-grow flex flex-col md:flex-row w-full h-screen">
+        
+        {/* LEFT PANEL: Branding & CTA */}
+        <div className="w-full md:w-1/2 flex flex-col justify-center px-10 md:px-24 z-20 bg-[#000000] relative">
+          
+          {/* THE CRIMSON HALO (Ambient Radial Glow) */}
+          <div className="absolute -left-20 top-1/2 -translate-y-1/2 w-[150%] h-[150%] pointer-events-none opacity-20 z-0"
+               style={{ backgroundImage: 'radial-gradient(circle at center, #DC143C 0%, transparent 65%)' }} />
+
+          <div className="z-10">
+            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 tracking-tighter uppercase leading-[0.85]">
+              Authenticity<br/>Excellence.
+            </h1>
+            
+            <p className="text-xl md:text-2xl font-light mb-12 leading-relaxed text-gray-400 max-w-md">
+              Curated Meetups.<br />
+              High-Standard<br />
+              Community.
+            </p>
+
+            <button 
+              onClick={onGetStarted}
+              className="w-full md:w-80 py-5 rounded-full bg-gradient-to-r from-[#FF4500] to-[#DC143C] text-white font-bold text-lg uppercase tracking-[0.2em] shadow-[0_10px_40px_rgba(220,20,60,0.3)] hover:scale-105 transition-transform duration-500"
+            >
+              Explore Curation
+            </button>
+            <p className="text-[10px] text-gray-600 mt-6 tracking-[0.2em] uppercase">18+ Only • ID on File Members</p>
           </div>
-          <button
-            onClick={onSignIn}
-            className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full font-medium transition-all"
-          >
-            Sign In
-          </button>
+        </div>
+
+        {/* RIGHT PANEL: The Background Image */}
+        <div className="w-full md:w-1/2 relative h-[50vh] md:h-auto overflow-hidden border-l border-white/5">
+          <img 
+            src="/girl_image_backgroundinterface.jpg" 
+            alt="Adonix Member" 
+            className="absolute inset-0 w-full h-full object-cover grayscale brightness-[0.35] contrast-125 scale-105"
+          />
+          
+          {/* Right-Side Verification Overlay */}
+          <div className="absolute top-1/2 right-12 -translate-y-1/2 text-right max-w-[280px] z-30">
+            <p className="text-sm md:text-base font-light tracking-[0.15em] leading-loose opacity-60 border-r-4 border-[#DC143C] pr-6 py-2">
+              Verified Public Meetups<br/>Real-World Connections.
+            </p>
+          </div>
+          
+          {/* Blending Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-transparent to-transparent opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#000000] via-transparent to-transparent opacity-60 hidden md:block" />
+        </div>
+      </main>
+
+      {/* 3. NAVIGATION BAR (Footer) */}
+      <nav className="fixed bottom-0 left-0 w-full bg-[#000000]/95 backdrop-blur-2xl border-t border-white/5 py-6 px-12 flex justify-around items-center z-50">
+        <div className="flex flex-col items-center gap-2 cursor-pointer group">
+          <Home className="w-6 h-6 text-[#DC143C]" />
+          <span className="text-[9px] uppercase tracking-[0.3em] text-[#DC143C] font-black">Home</span>
+        </div>
+        <div className="flex flex-col items-center gap-2 cursor-pointer text-gray-600 hover:text-white transition-all">
+          <Calendar className="w-6 h-6" />
+          <span className="text-[9px] uppercase tracking-[0.3em]">Meetups</span>
+        </div>
+        <div className="flex flex-col items-center gap-2 cursor-pointer text-gray-600 hover:text-white transition-all">
+          <Users className="w-6 h-6" />
+          <span className="text-[9px] uppercase tracking-[0.3em]">Partners</span>
+        </div>
+        <div className="flex flex-col items-center gap-2 cursor-pointer text-gray-600 hover:text-white transition-all">
+          <UserCircle className="w-6 h-6" />
+          <span className="text-[9px] uppercase tracking-[0.3em]">Profile</span>
         </div>
       </nav>
 
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-              Find Your Perfect
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
-                Fitness Partner
-              </span>
-            </h1>
-            <p className="text-xl text-gray-400 mb-12 leading-relaxed">
-              Connect with verified fitness enthusiasts who match your energy, goals, and vibe.
-              Train together. Push harder. Achieve more.
-            </p>
-            <button
-              onClick={onGetStarted}
-              className="px-12 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-full text-lg font-semibold transition-all transform hover:scale-105 shadow-2xl"
-            >
-              Get Started
-            </button>
-            <p className="text-sm text-gray-500 mt-4">18+ Only • ID on File Members</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-6 bg-gradient-to-b from-black to-zinc-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12">
-            <FeatureCard
-              icon={<Camera className="w-12 h-12" />}
-              title="Live Verification"
-              description="All members verify with live camera photos. No catfishing, just real people."
-            />
-            <FeatureCard
-              icon={<Shield className="w-12 h-12" />}
-              title="Age Verified"
-              description="Secure 18+ age verification ensures a safe, adult community."
-            />
-            <FeatureCard
-              icon={<Users className="w-12 h-12" />}
-              title="Real Connections"
-              description="Match with fitness partners who share your goals and lifestyle."
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Level Up?</h2>
-          <p className="text-xl text-gray-400 mb-10">
-            Join the most exclusive fitness partner marketplace.
-          </p>
-          <button
-            onClick={onGetStarted}
-            className="px-12 py-4 bg-white text-black hover:bg-gray-200 rounded-full text-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Create Your Profile
-          </button>
-        </div>
-      </section>
-
-      <footer className="py-8 px-6 border-t border-white/10">
-        <div className="max-w-7xl mx-auto text-center space-y-3">
-          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-            <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/safety" className="hover:text-white transition-colors">Safety &amp; Zero Tolerance</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <p className="text-xs text-gray-600">
-            © 2026 Prime Social LLC. All rights reserved. Adonix Fit is a private social networking platform, not a professional services marketplace.
-          </p>
-        </div>
+      {/* 4. FOOTER CREDITS */}
+      <footer className="absolute bottom-24 w-full px-10 pointer-events-none opacity-20">
+         <p className="text-[8px] text-center tracking-[0.1em] text-gray-500 uppercase">
+           © 2026 Prime Social LLC • Adonix is a private social network
+         </p>
       </footer>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-red-500/50 transition-all">
-      <div className="text-red-500 mb-4">{icon}</div>
-      <h3 className="text-2xl font-bold mb-3">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{description}</p>
     </div>
   );
 }
