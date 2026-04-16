@@ -6,7 +6,7 @@ import PartnerMarketplace from './PartnerMarketplace';
 import BookingFlow, { BookingDetails } from './BookingFlow';
 import CheckoutScreen from './CheckoutScreen';
 import MyBookings from './MyBookings';
-import { Dumbbell, LogOut, Users, Calendar } from 'lucide-react';
+import { LogOut, Users, Calendar } from 'lucide-react';
 
 type Tab = 'browse' | 'bookings';
 
@@ -42,9 +42,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-black text-white">
       <nav className="fixed top-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="w-8 h-8 text-red-500" strokeWidth={2.5} />
-            <span className="text-2xl font-bold tracking-tight">Hot Buddies</span>
+          <div className="flex items-center">
+            <img src="/.bolt/adonixlogo.png" alt="Adonix" className="h-11 w-auto object-contain" />
           </div>
           <button
             onClick={handleSignOut}

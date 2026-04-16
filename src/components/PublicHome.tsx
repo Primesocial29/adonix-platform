@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dumbbell, LogOut, X } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import TrainerDashboard from "./TrainerDashboard";
@@ -376,9 +376,8 @@ We are actively working to improve accessibility. If you experience any issues, 
     <div className="min-h-screen bg-black text-white">
       <nav className="fixed top-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <img src="/Screenshot_2026-04-03_221406.png" alt="Adonix Fit" className="h-8 w-auto" />
-            <span className="text-2xl font-bold tracking-tight">Adonix Fit</span>
+          <div className="flex items-center">
+            <img src="/.bolt/adonixlogo.png" alt="Adonix" className="h-11 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-6">
             {user ? (

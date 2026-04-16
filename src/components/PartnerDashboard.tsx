@@ -341,10 +341,10 @@ export default function PartnerDashboard() {
       <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <img 
-              src="/Screenshot_2026-04-03_221406.png" 
-              alt="Adonix Logo" 
-              className="h-12 w-auto"
+            <img
+              src="/.bolt/adonixlogo.png"
+              alt="Adonix"
+              className="h-11 w-auto object-contain"
             />
             <div className="flex flex-col">
               <span className="text-2xl font-bold text-white leading-tight">ADONIX</span>

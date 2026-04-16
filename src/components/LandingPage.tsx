@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Dumbbell, Users, Camera, Shield } from 'lucide-react';
+import { Camera, Shield, Users } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -8,106 +7,167 @@ interface LandingPageProps {
 
 export default function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-md border-b border-white/10 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="w-8 h-8 text-red-500" strokeWidth={2.5} />
-            <span className="text-2xl font-bold tracking-tight">Hot Buddies</span>
-          </div>
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Fixed Header */}
+      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-5">
+        <div />
+        <div className="flex items-center gap-6">
           <button
             onClick={onSignIn}
-            className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full font-medium transition-all"
+            className="text-sm font-medium tracking-widest uppercase text-gray-300 hover:text-white transition-colors duration-300"
           >
             Sign In
           </button>
+          <button
+            onClick={onGetStarted}
+            className="text-sm font-medium tracking-widest uppercase px-6 py-2.5 border border-white/30 hover:border-white hover:bg-white hover:text-black transition-all duration-300"
+          >
+            Join
+          </button>
+        </div>
+        {/* Logo upper-right */}
+        <div className="absolute top-4 right-8">
+          <img
+            src="/.bolt/adonixlogo.png"
+            alt="Adonix"
+            className="h-10 w-auto object-contain"
+          />
         </div>
       </nav>
 
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-              Find Your Perfect
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
-                Fitness Partner
+      {/* Split-Panel Hero */}
+      <div className="flex min-h-screen">
+        {/* Left Panel */}
+        <div className="relative flex-1 flex flex-col justify-center px-16 py-24 bg-black overflow-hidden">
+          {/* Crimson Halo Radial Glow */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '50%',
+              left: '40%',
+              transform: 'translate(-50%, -50%)',
+              width: '700px',
+              height: '700px',
+              background: 'radial-gradient(ellipse at center, rgba(180,0,0,0.22) 0%, rgba(120,0,0,0.10) 40%, transparent 70%)',
+              borderRadius: '50%',
+            }}
+          />
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '50%',
+              left: '40%',
+              transform: 'translate(-50%, -50%)',
+              width: '400px',
+              height: '400px',
+              background: 'radial-gradient(ellipse at center, rgba(220,20,20,0.12) 0%, transparent 65%)',
+              borderRadius: '50%',
+            }}
+          />
+
+          <div className="relative z-10 max-w-xl">
+            {/* Eyebrow */}
+            <p className="text-xs font-medium tracking-[0.35em] uppercase text-red-500 mb-8">
+              Premium Social Fitness
+            </p>
+
+            {/* Main Headline */}
+            <h1
+              className="text-white leading-none mb-8"
+              style={{
+                fontFamily: "'Georgia', 'Times New Roman', serif",
+                fontSize: 'clamp(3rem, 5.5vw, 5.5rem)',
+                fontWeight: 400,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.08,
+              }}
+            >
+              AUTHENTICITY
+              <br />
+              <span
+                style={{
+                  fontFamily: "'Georgia', 'Times New Roman', serif",
+                  fontStyle: 'italic',
+                  color: 'rgba(255,255,255,0.75)',
+                }}
+              >
+                EXCELLENCE
               </span>
             </h1>
-            <p className="text-xl text-gray-400 mb-12 leading-relaxed">
-              Connect with verified fitness enthusiasts who match your energy, goals, and vibe.
-              Train together. Push harder. Achieve more.
+
+            <div className="w-16 h-px bg-red-600 mb-8" />
+
+            <p className="text-gray-400 text-base leading-relaxed mb-12 max-w-sm">
+              Connect with verified fitness professionals who match your energy, goals, and ambition.
             </p>
+
             <button
               onClick={onGetStarted}
-              className="px-12 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-full text-lg font-semibold transition-all transform hover:scale-105 shadow-2xl"
+              className="group inline-flex items-center gap-4 px-10 py-4 bg-white text-black text-sm font-semibold tracking-widest uppercase transition-all duration-300 hover:bg-red-600 hover:text-white"
             >
               Get Started
+              <span className="w-6 h-px bg-current transition-all duration-300 group-hover:w-10" />
             </button>
-            <p className="text-sm text-gray-500 mt-4">18+ Only • ID on File Members</p>
+
+            <p className="text-xs text-gray-600 mt-5 tracking-wider uppercase">18+ Only &bull; ID Verified Members</p>
+          </div>
+
+          {/* Feature pills */}
+          <div className="relative z-10 flex gap-6 mt-16">
+            {[
+              { icon: <Camera className="w-4 h-4" />, label: 'Live Verified' },
+              { icon: <Shield className="w-4 h-4" />, label: 'Age Verified' },
+              { icon: <Users className="w-4 h-4" />, label: 'Real Connections' },
+            ].map(({ icon, label }) => (
+              <div key={label} className="flex items-center gap-2 text-xs text-gray-500 tracking-wider uppercase">
+                <span className="text-red-600">{icon}</span>
+                {label}
+              </div>
+            ))}
           </div>
         </div>
-      </section>
 
-      <section className="py-20 px-6 bg-gradient-to-b from-black to-zinc-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12">
-            <FeatureCard
-              icon={<Camera className="w-12 h-12" />}
-              title="Live Verification"
-              description="All members verify with live camera photos. No catfishing, just real people."
-            />
-            <FeatureCard
-              icon={<Shield className="w-12 h-12" />}
-              title="Age Verified"
-              description="Secure 18+ age verification ensures a safe, adult community."
-            />
-            <FeatureCard
-              icon={<Users className="w-12 h-12" />}
-              title="Real Connections"
-              description="Match with fitness partners who share your goals and lifestyle."
-            />
-          </div>
+        {/* Right Panel — hero image */}
+        <div className="relative w-[42%] flex-shrink-0 overflow-hidden">
+          <img
+            src="/.bolt/girl_image_backgroundinterface.jpg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              filter: 'grayscale(100%) brightness(0.45)',
+            }}
+          />
+          {/* Subtle left-edge fade into black */}
+          <div
+            className="absolute inset-y-0 left-0 w-32 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to right, #000000, transparent)',
+            }}
+          />
+          {/* Bottom fade */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-40 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to top, #000000, transparent)',
+            }}
+          />
         </div>
-      </section>
+      </div>
 
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to Level Up?</h2>
-          <p className="text-xl text-gray-400 mb-10">
-            Join the most exclusive fitness partner marketplace.
+      {/* Footer */}
+      <footer className="py-8 px-8 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+          <p className="text-xs text-gray-700">
+            &copy; 2026 Prime Social LLC. All rights reserved.
           </p>
-          <button
-            onClick={onGetStarted}
-            className="px-12 py-4 bg-white text-black hover:bg-gray-200 rounded-full text-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Create Your Profile
-          </button>
-        </div>
-      </section>
-
-      <footer className="py-8 px-6 border-t border-white/10">
-        <div className="max-w-7xl mx-auto text-center space-y-3">
-          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-            <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/safety" className="hover:text-white transition-colors">Safety &amp; Zero Tolerance</a>
+          <div className="flex flex-wrap gap-6 text-xs text-gray-600">
+            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+            <a href="/safety" className="hover:text-white transition-colors">Safety</a>
             <a href="/contact" className="hover:text-white transition-colors">Contact</a>
           </div>
-          <p className="text-xs text-gray-600">
-            © 2026 Prime Social LLC. All rights reserved. Adonix Fit is a private social networking platform, not a professional services marketplace.
-          </p>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-red-500/50 transition-all">
-      <div className="text-red-500 mb-4">{icon}</div>
-      <h3 className="text-2xl font-bold mb-3">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{description}</p>
     </div>
   );
 }
