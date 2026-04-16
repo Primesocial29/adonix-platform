@@ -374,9 +374,15 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar - LOGIN/SETUP at top right */}
+      {/* Navbar - LOGIN/SETUP at top right, ADONIX text at top left */}
       <nav className="fixed top-0 w-full z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-end items-center">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+          {/* ADONIX text at top left */}
+          <h1 className="text-2xl md:text-3xl font-bold tracking-wide text-white">
+            ADONIX
+          </h1>
+          
+          {/* LOGIN/SETUP at top right */}
           <div className="flex items-center gap-6">
             {user ? (
               <>
@@ -416,7 +422,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Logo center-left, girl covering entire right side */}
+      {/* Hero Section - Logo on far left, girl on right */}
       <div className="relative min-h-screen flex items-center">
         {/* Girl Image - Covering entire right side */}
         <div 
@@ -430,21 +436,21 @@ We are actively working to improve accessibility. If you experience any issues, 
             backgroundPositionY: 'center',
             right: 0,
             left: 'auto',
-            width: '60%',
+            width: '55%',
           }}
         />
         
         {/* Black gradient overlay on the left */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/90 to-transparent" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-2xl">
-            {/* Logo - 4x larger, center-left */}
+          <div className="max-w-xl">
+            {/* Logo - Far left, twice the size (h-56 = 224px) */}
             <div className="mb-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-48 w-auto object-contain" 
+                className="h-56 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
@@ -452,11 +458,6 @@ We are actively working to improve accessibility. If you experience any issues, 
                 }}
               />
             </div>
-            
-            {/* ADONIX Text */}
-            <h1 className="text-6xl md:text-7xl font-bold tracking-wide mb-8 text-white">
-              ADONIX
-            </h1>
             
             {/* Subheadline */}
             <div className="mb-8">
