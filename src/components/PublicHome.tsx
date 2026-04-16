@@ -378,7 +378,16 @@ We are actively working to improve accessibility. If you experience any issues, 
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/adonixlogo.png" alt="Adonix" className="h-12 w-auto object-contain" />
+            {/* Logo - Made larger and more visible */}
+            <img 
+              src="/adonixlogo.png" 
+              alt="Adonix" 
+              className="h-16 w-auto object-contain" 
+              onError={(e) => {
+                console.error('Logo failed to load');
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
           <div className="flex items-center gap-6">
             {user ? (
@@ -419,24 +428,27 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Exact Match to Screenshots */}
+      {/* Hero Section - With visible girl image */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image - Cut off on the right, black on the left */}
+        {/* Background Image - Girl walking - Made more visible */}
         <div 
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
             backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'auto 100%',
+            backgroundSize: 'contain',
+            backgroundPositionX: '100%',
+            backgroundPositionY: 'center',
+            opacity: 0.85,
             right: 0,
             left: 'auto',
-            width: '60%',
+            width: '55%',
           }}
         />
         
-        {/* Black gradient overlay on the left */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/95 to-transparent" />
+        {/* Black gradient overlay on the left - lighter so image shows */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-3xl">
