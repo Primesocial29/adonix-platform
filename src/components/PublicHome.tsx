@@ -374,21 +374,9 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar */}
+      {/* Navbar - Only login/setup button, no logo here */}
       <nav className="fixed top-0 w-full z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <div className="flex items-center">
-            {/* Logo - Large and prominent on the left */}
-            <img 
-              src="/adonixlogo.png" 
-              alt="Adonix" 
-              className="h-20 w-auto object-contain" 
-              onError={(e) => {
-                console.error('Logo failed to load');
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-end items-center">
           <div className="flex items-center gap-6">
             {user ? (
               <>
@@ -452,23 +440,23 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - Large and prominent on the left side (opposite of girl) */}
-            <div className="mb-8">
+            {/* ADONIX Text - Above the logo */}
+            <h1 className="text-5xl md:text-6xl font-bold tracking-wide mb-6 text-white">
+              ADONIX
+            </h1>
+            
+            {/* Logo - Single, 5x bigger, positioned to the left of the girl */}
+            <div className="mb-10">
               <img 
                 src="/adonixlogo.png" 
-                alt="Adonix" 
-                className="h-24 w-auto object-contain mb-6" 
+                alt="Adonix Logo" 
+                className="h-40 w-auto object-contain" 
                 onError={(e) => {
                   console.error('Logo failed to load');
                   e.currentTarget.style.display = 'none';
                 }}
               />
             </div>
-            
-            {/* ADONIX Text - Much smaller */}
-            <h1 className="text-3xl md:text-4xl font-bold tracking-wide mb-8 text-white">
-              ADONIX
-            </h1>
             
             {/* Subheadline */}
             <div className="mb-10">
