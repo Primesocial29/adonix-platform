@@ -374,7 +374,7 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar - Only login/setup button, no logo here */}
+      {/* Navbar - Only login/setup button */}
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-end items-center">
           <div className="flex items-center gap-6">
@@ -440,17 +440,17 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* ADONIX Text - Above the logo */}
-            <h1 className="text-5xl md:text-6xl font-bold tracking-wide mb-6 text-white">
+            {/* ADONIX Text - Half the size (text-3xl) */}
+            <h1 className="text-3xl md:text-4xl font-bold tracking-wide mb-16 text-white">
               ADONIX
             </h1>
             
-            {/* Logo - Single, 5x bigger, positioned to the left of the girl */}
-            <div className="mb-10">
+            {/* Logo - Much lower (mt-20 pushes it down), more than double in size (h-60 = 240px) */}
+            <div className="mt-20 mb-16">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-40 w-auto object-contain" 
+                className="h-60 w-auto object-contain" 
                 onError={(e) => {
                   console.error('Logo failed to load');
                   e.currentTarget.style.display = 'none';
