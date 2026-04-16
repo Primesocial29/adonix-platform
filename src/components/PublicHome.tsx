@@ -378,11 +378,11 @@ We are actively working to improve accessibility. If you experience any issues, 
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
           <div className="flex items-center">
-            {/* Logo - Made larger and more visible */}
+            {/* Logo - Large and prominent on the left */}
             <img 
               src="/adonixlogo.png" 
               alt="Adonix" 
-              className="h-16 w-auto object-contain" 
+              className="h-20 w-auto object-contain" 
               onError={(e) => {
                 console.error('Logo failed to load');
                 e.currentTarget.style.display = 'none';
@@ -428,9 +428,9 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - With visible girl image */}
+      {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image - Girl walking - Made more visible */}
+        {/* Background Image - Girl walking on the right side */}
         <div 
           className="absolute inset-0 z-0"
           style={{
@@ -440,37 +440,50 @@ We are actively working to improve accessibility. If you experience any issues, 
             backgroundSize: 'contain',
             backgroundPositionX: '100%',
             backgroundPositionY: 'center',
-            opacity: 0.85,
+            opacity: 0.9,
             right: 0,
             left: 'auto',
             width: '55%',
           }}
         />
         
-        {/* Black gradient overlay on the left - lighter so image shows */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+        {/* Black gradient overlay on the left */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-3xl">
-            {/* Main Headline - Large ADONIX */}
-            <h1 className="text-8xl md:text-9xl font-bold tracking-tighter mb-8 text-white">
+          <div className="max-w-2xl">
+            {/* Logo - Large and prominent on the left side (opposite of girl) */}
+            <div className="mb-8">
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix" 
+                className="h-24 w-auto object-contain mb-6" 
+                onError={(e) => {
+                  console.error('Logo failed to load');
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+            
+            {/* ADONIX Text - Much smaller */}
+            <h1 className="text-3xl md:text-4xl font-bold tracking-wide mb-8 text-white">
               ADONIX
             </h1>
             
-            {/* Subheadline - Exact match to screenshot with pipe symbol */}
+            {/* Subheadline */}
             <div className="mb-10">
-              <p className="text-5xl md:text-6xl font-light text-white leading-tight">
+              <p className="text-4xl md:text-5xl font-light text-white leading-tight">
                 Verified Public
               </p>
-              <p className="text-5xl md:text-6xl font-light text-red-500 leading-tight mt-1">
+              <p className="text-4xl md:text-5xl font-light text-red-500 leading-tight mt-1">
                 Meetups<span className="text-white">|</span>
               </p>
-              <p className="text-4xl md:text-5xl font-light text-white leading-tight mt-4">
+              <p className="text-3xl md:text-4xl font-light text-white leading-tight mt-4">
                 Real-World Connections.
               </p>
             </div>
             
-            {/* Trust Badges - Three badges exactly like screenshot */}
+            {/* Trust Badges */}
             <div className="flex flex-wrap gap-4 mb-12">
               <div className="border border-red-500/50 bg-red-500/10 rounded-full px-5 py-2">
                 <span className="text-xs font-semibold text-red-400 tracking-wider">AUTHENTICITY EXCELLENCE</span>
@@ -494,7 +507,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </div>
 
-      {/* Footer - Preserved exactly as before */}
+      {/* Footer */}
       <footer className="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
