@@ -416,36 +416,35 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Exactly like screenshot */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center">
-        {/* Background Image - Girl walking on the right side */}
+      {/* Hero Section - Logo center-left, girl covering entire right side */}
+      <div className="relative min-h-screen flex items-center">
+        {/* Girl Image - Covering entire right side */}
         <div 
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
             backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
+            backgroundSize: 'cover',
             backgroundPositionX: '100%',
             backgroundPositionY: 'center',
-            opacity: 0.7,
             right: 0,
             left: 'auto',
-            width: '50%',
+            width: '60%',
           }}
         />
         
         {/* Black gradient overlay on the left */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/90 to-transparent" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-2xl text-center mx-auto">
-            {/* Logo - Transparent PNG */}
-            <div className="mb-8 flex justify-center">
+          <div className="max-w-2xl">
+            {/* Logo - 4x larger, center-left */}
+            <div className="mb-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-32 w-auto object-contain" 
+                className="h-48 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
@@ -472,7 +471,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               </p>
             </div>
             
-            {/* Text lines (not buttons) - Exactly like screenshot */}
+            {/* Text lines (not buttons) */}
             <div className="space-y-1 mb-10">
               <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
               <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
