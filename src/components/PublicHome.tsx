@@ -374,10 +374,11 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <nav className="fixed top-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-md z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full z-40">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/adonixlogo.png" alt="Adonix" className="h-10 w-auto object-contain" />
+            <img src="/adonixlogo.png" alt="Adonix" className="h-12 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-6">
             {user ? (
@@ -409,7 +410,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="text-gray-400 hover:text-white transition-colors text-sm tracking-wide"
+                className="text-gray-400 hover:text-white transition-colors text-sm tracking-wide font-medium"
               >
                 LOGIN/SETUP
               </button>
@@ -418,49 +419,54 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Exact Match to Screenshot */}
-      <div className="relative min-h-screen flex items-center justify-center">
-        {/* Background Image - Girl on the right */}
+      {/* Hero Section - Exact Match to Screenshots */}
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image - Cut off on the right, black on the left */}
         <div 
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
             backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover',
-            opacity: 0.3
+            backgroundSize: 'auto 100%',
+            right: 0,
+            left: 'auto',
+            width: '60%',
           }}
         />
         
+        {/* Black gradient overlay on the left */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/95 to-transparent" />
+        
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Main Headline */}
-            <h1 className="text-7xl md:text-8xl font-bold tracking-tight mb-8 text-white">
+          <div className="max-w-3xl">
+            {/* Main Headline - Large ADONIX */}
+            <h1 className="text-8xl md:text-9xl font-bold tracking-tighter mb-8 text-white">
               ADONIX
             </h1>
             
-            {/* Subheadline - Exact match to screenshot */}
+            {/* Subheadline - Exact match to screenshot with pipe symbol */}
             <div className="mb-10">
-              <p className="text-4xl md:text-5xl font-light text-white">
+              <p className="text-5xl md:text-6xl font-light text-white leading-tight">
                 Verified Public
               </p>
-              <p className="text-4xl md:text-5xl font-light text-red-500 mt-2">
-                Meetups
+              <p className="text-5xl md:text-6xl font-light text-red-500 leading-tight mt-1">
+                Meetups<span className="text-white">|</span>
               </p>
-              <p className="text-3xl md:text-4xl font-light text-white mt-6">
-                Real-World Connections
+              <p className="text-4xl md:text-5xl font-light text-white leading-tight mt-4">
+                Real-World Connections.
               </p>
             </div>
             
-            {/* Trust Badges - Exact match to screenshot */}
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <div className="border border-red-500/40 bg-red-500/10 rounded-full px-6 py-2">
+            {/* Trust Badges - Three badges exactly like screenshot */}
+            <div className="flex flex-wrap gap-4 mb-12">
+              <div className="border border-red-500/50 bg-red-500/10 rounded-full px-5 py-2">
                 <span className="text-xs font-semibold text-red-400 tracking-wider">AUTHENTICITY EXCELLENCE</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-6 py-2">
-                <span className="text-xs font-semibold text-gray-300 tracking-wider">CURATED MEETUPS</span>
+              <div className="border border-white/20 bg-white/5 rounded-full px-5 py-2">
+                <span className="text-xs font-semibold text-gray-300 tracking-wider">CURATED MEETUPS.</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-6 py-2">
+              <div className="border border-white/20 bg-white/5 rounded-full px-5 py-2">
                 <span className="text-xs font-semibold text-gray-300 tracking-wider">HIGH-STANDARD COMMUNITY</span>
               </div>
             </div>
