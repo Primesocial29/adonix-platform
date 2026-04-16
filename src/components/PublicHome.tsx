@@ -419,7 +419,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Updated to match Gemini design */}
+      {/* Hero Section - Gemini Design */}
       <div className="relative min-h-screen overflow-hidden">
         {/* Background Image - Girl on the right */}
         <div 
@@ -429,56 +429,60 @@ We are actively working to improve accessibility. If you experience any issues, 
             backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'contain',
-            opacity: 0.4
+            opacity: 0.35
           }}
         />
+        
+        {/* Gradient overlay for better text readability */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20">
           <div className="max-w-2xl">
             {/* Main Headline */}
-            <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-4">
+            <h1 className="text-7xl md:text-8xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               ADONIX
             </h1>
             
             {/* Subheadline with crimson accent */}
-            <div className="mb-8">
-              <p className="text-2xl md:text-3xl font-light text-gray-300">
+            <div className="mb-10">
+              <p className="text-3xl md:text-4xl font-light text-gray-200">
                 Verified Public
               </p>
-              <p className="text-2xl md:text-3xl font-light text-red-500">
+              <p className="text-3xl md:text-4xl font-light text-red-500 mt-1">
                 Meetups
               </p>
-              <p className="text-2xl md:text-3xl font-light text-gray-300 mt-2">
+              <p className="text-xl md:text-2xl font-light text-gray-400 mt-4">
                 Real-World Connections
               </p>
             </div>
             
             {/* Trust Badges */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <div className="border border-red-500/30 bg-red-500/10 rounded-full px-4 py-2">
-                <span className="text-xs font-medium text-red-400 tracking-wider">AUTHENTICITY EXCELLENCE</span>
+            <div className="flex flex-wrap gap-3 mb-10">
+              <div className="border border-red-500/40 bg-red-500/10 rounded-full px-4 py-2 backdrop-blur-sm">
+                <span className="text-xs font-semibold text-red-400 tracking-wider">AUTHENTICITY EXCELLENCE</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2">
-                <span className="text-xs font-medium text-gray-400 tracking-wider">CURATED MEETUPS</span>
+              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm">
+                <span className="text-xs font-semibold text-gray-400 tracking-wider">CURATED MEETUPS</span>
               </div>
-              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2">
-                <span className="text-xs font-medium text-gray-400 tracking-wider">HIGH-STANDARD COMMUNITY</span>
+              <div className="border border-white/20 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm">
+                <span className="text-xs font-semibold text-gray-400 tracking-wider">HIGH-STANDARD COMMUNITY</span>
               </div>
             </div>
             
             {/* CTA Button */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/25"
+              className="group relative px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30 overflow-hidden"
             >
-              EXPLORE CURATION
+              <span className="relative z-10">EXPLORE CURATION</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-orange-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-black/50 backdrop-blur-sm">
+      <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
