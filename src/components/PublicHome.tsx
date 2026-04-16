@@ -374,15 +374,12 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar - LOGIN/SETUP at top right, ADONIX text at top left */}
+      {/* Navbar - ADONIX top left, LOGIN/SETUP top right */}
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          {/* ADONIX text at top left */}
-          <h1 className="text-2xl md:text-3xl font-bold tracking-wide text-white">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white">
             ADONIX
           </h1>
-          
-          {/* LOGIN/SETUP at top right */}
           <div className="flex items-center gap-6">
             {user ? (
               <>
@@ -422,9 +419,9 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Logo on far left, girl on right */}
-      <div className="relative min-h-screen flex items-center">
-        {/* Girl Image - Covering entire right side */}
+      {/* Hero Section - Centered content, girl on right */}
+      <div className="relative min-h-screen flex flex-col items-center justify-center">
+        {/* Girl Image - Covering right side */}
         <div 
           className="absolute inset-0 z-0"
           style={{
@@ -436,57 +433,55 @@ We are actively working to improve accessibility. If you experience any issues, 
             backgroundPositionY: 'center',
             right: 0,
             left: 'auto',
-            width: '55%',
+            width: '50%',
           }}
         />
         
-        {/* Black gradient overlay on the left */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+        {/* Black gradient overlay */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
         
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-xl">
-            {/* Logo - Far left, twice the size (h-56 = 224px) */}
-            <div className="mb-8">
-              <img 
-                src="/adonixlogo.png" 
-                alt="Adonix Logo" 
-                className="h-56 w-auto object-contain" 
-                style={{ background: 'transparent' }}
-                onError={(e) => {
-                  console.error('Logo failed to load');
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-            
-            {/* Subheadline */}
-            <div className="mb-8">
-              <p className="text-3xl md:text-4xl font-light text-white leading-tight">
-                Verified Public
-              </p>
-              <p className="text-3xl md:text-4xl font-light text-red-500 leading-tight mt-1">
-                Meetups<span className="text-white">|</span>
-              </p>
-              <p className="text-2xl md:text-3xl font-light text-white leading-tight mt-4">
-                Real-World Connections.
-              </p>
-            </div>
-            
-            {/* Text lines (not buttons) */}
-            <div className="space-y-1 mb-10">
-              <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
-              <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
-              <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
-            </div>
-            
-            {/* Single CTA Button */}
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
-            >
-              EXPLORE CURATION
-            </button>
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          {/* Pyramid Logo - Centered */}
+          <div className="mb-6 flex justify-center">
+            <img 
+              src="/adonixlogo.png" 
+              alt="Adonix Logo" 
+              className="h-32 w-auto object-contain" 
+              style={{ background: 'transparent' }}
+              onError={(e) => {
+                console.error('Logo failed to load');
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
+          
+          {/* Subheadline - Centered exactly like screenshot */}
+          <div className="mb-8">
+            <p className="text-4xl md:text-5xl font-light text-white leading-tight">
+              Verified Public
+            </p>
+            <p className="text-4xl md:text-5xl font-light text-red-500 leading-tight mt-1">
+              Meetups<span className="text-white">|</span>
+            </p>
+            <p className="text-3xl md:text-4xl font-light text-white leading-tight mt-4">
+              Real-World Connections.
+            </p>
+          </div>
+          
+          {/* Text lines - Centered exactly like screenshot */}
+          <div className="space-y-1 mb-10">
+            <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
+            <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
+            <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
+          </div>
+          
+          {/* CTA Button - Centered */}
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
+          >
+            EXPLORE CURATION
+          </button>
         </div>
       </div>
 
