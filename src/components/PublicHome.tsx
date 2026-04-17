@@ -419,7 +419,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Logo moved 1 inch left, size reduced by 15% */}
+      {/* Hero Section - Logo centered left, girl on right */}
       <div className="relative min-h-screen flex items-center">
         {/* Girl Image - Right side */}
         <div 
@@ -442,12 +442,12 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - Moved 1 inch left with -ml-8, size reduced to h-34 (approx 15% smaller than h-40) */}
-            <div className="mb-8 flex justify-start -ml-8">
+            {/* Logo - Size reduced by half (h-40 = 160px), centered left */}
+            <div className="mb-8 flex justify-start">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-34 w-auto object-contain" 
+                className="h-40 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
