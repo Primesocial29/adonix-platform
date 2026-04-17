@@ -6,6 +6,7 @@ import TrainerDashboard from "./TrainerDashboard";
 import BookingFlow, { BookingDetails } from './BookingFlow';
 import CheckoutScreen from './CheckoutScreen';
 import AuthModal from './AuthModal';
+import MyBookings from './MyBookings';
 
 // Simple View-Only Modal (no scroll requirement, just a close button)
 function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
@@ -418,69 +419,75 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Centered content exactly like screenshot */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center">
-        {/* Background Image - Girl as full background */}
+      {/* Hero Section */}
+      <div className="relative min-h-screen flex items-center">
+        {/* Girl Image - 30% smaller (width 35% instead of 50%) */}
         <div 
           className="absolute inset-0 z-0"
           style={{
             backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
-            backgroundPosition: 'center center',
+            backgroundPosition: 'right center',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
-            opacity: 0.3
+            backgroundPositionX: '100%',
+            backgroundPositionY: 'center',
+            right: 0,
+            left: 'auto',
+            width: '35%',
           }}
         />
         
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 z-0 bg-black/60" />
+        {/* Black gradient overlay on the left */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          {/* Pyramid Logo - Centered */}
-          <div className="mb-8 flex justify-center">
-            <img 
-              src="/adonixlogo.png" 
-              alt="Adonix Logo" 
-              className="h-32 w-auto object-contain" 
-              style={{ background: 'transparent' }}
-              onError={(e) => {
-                console.error('Logo failed to load');
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
+          <div className="max-w-2xl">
+            {/* Logo - 5 times bigger (h-80 = 320px), center-left */}
+            <div className="mb-8">
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix Logo" 
+                className="h-80 w-auto object-contain" 
+                style={{ background: 'transparent' }}
+                onError={(e) => {
+                  console.error('Logo failed to load');
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+            
+            {/* Subheadline - Left aligned */}
+            <div className="mb-8">
+              <p className="text-3xl md:text-4xl font-light text-white leading-tight">
+                Verified Public
+              </p>
+              <p className="text-3xl md:text-4xl font-light text-red-500 leading-tight mt-1">
+                Meetups<span className="text-white">|</span>
+              </p>
+              <p className="text-2xl md:text-3xl font-light text-white leading-tight mt-4">
+                Real-World Connections.
+              </p>
+            </div>
+            
+            {/* Text lines - Left aligned */}
+            <div className="space-y-1 mb-10">
+              <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
+              <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
+              <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
+            </div>
+            
+            {/* CTA Button - Left aligned */}
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
+            >
+              EXPLORE CURATION
+            </button>
           </div>
-          
-          {/* Subheadline - Exactly like screenshot */}
-          <div className="mb-8">
-            <p className="text-4xl md:text-5xl font-light text-white leading-tight">
-              Verified Public
-            </p>
-            <p className="text-4xl md:text-5xl font-light text-red-500 leading-tight mt-1">
-              Meetups<span className="text-white">|</span>
-            </p>
-            <p className="text-3xl md:text-4xl font-light text-white leading-tight mt-4">
-              Real-World Connections.
-            </p>
-          </div>
-          
-          {/* Text lines - Exactly like screenshot */}
-          <div className="space-y-1 mb-10">
-            <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
-            <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
-            <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
-          </div>
-          
-          {/* CTA Button */}
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
-          >
-            EXPLORE CURATION
-          </button>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - At the bottom */}
       <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
