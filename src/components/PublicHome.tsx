@@ -383,6 +383,9 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="flex items-center gap-6">
             {user ? (
               <>
+                <div className="fixed top-[72px] w-full z-40">
+  <div className="w-full h-px bg-white/30"></div>
+</div>
                 <span className="text-gray-300 text-sm">
                   Welcome, {profile?.first_name || (role === 'trainer' ? 'Partner' : 'Fitness Enthusiast')}!
                 </span>
