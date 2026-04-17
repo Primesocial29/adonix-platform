@@ -493,11 +493,6 @@ We are actively working to improve accessibility. If you experience any issues, 
     <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
   </div>
 </div>
-    
-    {/* Black gradient overlay on the right panel edge for blending */}
-    <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
-  </div>
-</div>
 
       {/* Footer - At the bottom */}
       <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
