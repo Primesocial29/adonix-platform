@@ -423,32 +423,30 @@ We are actively working to improve accessibility. If you experience any issues, 
       <div className="relative min-h-screen flex">
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
-          <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
+          {/* Removed max-w-2xl constraint so logo doesn't shrink */}
+          <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-<div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
-  
-  {/* ========================================================= */}
-  {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
-  {/* ========================================================= */}
-  <div style={{ 
-    marginBottom: '-105px',
-    marginLeft: '-17px'
-  }}>
-    <img 
-      src="/adonixlogo.png" 
-      alt="Adonix Logo" 
-      style={{
-        width: '600px',
-        height: 'auto',
-        background: 'transparent'
-      }}
-      onError={(e) => {
-        console.error('Logo failed to load');
-        e.currentTarget.style.display = 'none';
-      }}
-    />
-  </div>
+            {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
+            {/* ========================================================= */}
+            <div style={{ 
+              marginBottom: '-105px',    // ← Change to move DOWN (increase) or UP (decrease)
+              marginLeft: '-17px'        // ← Changed from -65px to -17px (moves 48px = 1/2 inch to the right)
+            }}>
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix Logo" 
+                style={{
+                  width: '600px',        // ← Change this number to make BIGGER or SMALLER
+                  height: 'auto',        // ← Changed to 'auto' - maintains aspect ratio, no distortion
+                  background: 'transparent'
+                }}
+                onError={(e) => {
+                  console.error('Logo failed to load');
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
             {/* ========================================================= */}
             
             {/* Subheadline */}
