@@ -123,7 +123,7 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
+  const [selectedPartner, setSelectedPartner] useState<Profile | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | 'contact' | 'accessibility' | null>(null);
 
@@ -431,10 +431,10 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-            {/* LOGO */}
+            {/* LOGO - MOVED UP 1 INCH (96px) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '105px',
+              marginBottom: '9px',      // Changed from 105px to 9px (moved up 96px)
               marginLeft: '-17px'
             }}>
               <img 
@@ -453,9 +453,9 @@ We are actively working to improve accessibility. If you experience any issues, 
               />
             </div>
             
-            {/* Text lines - MOVED 1 INCH (96px) HIGHER */}
+            {/* Text lines */}
             <div className="mb-10" style={{ 
-              marginTop: '-116px',    // Changed from -20px to -116px (moved up 96px)
+              marginTop: '-20px',
               marginLeft: '0px'
             }}>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
@@ -464,9 +464,9 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Right Side Text */}
+            {/* Right Side Text - MOVED DOWN 1.5 INCHES (144px) */}
             <div className="absolute left-0 z-20" style={{ 
-              top: '-100px',
+              top: '44px',           // Changed from -100px to 44px (moved down 144px)
               left: '250px'
             }}>
               <div className="text-left">
