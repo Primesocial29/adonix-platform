@@ -421,7 +421,7 @@ We are actively working to improve accessibility. If you experience any issues, 
 
       {/* Hero Section */}
 <div className="relative min-h-screen flex">
-  {/* Left Side - Solid Black Background (covers 60% = 10% more than half) */}
+  {/* Left Side - Solid Black Background (covers 60%) */}
   <div className="relative w-3/5 bg-black flex flex-col justify-center">
     {/* Radial Gradient Glow - Crimson Red halo */}
     <div 
@@ -435,7 +435,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       {/* Logo */}
       <div className="mb-6">
         <img 
-          src="/adonixlogo.png?t=9" 
+          src="/adonixlogo.png?t=11" 
           alt="Adonix Logo" 
           className="h-60 w-auto object-contain" 
           style={{ background: 'transparent' }}
@@ -476,9 +476,9 @@ We are actively working to improve accessibility. If you experience any issues, 
     </div>
   </div>
   
-  {/* Right Side - Girl Image (smaller size) */}
+  {/* Right Side - Girl Image (12% smaller - using 88% width) */}
   <div className="relative w-2/5 flex items-center justify-center overflow-hidden">
-    <div className="relative w-8/9 h-auto">
+    <div className="relative w-[88%] h-auto">
       <img 
         src="/girl_image_backgroundinterface.jpg" 
         alt="Female runner"
@@ -488,6 +488,11 @@ We are actively working to improve accessibility. If you experience any issues, 
         }}
       />
     </div>
+    
+    {/* Black gradient overlay on the right panel edge for blending */}
+    <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+  </div>
+</div>
     
     {/* Black gradient overlay on the right panel edge for blending */}
     <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
