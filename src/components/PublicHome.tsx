@@ -467,7 +467,7 @@ We are actively working to improve accessibility. If you experience any issues, 
 
 <div className="absolute left-0 z-20" style={{ 
   top: '150px',       // ← Change this to move UP (smaller number) or DOWN (larger number)
-  left: '50px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
+  left: '-150px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
 }}>
   <div className="text-left">
     <p className="text-4xl md:text-5xl font-light text-white leading-tight">
