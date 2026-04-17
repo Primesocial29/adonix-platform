@@ -434,7 +434,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '-220px',    // Changed from -160px to -220px (moved HIGHER)
+              marginBottom: '220px',    // Changed from -160px to -220px (moved HIGHER)
               marginLeft: '-17px'
             }}>
               <img 
