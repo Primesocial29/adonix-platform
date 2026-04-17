@@ -419,7 +419,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Pure Black Background (no red glow) */}
+      {/* Hero Section - Pure Black Background */}
       <div className="relative min-h-screen flex">
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
@@ -468,32 +468,16 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image (PIXEL CONTROLS - YOU CAN CHANGE THESE VALUES) */}
-        <div className="relative w-2/5 flex items-center justify-center">
-          {/* 
-            ============================================================
-            GIRL IMAGE CONTROLS - Change these pixel values as needed:
-            - width: Width of the image in pixels
-            - height: Height of the image in pixels  
-            - top: Moves image down (positive number) or up (negative number)
-            - left: Moves image right (positive) or left (negative)
-            ============================================================
-          */}
-          <div className="relative" style={{ 
-            width: '500px',      // ← Change this to make image wider/narrower
-            height: '600px',     // ← Change this to make image taller/shorter
-            top: '0px',          // ← Change to move image DOWN (positive) or UP (negative)
-            left: '0px'          // ← Change to move image RIGHT (positive) or LEFT (negative)
-          }}>
-            <img 
-              src="/girl_image_backgroundinterface.jpg" 
-              alt="Female runner"
-              className="w-full h-full object-contain"
-              style={{
-                filter: 'grayscale(100%) brightness(70%)'
-              }}
-            />
-          </div>
+        {/* Right Side - Girl Image */}
+        <div className="relative w-2/5 flex items-center justify-center overflow-hidden">
+          <img 
+            src="/girl_image_backgroundinterface.jpg" 
+            alt="Female runner"
+            className="w-full h-full object-cover"
+            style={{
+              filter: 'grayscale(100%) brightness(70%)'
+            }}
+          />
           
           {/* Black gradient overlay on the right panel edge for blending */}
           <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
