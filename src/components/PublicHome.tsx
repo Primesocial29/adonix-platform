@@ -375,7 +375,7 @@ We are actively working to improve accessibility. If you experience any issues, 
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navbar - ADONIX top left in CAPS, LOGIN/SETUP top right */}
-      <nav className="fixed top-0 w-full z-40">
+      <nav className="fixed top-0 w-full z-80">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
           <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white uppercase">
             ADONIX
