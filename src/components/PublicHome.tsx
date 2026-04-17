@@ -410,7 +410,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="text-gray-400 hover:text-white transition-colors text-xl tracking-wide font-medium"
+                className="text-gray-400 hover:text-white transition-colors text-medium tracking-wide font-medium"
               >
                 LOGIN/SETUP
               </button>
