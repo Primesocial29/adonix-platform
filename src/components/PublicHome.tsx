@@ -478,7 +478,7 @@ We are actively working to improve accessibility. If you experience any issues, 
   
   {/* Right Side - Girl Image (control size with pixels, no rounded corners) */}
   <div className="relative w-2/5 flex items-center justify-center">
-    <div className="relative" style={{ width: '650px', height: '730px' }}>
+    <div className="relative" style={{ width: '650px', height: '740px' }}>
       <img 
         src="/girl_image_backgroundinterface.jpg" 
         alt="Female runner"
