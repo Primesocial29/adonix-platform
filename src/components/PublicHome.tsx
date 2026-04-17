@@ -442,19 +442,24 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - 5% bigger (h-56), moved left (-ml-125), brought lower (mt-8) */}
-            <div className="mb-4 flex justify-start -ml-8 mt-8">
-              <img 
-                src="/adonixlogo.png?t=5" 
-                alt="Adonix Logo" 
-                className="h-56 w-auto object-contain" 
-                style={{ background: 'transparent' }}
-                onError={(e) => {
-                  console.error('Logo failed to load');
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
+            {/* Black gradient overlay on the left */}
+<div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+
+<div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
+  <div className="max-w-2xl">
+    {/* Logo - A little bigger (h-60), more left (-ml-12), lower (mt-12) */}
+    <div className="mb-4 flex justify-start -ml-12 mt-12">
+      <img 
+        src="/adonixlogo.png?t=6" 
+        alt="Adonix Logo" 
+        className="h-60 w-auto object-contain" 
+        style={{ background: 'transparent' }}
+        onError={(e) => {
+          console.error('Logo failed to load');
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+    </div>
             
             {/* Subheadline - Left aligned */}
             <div className="mb-8">
