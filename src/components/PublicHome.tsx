@@ -424,12 +424,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
-            {/* Logo - CONTROL SIZE & POSITION WITH PIXELS */}
-<div style={{ 
-  marginBottom: '24px',      // ← Change to move DOWN (increase) or UP (decrease)
-  marginLeft: '0px'          // ← Change to move RIGHT (positive) or LEFT (negative)
-}}>
-  <img 
+           <img 
   src="/adonixlogo.png" 
   alt="Adonix Logo" 
   className="h-60 w-auto object-contain"   // ← REMOVE THIS LINE
