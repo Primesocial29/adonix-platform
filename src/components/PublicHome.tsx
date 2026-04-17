@@ -483,12 +483,13 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             
             {/* CTA Button */}
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
-            >
-              EXPLORE CURATION
-            </button>
+            {/* CTA BUTTON - Wide, Tall, Gradient */}
+<button
+  onClick={() => setShowAuthModal(true)}
+  className="w-full py-5 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300"
+>
+  EXPLORE CURATION
+</button>
           </div>
         </div>
         
