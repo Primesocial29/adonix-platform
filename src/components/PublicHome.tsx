@@ -434,7 +434,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* LOGO - MOVED UP 1.5 INCHES (144px) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '-39px',    // Changed from 105px to -39px (moved up 144px)
+              marginBottom: '-100px',    // Changed from 105px to -39px (moved up 144px)
               marginLeft: '-17px'
             }}>
               <img 
