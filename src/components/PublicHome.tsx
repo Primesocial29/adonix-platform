@@ -468,16 +468,18 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image (moved UP) */}
+        {/* Right Side - Girl Image (CONTROL SIZE & POSITION WITH PIXELS) */}
 <div className="relative w-2/5 flex items-center justify-center overflow-hidden">
   <img 
     src="/girl_image_backgroundinterface.jpg" 
     alt="Female runner"
-    className="w-full h-full object-cover"
+    className="relative"
     style={{
-      position: 'relative',
-      top: '-40px',           // ← Negative moves UP, Positive moves DOWN
-      filter: 'grayscale(100%) brightness(70%)'
+      width: '600px',              // ← Change this to make image WIDER or NARROWER
+      height: 'auto',              // ← Keeps aspect ratio (don't change)
+      top: '-50px',                // ← Negative moves UP, Positive moves DOWN
+      filter: 'grayscale(100%) brightness(70%)',
+      objectFit: 'contain'
     }}
   />
   
