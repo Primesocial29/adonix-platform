@@ -443,7 +443,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               - marginLeft: negative number moves LEFT, positive number moves RIGHT
             */}
             <div style={{ 
-              marginBottom: '200px',
+              marginBottom: '230px',
               marginLeft: '-17px'
             }}>
               <img 
