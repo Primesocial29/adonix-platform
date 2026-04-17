@@ -450,7 +450,7 @@ We are actively working to improve accessibility. If you experience any issues, 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '150x',
+                  width: '150px',
                   height: 'auto',
                   maxWidth: 'none',
                   background: 'transparent'
