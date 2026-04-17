@@ -434,7 +434,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* PNG LOGO - MOVED UP (negative margin pushes it up) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '-120px',    // Changed from -80px to -120px (moved UP more)
+              marginBottom: '-160px',    // Changed from -120px to -160px (moved UP more)
               marginLeft: '-17px'
             }}>
               <img 
@@ -464,9 +464,9 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Right Side Text - MOVED DOWN A LITTLE */}
+            {/* Right Side Text */}
             <div className="absolute left-0 z-20" style={{ 
-              top: '-85px',             // Changed from -100px to -85px (moved DOWN 15px)
+              top: '-85px',
               left: '250px'
             }}>
               <div className="text-left">
