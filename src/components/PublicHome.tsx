@@ -1,3 +1,5 @@
+where this code. Does it show me where the logo location and and size
+
 import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
@@ -447,7 +449,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-40000 w-auto object-contain" 
+                className="h-40 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
