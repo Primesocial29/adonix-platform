@@ -429,7 +429,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '24px',    // ← Change to move DOWN (increase) or UP (decrease)
+              marginBottom: '40px',    // ← Change to move DOWN (increase) or UP (decrease)
               marginLeft: '0px'        // ← Change to move RIGHT (positive) or LEFT (negative)
             }}>
               <img 
