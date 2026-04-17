@@ -471,8 +471,8 @@ We are actively working to improve accessibility. If you experience any issues, 
        {/* Right Side - Girl Image (CONTROL SIZE & POSITION WITH PIXELS) */}
 <div className="relative w-2/5 flex items-center justify-center">
   <div style={{ 
-    width: '750px',           // ← CHANGE THIS TO MAKE IMAGE BIGGER/SMALLER
-    height: '750px',          // ← CHANGE THIS TO MATCH WIDTH (keeps square)
+    width: '760px',           // ← CHANGE THIS TO MAKE IMAGE BIGGER/SMALLER
+    height: '760px',          // ← CHANGE THIS TO MATCH WIDTH (keeps square)
     position: 'relative',
     top: '-10px'              // ← CHANGE THIS TO MOVE UP/DOWN
   }}>
