@@ -471,7 +471,7 @@ We are actively working to improve accessibility. If you experience any issues, 
 }}>
   <div className="text-left">
     <p className="text-1.75xl md:text-5xl font-bold text-white leading-tight">
-      Verified Public
+      VerifiedPublic
     </p>
     <p className="text-1.75xl md:text-5xl font-bold text-red-500 leading-tight mt-1">
       Meetups<span className="text-white">|</span>
