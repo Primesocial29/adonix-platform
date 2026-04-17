@@ -420,32 +420,22 @@ We are actively working to improve accessibility. If you experience any issues, 
       </nav>
 
       {/* Hero Section */}
-<div className="relative min-h-screen flex items-center">
-  {/* Girl Image - Right side */}
-  <div 
-    className="absolute inset-0 z-0"
-    style={{
-      backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
-      backgroundPosition: 'right center',
-      backgroundRepeat: 'no-repeat',
-      backgroundSize: 'cover',
-      backgroundPositionX: '100%',
-      backgroundPositionY: 'center',
-      right: 0,
-      left: 'auto',
-      width: '35%',
-    }}
-  />
-  
-  {/* Black gradient overlay on the left - shrunk and moved left */}
-  <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/60 to-transparent" style={{ right: 'auto', width: '40%' }} />
-  
-  <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-    <div className="max-w-xl ml-0">
+<div className="relative min-h-screen flex">
+  {/* Left Side - Solid Black Background (covers left half + a bit of center) */}
+  <div className="relative w-1/2 bg-black flex flex-col justify-center">
+    {/* Radial Gradient Glow - Crimson Red halo */}
+    <div 
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background: 'radial-gradient(circle at center, rgba(220,20,60,0.15) 0%, rgba(0,0,0,0) 70%)'
+      }}
+    />
+    
+    <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
       {/* Logo */}
-      <div className="mb-4 flex justify-start -ml-12 mt-12">
+      <div className="mb-6">
         <img 
-          src="/adonixlogo.png?t=7" 
+          src="/adonixlogo.png?t=8" 
           alt="Adonix Logo" 
           className="h-60 w-auto object-contain" 
           style={{ background: 'transparent' }}
@@ -456,7 +446,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         />
       </div>
       
-      {/* Subheadline - Left aligned */}
+      {/* Subheadline */}
       <div className="mb-8">
         <p className="text-3xl md:text-4xl font-light text-white leading-tight">
           Verified Public
@@ -469,14 +459,14 @@ We are actively working to improve accessibility. If you experience any issues, 
         </p>
       </div>
       
-      {/* Text lines - Left aligned */}
+      {/* Text lines */}
       <div className="space-y-1 mb-10">
         <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
         <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
         <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
       </div>
       
-      {/* CTA Button - Left aligned */}
+      {/* CTA Button */}
       <button
         onClick={() => setShowAuthModal(true)}
         className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
@@ -484,6 +474,21 @@ We are actively working to improve accessibility. If you experience any issues, 
         EXPLORE CURATION
       </button>
     </div>
+  </div>
+  
+  {/* Right Side - Girl Image */}
+  <div className="relative w-1/2 overflow-hidden">
+    <img 
+      src="/girl_image_backgroundinterface.jpg" 
+      alt="Female runner"
+      className="absolute inset-0 w-full h-full object-cover"
+      style={{
+        filter: 'grayscale(100%) brightness(70%)'
+      }}
+    />
+    
+    {/* Black gradient overlay on the right panel edge for blending */}
+    <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
   </div>
 </div>
 
