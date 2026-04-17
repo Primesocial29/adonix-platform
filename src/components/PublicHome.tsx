@@ -488,11 +488,14 @@ We are actively working to improve accessibility. If you experience any issues, 
 </div>
             
             {/* Text lines */}
-            <div className="space-y-1 mb-10">
-              <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
-              <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
-              <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
-            </div>
+            <div className="space-y-1 mb-10" style={{ 
+  marginBottom: '40px',    // ← Pixel control for position
+  marginLeft: '0px'        // ← Pixel control for position
+}}>
+  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>AUTHENTICITY EXCELLENCE</p>
+  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>Curated Meetups.</p>
+  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>High-Standard Community</p>
+</div>
             
             {/* CTA Button */}
             <button
