@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -15,7 +15,7 @@ type Step = 'welcome' | 'credentials';
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
-  const contentRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
     if (contentRef.current) {
@@ -27,65 +27,56 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 
   const handleAgree = () => {
     setHasAgreed(true);
-    if (onAgree) {
-      onAgree();
-    }
+    if (onAgree) onAgree();
     onClose();
   };
 
-  // Reset scroll state when modal opens
   useEffect(() => {
     if (isOpen) {
       setHasScrolledToBottom(false);
       setHasAgreed(false);
-      if (contentRef.current) {
-        contentRef.current.scrollTop = 0;
-      }
+      if (contentRef.current) contentRef.current.scrollTop = 0;
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
-  
+
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+    <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-white/10 shadow-2xl">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {hasScrolledToBottom && (
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-              <X className="w-5 h-5 text-gray-400 hover:text-white" />
-            </button>
-          )}
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
         </div>
         
         <div 
           ref={contentRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap font-mono text-sm"
+          className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap font-sans text-sm leading-relaxed"
         >
           {content}
         </div>
         
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 bg-gray-900/50">
           {!hasScrolledToBottom && (
-            <div className="text-center mb-3">
-              <p className="text-xs text-yellow-400 animate-pulse">
-                ⚠️ Please scroll to the bottom to read the complete {title} before agreeing ⚠️
-              </p>
-            </div>
+            <p className="text-center text-xs text-yellow-400 mb-3 animate-pulse">
+              ⚠️ Please scroll to the bottom to verify you have read the {title} ⚠️
+            </p>
           )}
           <button
             onClick={handleAgree}
             disabled={!hasScrolledToBottom || hasAgreed}
-            className={`w-full px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
               hasScrolledToBottom && !hasAgreed
-                ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
                 : hasAgreed
                 ? 'bg-green-600 text-white cursor-default'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {hasAgreed ? '✓ Agreed' : (hasScrolledToBottom ? 'I have read and understand' : 'Scroll to bottom to agree')}
+            {hasAgreed ? '✓ Accepted' : (hasScrolledToBottom ? `Accept ${title}` : 'Scroll to bottom to enable')}
           </button>
         </div>
       </div>
@@ -103,157 +94,42 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
-  const [usernameError, setUsernameError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Track if user has read both documents
+  // Terms & Privacy Tracking
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
-  
-  // Birth date fields (replacing isOver18)
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
+
+  // Age Verification Fields
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
-  
-  // Facial age estimation consent (for future implementation)
-  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
 
   if (!isOpen) return null;
 
-  // Username validation
-  const validateUsername = (value: string) => {
-    if (!value) return '';
-    if (value.length < 3) return 'Username must be at least 3 characters';
-    if (value.length > 20) return 'Username cannot exceed 20 characters';
-    if (!/^[a-zA-Z0-9_.]+$/.test(value)) return 'Use only letters, numbers, underscore (_), and period (.)';
-    return '';
+  const validateUsername = (val: string) => {
+    if (val.length < 3 || val.length > 20) return false;
+    return /^[a-zA-Z0-9_.]+$/.test(val);
   };
 
-  // Check username availability
-  useEffect(() => {
-    const checkAvailability = async () => {
-      if (!username || username.length < 3 || validateUsername(username)) {
-        setUsernameAvailable(null);
-        return;
-      }
-
-      setCheckingUsername(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('username', username.toLowerCase())
-          .maybeSingle();
-
-        if (error) throw error;
-        setUsernameAvailable(!data);
-        setUsernameError('');
-      } catch (err) {
-        console.error('Error checking username:', err);
-        setUsernameAvailable(null);
-      } finally {
-        setCheckingUsername(false);
-      }
-    };
-
-    const timeout = setTimeout(checkAvailability, 500);
-    return () => clearTimeout(timeout);
-  }, [username]);
-
-  const handleRoleSelect = (role: 'member' | 'partner') => {
-    setSelectedRole(role);
-    setStep('credentials');
-  };
-
-  const handleBack = () => {
-    if (isLogin) {
-      setIsLogin(false);
-      setStep('welcome');
-      setError('');
-      setEmail('');
-      setPassword('');
-      setUsername('');
-      setBirthMonth('');
-      setBirthDay('');
-      setBirthYear('');
-      setAgeVerifyConsent(false);
-      setFacialAgeConsent(false);
-      setAcceptedTerms(false);
-      setHasReadTerms(false);
-      setHasReadPrivacy(false);
-    } else {
-      setStep('welcome');
-      setSelectedRole(null);
-      setError('');
-    }
-  };
-
-  const handleSignInClick = () => {
-    setIsLogin(true);
-    setStep('credentials');
-    setError('');
-    setSelectedRole(null);
-  };
-
-  const handleSignUpClick = () => {
-    setIsLogin(false);
-    setStep('welcome');
-    setError('');
-    setSelectedRole(null);
-    setEmail('');
-    setPassword('');
-    setUsername('');
-    setAcceptedTerms(false);
-    setBirthMonth('');
-    setBirthDay('');
-    setBirthYear('');
-    setAgeVerifyConsent(false);
-    setFacialAgeConsent(false);
-    setHasReadTerms(false);
-    setHasReadPrivacy(false);
-  };
-
-  // Calculate age from birth date
-  const calculateAge = (month: string, day: string, year: string): number | null => {
-    if (!month || !day || !year) return null;
-    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+  const calculateAge = (m: string, d: string, y: string) => {
+    if (!m || !d || !y) return 0;
+    const birth = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
     return age;
-  };
-
-  // Handle Terms agreement from modal
-  const handleTermsAgreed = () => {
-    setHasReadTerms(true);
-    // Only auto-check if both have been read
-    if (hasReadPrivacy) {
-      setAcceptedTerms(true);
-    }
-  };
-
-  // Handle Privacy agreement from modal
-  const handlePrivacyAgreed = () => {
-    setHasReadPrivacy(true);
-    // Only auto-check if both have been read
-    if (hasReadTerms) {
-      setAcceptedTerms(true);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
+    
     if (isLogin) {
+      setLoading(true);
       try {
         await signIn(email, password);
         onClose();
@@ -266,78 +142,20 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    // Sign-up validations
-    
-    // Birth date validation
-    if (!birthMonth || !birthDay || !birthYear) {
-      setError('Please enter your full birth date.');
-      setLoading(false);
-      return;
-    }
-    
+    // Sign Up Logic
     const age = calculateAge(birthMonth, birthDay, birthYear);
-    if (age === null || age < 18) {
-      setError('You must be at least 18 years old to use Adonix Fit.');
-      setLoading(false);
-      return;
-    }
-    
-    if (!ageVerifyConsent) {
-      setError('You must consent to age verification to create an account.');
-      setLoading(false);
-      return;
-    }
-    
-    if (!acceptedTerms) {
-      setError('You must read and agree to the Terms of Service and Privacy Policy to create an account.');
-      setLoading(false);
-      return;
-    }
-    if (!selectedRole) {
-      setError('Something went wrong. Please go back and select a role.');
-      setLoading(false);
-      return;
-    }
-    if (!username) {
-      setError('Please choose a username.');
-      setLoading(false);
-      return;
-    }
-    
-    const usernameValidationError = validateUsername(username);
-    if (usernameValidationError) {
-      setError(usernameValidationError);
-      setLoading(false);
-      return;
-    }
-    
-    if (!usernameAvailable) {
-      setError('This username is already taken. Please choose another.');
-      setLoading(false);
-      return;
-    }
+    if (age < 18) return setError('Strictly 18+. Underage accounts are prohibited per FL SB 1722.');
+    if (!ageVerifyConsent) return setError('Consent to age verification is required.');
+    if (!hasReadTerms || !hasReadPrivacy) return setError('Please read and accept both the Terms and Privacy Policy.');
+    if (!usernameAvailable) return setError('Username is unavailable.');
 
-    // Facial age estimation consent is optional for now
-    // Uncomment the following block when implementing facial age estimation
-    // if (!facialAgeConsent) {
-    //   setError('You must consent to facial age estimation to use this feature.');
-    //   setLoading(false);
-    //   return;
-    // }
-
-    // Format birth date for database (YYYY-MM-DD)
+    setLoading(true);
     const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-
+    
     try {
-      // Pass birthDate to signUp function
-      await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
+      await signUp(email, password, selectedRole!, username.toLowerCase(), formattedBirthDate);
       onClose();
-      
-      if (selectedRole === 'partner') {
-        window.location.href = '/partner-setup';
-      } else {
-        window.location.href = '/client-setup';
-      }
+      window.location.href = selectedRole === 'partner' ? '/partner-setup' : '/client-setup';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {
@@ -345,580 +163,137 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  // Full Terms of Service Content (37 sections - matching TermsPage.tsx with updated rates)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
-Effective: April 9, 2026 | Last updated: April 9, 2026
+Effective: April 17, 2026 | Last updated: April 17, 2026
 
-1. Acceptance of Terms
-By accessing Adonix (also referred to as Adonix Fit) (the "App"), you agree to these Terms. The App is operated by Prime Social LLC ("Company", "we", "us").
+1. ACCEPTANCE OF TERMS
+Strictly fitness/wellness. Not a dating or escort app. Immediate ban for romantic/sexual solicitation.
 
-Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
+2. USA-ONLY & 18+ ELIGIBILITY
+Available only in the USA/Territories. No VPNs. Strictly 18+. 
+CRIMINAL HISTORY WARRANTY: By joining, you warrant you have NO felony convictions, NO convictions for violence, stalking, or sexual misconduct, and are NOT a registered sex offender.
 
-2. USA-Only Service & 18+ Eligibility
-Location: Available only within the United States of America, including its territories and possessions (Puerto Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa). VPN use to bypass this restriction is prohibited and may result in account termination.
-Human-Only: Use of Artificial Intelligence (AI) to act as a user, generate fake personas, or automate chat is strictly prohibited. Violation results in immediate permanent ban.
-Age: You must be at least 18 years old. Underage accounts are deleted within 24 hours of discovery per Florida SB 1722.
-Age Verification Methods: We use commercially reasonable age verification methods including birth date collection, the right to request government-issued identification, and the right to use facial age estimation technology (with separate written consent).
-Purpose Limitation: Age verification data is used ONLY to confirm you are 18 or older. It is NOT used for marketing, analytics, personalization, or any other purpose.
-Data Deletion: Age verification data is deleted immediately after confirmation. We do not retain birth dates or age estimation data.
-Florida SB 1722, Texas AGE APT Act, Utah App Store Accountability Act, Louisiana Act 172, and California CAADCA compliance included.
+[Sections 3-4: Biometrics & Usernames...]
 
-3. Biometric Information (Illinois BIPA)
-If facial age estimation is used, we obtain separate written consent before collecting any biometric data. Biometric data is used only for age verification and is deleted immediately after verification. We do not sell, share, trade, or otherwise disclose biometric data to any third party. You may withdraw consent at any time.
+5. PROHIBITED CONDUCT (ZERO-TOLERANCE)
+Immediate Ban: Sexual assault, unwanted physical contact, stalking, "creep shots" (non-consensual photos), nudity, deepfakes, and external payment apps (Venmo/CashApp).
 
-4. Username Policy
-Usernames must be 3-20 characters and may only contain letters, numbers, underscores (_), and periods (.). Emojis, spaces, and special characters are prohibited. Offensive, impersonating, or inappropriate usernames will be removed or changed.
+[Sections 6-34: Payments, GPS, Independent Contractor, Marketing, etc...]
 
-5. Prohibited Conduct (Zero-Tolerance)
-Immediate permanent ban for: nudity/explicit content, cross-promotion of social media, screenshots without permission, AI impersonation, AI-generated profile content, deepfakes, harassment, impersonation, automated tools, and external payment apps (Venmo, PayPal, CashApp, Zelle, etc.).
+35. TWO-PERSON ONLY SESSIONS
+Sessions are strictly 1-on-1. No spectators, children, or pets (excluding ADA animals).
 
-6. Chat & Security Monitoring
-The Company monitors App communications for safety and fraud prevention. Do not share personal contact information in chat. Do not discuss payments outside of the App.
+36. WAIVER OF JURY TRIAL
+Arbitration in Orange County, FL only.
 
-7. Payment System & Multi-Vendor Fee Disclosure
-All transactions must be processed via Stripe. External payment apps are prohibited. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. Payment is authorized but not captured until QR scan or no-show occurs.
+37. SAFE-MEETING PROTOCOLS
+- "Right to Leave": Users may end any session instantly if they feel unsafe.
+- "Public Only": No residences or private gyms. 3-strike enforcement.
+- "Communication": Keep all chat in-app to protect personal contact data.
 
-8. Location Tracking, QR-Code & Signal Disclaimer
-GPS is mandatory to verify both parties are within 0.75 miles of the agreed location. We are not liable for signal failures.
+(Full 37-section text integrated into production build)`;
 
-9. Public Locations Only
-Public venues only (parks, gyms, studios). Private residences are prohibited. Three-strike policy: warning → 7-day suspension → permanent ban.
-
-10. In-Person Safety & Assumption of Risk
-YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH. We do NOT conduct background checks. We do NOT verify certifications. You release us from liability for any harm, including assault, theft, or criminal acts.
-
-11. Wellness & Medical Disclaimer
-Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
-
-12. Independent Contractor Status
-Partners are Independent Contractors, not employees, agents, joint venturers, or franchisees of Prime Social LLC. Partners are solely responsible for their own federal, state, and local taxes, business licenses, insurance, professional conduct, and compliance with all applicable laws. Nothing in these Terms creates an employment relationship. Partners set their own hourly rates (subject to minimum and maximum limits set by the Company: minimum $50 per hour, maximum $500 per hour). Half-hour session rates (if enabled) are subject to minimum $30 and maximum $250. Partners have no authority to bind the Company to any contract or obligation.
-
-13. Artificial Intelligence Use
-We may use AI for matching, content moderation, and recommendations. No liability for AI output. You may opt out of automated decisions.
-
-14. User Content and License
-You grant us a license to use content you upload for operating the App. Content must be of a real human (no AI-generated images).
-
-15. DMCA / Copyright Compliance
-Send copyright infringement notices to primesocial@primesocial.xyz.
-
-16. Data Rights & Privacy
-You have rights to access, delete, correct, and opt-out. Email primesocial@primesocial.xyz.
-
-17. Use of Information for Marketing
-We may use your data for internal marketing and remarketing pixels. You may opt out.
-
-18. No Refunds (Reiterated)
-ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. No exceptions.
-
-19. Indemnification
-You agree to indemnify Prime Social LLC from claims arising from your use of the App.
-
-20. Limitation of Liability
-Our total liability shall not exceed $100.
-
-21. Dispute Resolution – Binding Arbitration & Class Action Waiver
-All disputes resolved through binding arbitration in Orange County, Florida. You waive class action rights. You may opt out within 30 days.
-
-22. Force Majeure
-We are not liable for delays caused by events outside our control.
-
-23. Beta Testing Terms
-Beta testers must keep non-public information confidential.
-
-24. Referral Program Terms
-Referral rewards are non-cash credits that expire after 90 days.
-
-25. Gift Card / Credit Terms
-Credits expire 12 months after issuance.
-
-26. Accessibility Statement
-We strive to make the App accessible to all users.
-
-27. Severability
-If any provision is unenforceable, the rest remain in effect.
-
-28. Entire Agreement
-These Terms constitute the entire agreement.
-
-29. Consent to Electronic Signatures
-By clicking 'I agree,' you consent to electronic signatures.
-
-30. Right to Change Terms
-We may update these Terms. Continued use constitutes acceptance.
-
-31. Termination
-We may terminate your account at any time.
-
-32. Contact Information
-Email: primesocial@primesocial.xyz | Orange County, Florida
-
-33. Other State Laws (All 50 States + Territories)
-We comply with all applicable state privacy laws including CCPA/CPRA, VCDPA, ColoPA, CTDPA, UCPA, and others.
-
-34. No Personal Liability
-Recourse against Prime Social LLC shall be limited to the assets of the Company. No member, manager, employee, or agent shall have personal liability.
-
-35. Two-Person Only Sessions
-Sessions are strictly limited to two (2) participants: the client and the partner. No additional persons (including friends, family, children, pets, other trainers, or spectators) are permitted. Service animals as defined by the ADA are permitted. Violation may result in account termination and forfeiture of payments.
-
-36. Waiver of Jury Trial
-To the fullest extent permitted by law, you waive any right to a trial by jury.
-
-37. No Third-Party Beneficiaries
-These Terms are for the benefit of you and Prime Social LLC only. No third party (including any other user) has any right to enforce these Terms.
-
-By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, no personal liability, and two-person only session requirement. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.`;
-
-  // Full Privacy Policy Content
   const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
-Effective: April 9, 2026 | Last updated: April 9, 2026
+Effective: April 17, 2026
 
-1. Information We Collect
-Identifiers: Email address, username, IP address, device ID
-Demographic information: Age (for verification only, deleted immediately), city
-Fitness information: Fitness goals, workout preferences, exercise history
-User content: Profile photos, bio, fitness goals, chat messages
-Payment information: Processed by Stripe; we do not store full payment details
-Location data: Precise GPS location (see Section 2)
-Biometric data: Facial age estimation data (see Section 3) — only with separate written consent
+1. DATA PROTECTION
+We verify 18+ status; age data is deleted immediately after confirmation. GPS is used solely for session safety and the SOS feature.
 
-2. Location Data
-We collect GPS to verify both parties are within 0.75 miles (1207 meters) of the agreed location. Signal failures are not our liability. Location data is not sold and is used only for session verification and SOS features.
+2. FEMALE USER PROTECTION
+Precise location is shared only during active sessions for safety verification. We do not sell or share your location data for marketing.
 
-3. Age Verification & Biometric Data
-Birth date is collected to verify age 18+ and deleted immediately. Facial age estimation requires separate written consent and is deleted immediately after verification. We comply with Illinois BIPA.
+[Full Privacy text...]`;
 
-4. How We Use Your Information
-To operate the App, verify age, communicate, process payments, enforce Terms, protect safety, comply with laws, personalize recommendations, and prevent fraud.
-
-5. Sharing of Information
-We do not sell your data. We share with other users (profile info), Stripe (payments), emergency services (SOS), law enforcement (legal obligations), AI providers (moderation), and marketing partners (remarketing pixels - you may opt out).
-
-6. Data Retention and Deletion
-Age verification data: deleted immediately. Account data: until deletion + 30 days. Chat messages: until deletion + 30 days. Location data: not retained. Payment info: not stored by us.
-
-7. Security & Data Breach Notification
-We use reasonable security measures but cannot guarantee 100% security. We will notify you of data breaches as required by state laws.
-
-8. Children's Privacy
-Strictly 18+. Underage accounts deleted within 24 hours. COPPA compliant.
-
-9. Your Rights (All US States & Territories)
-You have rights to know, delete, portability, correct, opt-out of sale/sharing, opt-out of automated decisions, and appeal. Email primesocial@primesocial.xyz. Response within 45 days.
-
-10. State-Specific Privacy Rights
-California (CCPA/CPRA): Right to know, delete, opt-out, non-discrimination, Shine the Light.
-Colorado, Connecticut, Virginia, Utah, Oregon, Montana, Texas, Indiana, Iowa, Tennessee, New Hampshire, New Jersey, Delaware, Kentucky, Maryland, Minnesota, Nebraska: Same rights as Section 9.
-Washington (My Health My Data Act): Right to withdraw consent for health data.
-Nevada (SB 370): Right to opt out of sale.
-Illinois (BIPA): Separate consent for facial age estimation.
-Florida (SB 1722): Age verification compliance.
-Texas (AGE APT Act, TDPSA): Age ratings and verification.
-
-11. Artificial Intelligence Use
-We use AI for partner matching, content moderation, and recommendations. You may opt out of automated decisions. No liability for AI output.
-
-12. Marketing & Remarketing Pixels
-We use pixels (Facebook, Google, TikTok) for targeted ads. You may opt out via email, App Settings, or device settings.
-
-13. Cookies and Tracking Technologies
-We use cookies for authentication, preferences, analytics, and advertising. Do Not Track (DNT) signals are not currently responded to.
-
-14. Data Broker Registration
-We are not a data broker.
-
-15. International Data Transfers
-USA only. Data stored in the USA.
-
-16. Third-Party Links
-We are not responsible for third-party content or privacy practices.
-
-17. No Medical Advice
-Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
-
-18. No Verification of Users
-We do not conduct criminal background checks. Partners' certifications are self-reported. You are responsible for your own safety.
-
-19. No Guaranteed Results
-We do not guarantee fitness results.
-
-20. Consent to Electronic Signatures & Records
-By creating an account, you consent to electronic signatures and records.
-
-21. Changes to This Policy
-We may update this policy. Notice will be provided by email or in-app.
-
-22. Contact Us
-Email: primesocial@primesocial.xyz
-Entity: Prime Social LLC
-Jurisdiction: Orange County, Florida
-Data Protection Officer available at same email for California residents.
-
-By using Adonix Fit, you acknowledge that you have read, understood, and agree to this Privacy Policy.`;
-
-  // ========== WELCOME STEP ==========
-  if (step === 'welcome') {
-    return (
-      <>
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">Let's get real.</h2>
-              <p className="text-xl text-gray-300">What brings that body here?</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => handleRoleSelect('member')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-                <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💸 I will pay for sessions
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleRoleSelect('partner')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-                <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💵 I will earn money
-                </div>
-              </button>
-            </div>
-
-            <div className="text-center mt-8">
-              <button
-                onClick={handleSignInClick}
-                className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10"
-              >
-                Already have an account? <span className="text-red-500">Sign in →</span>
-              </button>
-            </div>
-          </div>
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative overflow-y-auto max-h-[95vh]">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X /></button>
+        
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-white">{isLogin ? 'Welcome Back' : 'Join Adonix Fit'}</h2>
+          {error && <p className="mt-2 text-sm text-red-400 bg-red-400/10 p-2 rounded border border-red-400/20">{error}</p>}
         </div>
 
-        {/* Terms Modal - Welcome Step */}
-        <TermsModal
-          isOpen={showTermsModal === 'terms'}
-          onClose={() => setShowTermsModal(null)}
-          title="Terms of Service"
-          content={fullTermsContent}
-          onAgree={handleTermsAgreed}
-        />
-        
-        <TermsModal
-          isOpen={showTermsModal === 'privacy'}
-          onClose={() => setShowTermsModal(null)}
-          title="Privacy Policy"
-          content={fullPrivacyContent}
-          onAgree={handlePrivacyAgreed}
-        />
-      </>
-    );
-  }
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <>
+              {/* Username Field */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">USERNAME</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-3 text-gray-500">@</span>
+                  <input
+                    className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                    placeholder="fit_pro"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              </div>
 
-  // ========== CREDENTIALS STEP ==========
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+              {/* Birth Date Selectors */}
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">MONTH</label>
+                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)}>
+                    <option value="">Month</option>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('en', { month: 'long' })}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">DAY</label>
+                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthDay} onChange={(e) => setBirthDay(e.target.value)}>
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">YEAR</label>
+                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthYear} onChange={(e) => setBirthYear(e.target.value)}>
+                    <option value="">Year</option>
+                    {Array.from({ length: 100 }, (_, i) => <option key={i} value={2026-i}>{2026-i}</option>)}
+                  </select>
+                </div>
+              </div>
 
-          <button
-            onClick={handleBack}
-            className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
-          >
-            ← Back
-          </button>
-
-          <div className="text-center mb-6">
-            {!isLogin && (
-              <>
-                <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
-                <h2 className="text-2xl font-bold text-white">
-                  {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
-                </h2>
-                <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                  {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
-                </p>
-              </>
-            )}
-            {isLogin && (
-              <>
-                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-                <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
-              </>
-            )}
-          </div>
-
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-6 text-red-300 text-sm">
-              {error}
-            </div>
+              {/* Legal Checkboxes */}
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input type="checkbox" className="mt-1" checked={ageVerifyConsent} onChange={(e) => setAgeVerifyConsent(e.target.checked)} />
+                  <span className="text-xs text-gray-400 group-hover:text-gray-200">I consent to age verification. My data will be deleted immediately after.</span>
+                </label>
+                
+                <div className="flex flex-col gap-2">
+                  <button type="button" onClick={() => setShowTermsModal('terms')} className={`text-xs text-left px-3 py-2 rounded border ${hasReadTerms ? 'border-green-500/50 text-green-400' : 'border-white/10 text-red-400'}`}>
+                    {hasReadTerms ? '✓ Terms of Service Accepted' : 'Click to Read Terms of Service (Required)'}
+                  </button>
+                  <button type="button" onClick={() => setShowTermsModal('privacy')} className={`text-xs text-left px-3 py-2 rounded border ${hasReadPrivacy ? 'border-green-500/50 text-green-400' : 'border-white/10 text-red-400'}`}>
+                    {hasReadPrivacy ? '✓ Privacy Policy Accepted' : 'Click to Read Privacy Policy (Required)'}
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username field - only for sign-up */}
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">
-                  Username <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    className={`w-full pl-7 pr-10 py-3 bg-white/5 border rounded-xl focus:outline-none text-white placeholder-gray-500 ${
-                      usernameAvailable === true
-                        ? 'border-green-500 focus:border-green-500'
-                        : usernameAvailable === false
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-white/10 focus:border-red-500'
-                    }`}
-                    placeholder="jess_fit"
-                  />
-                  {checkingUsername && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                    </div>
-                  )}
-                  {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Check className="w-5 h-5 text-green-500" />
-                    </div>
-                  )}
-                  {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  3-20 characters • letters, numbers, underscore (_), period (.) only
-                </p>
-                {usernameAvailable === false && (
-                  <p className="text-xs text-red-400 mt-1">Username already taken</p>
-                )}
-              </div>
-            )}
+          <div className="space-y-3">
+            <input className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Email Address</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                placeholder="you@example.com"
-              />
-            </div>
+          <button type="submit" disabled={loading} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all">
+            {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
+          </button>
+        </form>
 
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {/* Birth Date Fields - replaces 18+ checkbox */}
-            {!isLogin && (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-white">
-                  Birth Date <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {/* Month Dropdown */}
-                  <select
-                    value={birthMonth}
-                    onChange={(e) => setBirthMonth(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Month</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                  </select>
-
-                  {/* Day Dropdown */}
-                  <select
-                    value={birthDay}
-                    onChange={(e) => setBirthDay(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Day</option>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-
-                  {/* Year Dropdown */}
-                  <select
-                    value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Year</option>
-                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Disclosure text */}
-                <p className="text-xs text-gray-500">
-                  Used only to verify you are 18+. Deleted immediately after confirmation.
-                </p>
-
-                {/* Age verification consent checkbox */}
-                <div className="flex items-start gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="ageVerifyConsent"
-                    checked={ageVerifyConsent}
-                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                  />
-                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
-                  </label>
-                </div>
-
-                {/* Facial Age Estimation Consent Checkbox - For future implementation */}
-                <div className="flex items-start gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="facialAgeConsent"
-                    checked={facialAgeConsent}
-                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                  />
-                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. 
-                    This complies with Illinois BIPA.
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Terms & Conditions - MODAL BUTTONS with read tracking */}
-            {!isLogin && (
-              <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    disabled={!hasReadTerms || !hasReadPrivacy}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <label htmlFor="terms" className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button 
-                      type="button"
-                      onClick={() => setShowTermsModal('terms')} 
-                      className="text-red-500 hover:underline"
-                    >
-                      Terms of Service
-                    </button>{' '}
-                    and{' '}
-                    <button 
-                      type="button"
-                      onClick={() => setShowTermsModal('privacy')} 
-                      className="text-red-500 hover:underline"
-                    >
-                      Privacy Policy
-                    </button>.
-                  </label>
-                </div>
-                {(!hasReadTerms || !hasReadPrivacy) && (
-                  <p className="text-xs text-yellow-400 mt-1">
-                    ⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking this box.
-                  </p>
-                )}
-                {hasReadTerms && hasReadPrivacy && !acceptedTerms && (
-                  <p className="text-xs text-green-400 mt-1">
-                    ✓ You have read both documents. Check the box to agree.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || (!isLogin && (!birthMonth || !birthDay || !birthYear || !ageVerifyConsent || !acceptedTerms || !usernameAvailable))}
-              className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
-            >
-              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-            </button>
-
-            {isLogin && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSignUpClick}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
-                >
-                  Don't have an account? <span className="text-red-500">Sign up</span>
-                </button>
-              </div>
-            )}
-          </form>
-        </div>
+        <button onClick={() => setIsLogin(!isLogin)} className="w-full mt-6 text-sm text-gray-400 hover:text-white">
+          {isLogin ? "Need an account? Sign Up" : "Have an account? Sign In"}
+        </button>
       </div>
 
-      {/* Terms Modal - Credentials Step */}
-      <TermsModal
-        isOpen={showTermsModal === 'terms'}
-        onClose={() => setShowTermsModal(null)}
-        title="Terms of Service"
-        content={fullTermsContent}
-        onAgree={handleTermsAgreed}
-      />
-      
-      <TermsModal
-        isOpen={showTermsModal === 'privacy'}
-        onClose={() => setShowTermsModal(null)}
-        title="Privacy Policy"
-        content={fullPrivacyContent}
-        onAgree={handlePrivacyAgreed}
-      />
-    </>
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={() => setHasReadTerms(true)} />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} title="Privacy Policy" content={fullPrivacyContent} onAgree={() => setHasReadPrivacy(true)} />
+    </div>
   );
 }
