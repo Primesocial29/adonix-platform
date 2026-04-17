@@ -442,12 +442,12 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - h-80 (320px), centered left */}
+            {/* Logo - Size reduced by half (h-40 = 160px), centered left */}
             <div className="mb-8 flex justify-start">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-80 w-auto object-contain" 
+                className="h-40 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
