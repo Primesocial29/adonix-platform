@@ -424,19 +424,25 @@ We are actively working to improve accessibility. If you experience any issues, 
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
-            {/* Logo */}
-            <div className="mb-6">
-              <img 
-                src="/adonixlogo.png" 
-                alt="Adonix Logo" 
-                className="h-190 w-auto object-contain" 
-                style={{ background: 'transparent' }}
-                onError={(e) => {
-                  console.error('Logo failed to load');
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
+            {/* Logo - CONTROL SIZE & POSITION WITH PIXELS */}
+<div style={{ 
+  marginBottom: '24px',      // ← Change to move DOWN (increase) or UP (decrease)
+  marginLeft: '0px'          // ← Change to move RIGHT (positive) or LEFT (negative)
+}}>
+  <img 
+    src="/adonixlogo.png" 
+    alt="Adonix Logo" 
+    style={{
+      width: '240px',        // ← Change to make BIGGER (increase) or SMALLER (decrease)
+      height: 'auto',
+      background: 'transparent'
+    }}
+    onError={(e) => {
+      console.error('Logo failed to load');
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+</div>
             
             {/* Subheadline */}
             <div className="mb-8">
