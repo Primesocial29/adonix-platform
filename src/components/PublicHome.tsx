@@ -123,7 +123,7 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [selectedPartner, setSelectedPartner] useState<Profile | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | 'contact' | 'accessibility' | null>(null);
 
