@@ -468,20 +468,22 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image */}
-        <div className="relative w-2/5 flex items-center justify-center overflow-hidden">
-          <img 
-            src="/girl_image_backgroundinterface.jpg" 
-            alt="Female runner"
-            className="w-full h-full object-cover"
-            style={{
-              filter: 'grayscale(100%) brightness(70%)'
-            }}
-          />
-          
-          {/* Black gradient overlay on the right panel edge for blending */}
-          <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
-        </div>
+        {/* Right Side - Girl Image (moved UP) */}
+<div className="relative w-2/5 flex items-center justify-center overflow-hidden">
+  <img 
+    src="/girl_image_backgroundinterface.jpg" 
+    alt="Female runner"
+    className="w-full h-full object-cover"
+    style={{
+      position: 'relative',
+      top: '-100px',           // ← Negative moves UP, Positive moves DOWN
+      filter: 'grayscale(100%) brightness(70%)'
+    }}
+  />
+  
+  {/* Black gradient overlay on the right panel edge for blending */}
+  <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+</div>
       </div>
 
       {/* Footer - At the bottom */}
