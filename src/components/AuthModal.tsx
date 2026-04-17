@@ -153,107 +153,110 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const fullTermsContent = `Terms of Service
-Effective: April 17, 2026 | Last updated: April 17, 2026
+  const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
+Effective: April 17, 2026 | Prime Social LLC
 
-1. Acceptance of Terms
-Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
+1. ACCEPTANCE
+Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dating or escort services. Solicitation results in a permanent ban.
 
-2. USA-Only Service, 18+ Eligibility & Criminal History
-- Location: Available only within the United States. VPN use is prohibited.
-- Human-Only: No AI fake personas or automated chat.
-- Age: You must be at least 18 years old.
-- Criminal History & Safety Eligibility: By creating an account, you represent and warrant that:
-  - You have never been convicted of a felony.
-  - You have never been convicted of a crime involving physical violence, sexual assault, sexual misconduct, or stalking.
-  - You are not required to register as a sex offender.
-  - You have no active restraining orders against you related to domestic violence or harassment.
+2. ELIGIBILITY & SAFETY WARRANTY
+You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender. Providing false information constitutes a material breach of these Terms.
 
-3. Biometric Information (Illinois BIPA)
-Facial age estimation requires separate consent. Biometric data is deleted immediately after use.
+3. BIPA COMPLIANCE
+Facial estimation data is deleted immediately after verification. Separate written consent required before any biometric data is collected.
 
-4. Username Policy
-3-20 characters. No offensive or impersonating handles.
+4. USERNAMES
+3-20 characters; no offensive or impersonating handles.
 
-5. Prohibited Conduct (Zero-Tolerance)
-Immediate ban for: Sexual Assault, Harassment, Stalking, Non-Consensual Photography, Nudity, Cross-Promotion, AI Abuse, or using External Payment apps (Venmo, PayPal, etc.).
+5. ZERO-TOLERANCE
+Immediate permanent ban for: Harassment, Stalking, Non-Consensual Photos, Nudity, AI Impersonation, Cross-Promotion, or External Payments (Venmo, CashApp, PayPal, Zelle, etc.).
 
-6. Chat & Security Monitoring
-The Company monitors App communications for safety. Do not share personal phone numbers or addresses in chat.
+6. MONITORING
+Prime Social LLC monitors in-app chat for safety and fraud prevention. By using Adonix Fit, you consent to this monitoring.
 
-7. Payment System & Fee Disclosure
-All transactions must stay on Stripe. Fees range from 0.01% to 30%. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
+7. PAYMENTS
+Stripe is the exclusive payment provider. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. External payment apps are a material breach.
 
-8. Location Tracking & SOS Disclaimer
-GPS is mandatory to verify 0.75-mile proximity. The SOS feature is "best effort." Obstructing its use results in a life ban.
+8. GPS & SOS DISCLAIMER
+GPS is mandatory for session verification. The SOS feature is a "best effort" tool only and is NOT a replacement for calling 911 directly.
 
-9. Public Locations Only
-No residences, hotels, or home gyms. Three-strike policy strictly enforced.
+9. PUBLIC ONLY
+Meetings in private residences, hotels, or any non-public location are a material breach. Three-strike policy: (1) warning, (2) 7-day suspension, (3) permanent ban.
 
-10. In‑Person Safety & Assumption of Risk
-PHYSICAL ACTIVITIES INVOLVE INHERENT RISKS. YOU VOLUNTARILY ASSUME ALL RISKS. We do NOT conduct background checks. You release Prime Social LLC from all liability.
+10. ASSUMPTION OF RISK
+YOU VOLUNTARILY ASSUME ALL RISKS OF PHYSICAL ACTIVITY. PRIME SOCIAL LLC DOES NOT VERIFY CRIMINAL HISTORIES. PHYSICAL ACTIVITIES INVOLVE INHERENT RISKS OF SERIOUS INJURY, INCLUDING PARALYSIS OR DEATH.
 
-11. Wellness & Medical Disclaimer
-Not a medical device. Consult a physician first.
+11. MEDICAL DISCLAIMER
+Consult a physician before use. Adonix Fit is a general wellness platform — not a medical device.
 
-12. Independent Contractor Status
-Partners are Independent Contractors, not employees.
+12. INDEPENDENT CONTRACTOR STATUS
+Partners are Independent Contractors, not employees, agents, or franchisees of Prime Social LLC.
 
-13. Safe-Meeting & Conduct Standards
-- The "Right to Leave": Users may terminate a session instantly if they feel unsafe.
-- No Private Invites: Soliciting home sessions is a material violation.
-- Communication Boundary: All chat must stay in the App.
+13. CONDUCT STANDARDS & RIGHT TO LEAVE
+The "Right to Leave" is absolute — users may end sessions at any time they feel unsafe with no penalty. All communication must remain within the App.
 
-14. Two-Person Only Sessions
-No spectators, friends, or pets (except ADA service animals).
+14. TWO-PERSON LIMIT
+Sessions limited to two (2) participants only. No spectators, guests, or pets (except ADA service animals).
 
-15. Artificial Intelligence Use
-AI is used for matching and moderation. Human review available upon request.
+15. AI USE
+AI is used for content moderation and partner matching. Human review available upon request within 30 days.
 
-16. User Content and License
-You grant us a license to use your human-generated content to operate the App.
+16. CONTENT LICENSE
+You grant Prime Social LLC a license to use your uploaded human-generated content to operate the App.
 
-17. DMCA / Copyright Compliance
-Report issues to primesocial@primesocial.xyz.
+17. DMCA
+Report copyright issues to primesocial@primesocial.xyz.
 
-18. Data Rights & Privacy
-We comply with CCPA/SB 1722. Data is deleted immediately after use.
+18. PRIVACY
+Data handled per CCPA/SB 1722 and all applicable US state privacy laws.
 
-19. Indemnification
-You agree to indemnify us against claims from your conduct.
+19. INDEMNIFICATION
+You agree to defend and indemnify Prime Social LLC against all claims arising from your conduct or use of the App.
 
-20. Limitation of Liability
-Aggregate liability capped at $100.
+20. LIMITATION OF LIABILITY
+TOTAL AGGREGATE LIABILITY OF PRIME SOCIAL LLC SHALL NOT EXCEED $100. NO INDIRECT, INCIDENTAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
 
-21. Dispute Resolution – Arbitration & Class Action Waiver
-Binding arbitration in Orange County, FL. YOU WAIVE CLASS ACTION RIGHTS.
+21. ARBITRATION & CLASS ACTION WAIVER
+Binding arbitration in Orange County, FL. CLASS ACTION WAIVER INCLUDED — YOU WAIVE THE RIGHT TO BRING OR PARTICIPATE IN ANY CLASS ACTION AGAINST PRIME SOCIAL LLC.
 
-22. Force Majeure
-Not liable for causes outside our control.
+22. FORCE MAJEURE
+Prime Social LLC is not liable for acts of God, server failures, cyberattacks, or causes outside our reasonable control.
 
-23. No Personal Liability
-Recourse limited to Company assets only.
+23. NO PERSONAL LIABILITY
+Recourse is limited to Company assets only. No member, manager, or employee of Prime Social LLC has personal liability.
 
-24. Waiver of Jury Trial
-No jury trials for disputes arising from these terms.
+24. JURY WAIVER
+YOU WAIVE THE RIGHT TO A TRIAL BY JURY IN ANY DISPUTE ARISING FROM THESE TERMS.
 
-25. Termination
-Accounts can be terminated for any violation.
+25. TERMINATION
+Prime Social LLC may terminate accounts for any policy violation at any time, with or without notice.
 
-26. Contact Information
+26. CONTACT
 primesocial@primesocial.xyz | Prime Social LLC | Orange County, Florida`;
 
-  const fullPrivacyContent = `Privacy Policy
-Effective: April 17, 2026
+  const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
+Effective: April 17, 2026 | Prime Social LLC
 
 1. DATA COLLECTION
-We verify 18+ status and delete the source data immediately. GPS is only used to verify meeting locations and for the SOS tool.
+Prime Social LLC collects identifiers (email, username, IP address, device ID) and fitness data. Age verification data is deleted immediately after 18+ confirmation and is not retained for any other purpose.
 
-2. USER PROTECTION
-We do not sell your personal data. All communication and payment data is encrypted and handled by industry-standard partners (Stripe).
+2. LOCATION DATA
+GPS is used only for session check-in verification and the SOS emergency safety feature. Location data is not retained after the session ends and is never sold to third parties.
 
-3. YOUR RIGHTS
-You may request data deletion or access at any time by emailing primesocial@primesocial.xyz.`;
+3. BIOMETRICS
+Per BIPA, facial estimation data is processed and purged instantly. Separate written consent is required. We do not sell, share, or trade biometric data.
+
+4. AI MODERATION
+AI scans user-generated content for safety violations. Human review of any AI decision is available upon request to primesocial@primesocial.xyz.
+
+5. NO SALE OF DATA
+Prime Social LLC does not sell personal data to third parties.
+
+6. RETENTION
+Account records are purged within 30 days after account deletion. Age verification data is deleted immediately.
+
+7. YOUR RIGHTS
+Per CCPA/CPRA, Florida SB 1722, and all applicable US state privacy laws, you have the right to access, correct, delete, and port your data. Email primesocial@primesocial.xyz. We respond within 45 days.`;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
