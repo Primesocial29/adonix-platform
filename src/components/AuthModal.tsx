@@ -11,7 +11,6 @@ interface AuthModalProps {
 type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
-// Terms Modal Component with scroll-to-bottom requirement
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -97,23 +96,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Terms & Privacy Tracking
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
 
-  // Age Verification Fields
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
 
   if (!isOpen) return null;
-
-  const validateUsername = (val: string) => {
-    if (val.length < 3 || val.length > 20) return false;
-    return /^[a-zA-Z0-9_.]+$/.test(val);
-  };
 
   const calculateAge = (m: string, d: string, y: string) => {
     if (!m || !d || !y) return 0;
@@ -142,12 +134,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    // Sign Up Logic
     const age = calculateAge(birthMonth, birthDay, birthYear);
     if (age < 18) return setError('Strictly 18+. Underage accounts are prohibited per FL SB 1722.');
     if (!ageVerifyConsent) return setError('Consent to age verification is required.');
     if (!hasReadTerms || !hasReadPrivacy) return setError('Please read and accept both the Terms and Privacy Policy.');
-    if (!usernameAvailable) return setError('Username is unavailable.');
 
     setLoading(true);
     const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
@@ -163,46 +153,107 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
+  const fullTermsContent = `Terms of Service
 Effective: April 17, 2026 | Last updated: April 17, 2026
 
-1. ACCEPTANCE OF TERMS
-Strictly fitness/wellness. Not a dating or escort app. Immediate ban for romantic/sexual solicitation.
+1. Acceptance of Terms
+Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
 
-2. USA-ONLY & 18+ ELIGIBILITY
-Available only in the USA/Territories. No VPNs. Strictly 18+. 
-CRIMINAL HISTORY WARRANTY: By joining, you warrant you have NO felony convictions, NO convictions for violence, stalking, or sexual misconduct, and are NOT a registered sex offender.
+2. USA-Only Service, 18+ Eligibility & Criminal History
+- Location: Available only within the United States. VPN use is prohibited.
+- Human-Only: No AI fake personas or automated chat.
+- Age: You must be at least 18 years old.
+- Criminal History & Safety Eligibility: By creating an account, you represent and warrant that:
+  - You have never been convicted of a felony.
+  - You have never been convicted of a crime involving physical violence, sexual assault, sexual misconduct, or stalking.
+  - You are not required to register as a sex offender.
+  - You have no active restraining orders against you related to domestic violence or harassment.
 
-[Sections 3-4: Biometrics & Usernames...]
+3. Biometric Information (Illinois BIPA)
+Facial age estimation requires separate consent. Biometric data is deleted immediately after use.
 
-5. PROHIBITED CONDUCT (ZERO-TOLERANCE)
-Immediate Ban: Sexual assault, unwanted physical contact, stalking, "creep shots" (non-consensual photos), nudity, deepfakes, and external payment apps (Venmo/CashApp).
+4. Username Policy
+3-20 characters. No offensive or impersonating handles.
 
-[Sections 6-34: Payments, GPS, Independent Contractor, Marketing, etc...]
+5. Prohibited Conduct (Zero-Tolerance)
+Immediate ban for: Sexual Assault, Harassment, Stalking, Non-Consensual Photography, Nudity, Cross-Promotion, AI Abuse, or using External Payment apps (Venmo, PayPal, etc.).
 
-35. TWO-PERSON ONLY SESSIONS
-Sessions are strictly 1-on-1. No spectators, children, or pets (excluding ADA animals).
+6. Chat & Security Monitoring
+The Company monitors App communications for safety. Do not share personal phone numbers or addresses in chat.
 
-36. WAIVER OF JURY TRIAL
-Arbitration in Orange County, FL only.
+7. Payment System & Fee Disclosure
+All transactions must stay on Stripe. Fees range from 0.01% to 30%. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
 
-37. SAFE-MEETING PROTOCOLS
-- "Right to Leave": Users may end any session instantly if they feel unsafe.
-- "Public Only": No residences or private gyms. 3-strike enforcement.
-- "Communication": Keep all chat in-app to protect personal contact data.
+8. Location Tracking & SOS Disclaimer
+GPS is mandatory to verify 0.75-mile proximity. The SOS feature is "best effort." Obstructing its use results in a life ban.
 
-(Full 37-section text integrated into production build)`;
+9. Public Locations Only
+No residences, hotels, or home gyms. Three-strike policy strictly enforced.
 
-  const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
+10. In‑Person Safety & Assumption of Risk
+PHYSICAL ACTIVITIES INVOLVE INHERENT RISKS. YOU VOLUNTARILY ASSUME ALL RISKS. We do NOT conduct background checks. You release Prime Social LLC from all liability.
+
+11. Wellness & Medical Disclaimer
+Not a medical device. Consult a physician first.
+
+12. Independent Contractor Status
+Partners are Independent Contractors, not employees.
+
+13. Safe-Meeting & Conduct Standards
+- The "Right to Leave": Users may terminate a session instantly if they feel unsafe.
+- No Private Invites: Soliciting home sessions is a material violation.
+- Communication Boundary: All chat must stay in the App.
+
+14. Two-Person Only Sessions
+No spectators, friends, or pets (except ADA service animals).
+
+15. Artificial Intelligence Use
+AI is used for matching and moderation. Human review available upon request.
+
+16. User Content and License
+You grant us a license to use your human-generated content to operate the App.
+
+17. DMCA / Copyright Compliance
+Report issues to primesocial@primesocial.xyz.
+
+18. Data Rights & Privacy
+We comply with CCPA/SB 1722. Data is deleted immediately after use.
+
+19. Indemnification
+You agree to indemnify us against claims from your conduct.
+
+20. Limitation of Liability
+Aggregate liability capped at $100.
+
+21. Dispute Resolution – Arbitration & Class Action Waiver
+Binding arbitration in Orange County, FL. YOU WAIVE CLASS ACTION RIGHTS.
+
+22. Force Majeure
+Not liable for causes outside our control.
+
+23. No Personal Liability
+Recourse limited to Company assets only.
+
+24. Waiver of Jury Trial
+No jury trials for disputes arising from these terms.
+
+25. Termination
+Accounts can be terminated for any violation.
+
+26. Contact Information
+primesocial@primesocial.xyz | Prime Social LLC | Orange County, Florida`;
+
+  const fullPrivacyContent = `Privacy Policy
 Effective: April 17, 2026
 
-1. DATA PROTECTION
-We verify 18+ status; age data is deleted immediately after confirmation. GPS is used solely for session safety and the SOS feature.
+1. DATA COLLECTION
+We verify 18+ status and delete the source data immediately. GPS is only used to verify meeting locations and for the SOS tool.
 
-2. FEMALE USER PROTECTION
-Precise location is shared only during active sessions for safety verification. We do not sell or share your location data for marketing.
+2. USER PROTECTION
+We do not sell your personal data. All communication and payment data is encrypted and handled by industry-standard partners (Stripe).
 
-[Full Privacy text...]`;
+3. YOUR RIGHTS
+You may request data deletion or access at any time by emailing primesocial@primesocial.xyz.`;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -217,7 +268,6 @@ Precise location is shared only during active sessions for safety verification. 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <>
-              {/* Username Field */}
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1">USERNAME</label>
                 <div className="relative">
@@ -226,43 +276,30 @@ Precise location is shared only during active sessions for safety verification. 
                     className="w-full pl-8 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
                     placeholder="fit_pro"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
                   />
                 </div>
               </div>
 
-              {/* Birth Date Selectors */}
               <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">MONTH</label>
-                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)}>
-                    <option value="">Month</option>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('en', { month: 'long' })}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">DAY</label>
-                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthDay} onChange={(e) => setBirthDay(e.target.value)}>
-                    <option value="">Day</option>
-                    {Array.from({ length: 31 }, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-400 mb-1">YEAR</label>
-                  <select className="w-full bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthYear} onChange={(e) => setBirthYear(e.target.value)}>
-                    <option value="">Year</option>
-                    {Array.from({ length: 100 }, (_, i) => <option key={i} value={2026-i}>{2026-i}</option>)}
-                  </select>
-                </div>
+                <select className="bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)}>
+                  <option value="">Month</option>
+                  {Array.from({ length: 12 }, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                </select>
+                <select className="bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthDay} onChange={(e) => setBirthDay(e.target.value)}>
+                  <option value="">Day</option>
+                  {Array.from({ length: 31 }, (_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                </select>
+                <select className="bg-gray-800 border border-white/10 rounded p-2 text-white text-sm" value={birthYear} onChange={(e) => setBirthYear(e.target.value)}>
+                  <option value="">Year</option>
+                  {Array.from({ length: 100 }, (_, i) => <option key={i} value={2026-i}>{2026-i}</option>)}
+                </select>
               </div>
 
-              {/* Legal Checkboxes */}
               <div className="space-y-3 pt-2">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <input type="checkbox" className="mt-1" checked={ageVerifyConsent} onChange={(e) => setAgeVerifyConsent(e.target.checked)} />
-                  <span className="text-xs text-gray-400 group-hover:text-gray-200">I consent to age verification. My data will be deleted immediately after.</span>
+                  <span className="text-xs text-gray-400">I consent to age verification per Section 2 of the Terms.</span>
                 </label>
                 
                 <div className="flex flex-col gap-2">
