@@ -484,7 +484,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             width: '750px',
             height: '750px',
             position: 'relative',
-            top: '-60px'
+            top: '-40px'
           }}>
             <img 
               src="/girl_image_backgroundinterface.jpg" 
