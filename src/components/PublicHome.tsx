@@ -424,12 +424,26 @@ We are actively working to improve accessibility. If you experience any issues, 
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
-           <img 
-  src="/adonixlogo.png" 
-  alt="Adonix Logo" 
-  className="h-190 w-auto object-contain"   // ← REMOVE THIS LINE
-  style={{ background: 'transparent' }}
-/>
+           <<img 
+  {/* Logo - CONTROL SIZE & POSITION WITH PIXELS */}
+<div style={{ 
+  marginBottom: '24px',
+  marginLeft: '0px'
+}}>
+  <img 
+    src="/adonixlogo.png" 
+    alt="Adonix Logo" 
+    style={{
+      width: '300px',        // ← CHANGE THIS NUMBER (200px, 300px, 400px, etc.)
+      height: 'auto',
+      background: 'transparent'
+    }}
+    onError={(e) => {
+      console.error('Logo failed to load');
+      e.currentTarget.style.display = 'none';
+    }}
+  />
+</div>
             
             {/* Subheadline */}
             <div className="mb-8">
