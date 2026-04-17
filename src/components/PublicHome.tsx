@@ -1,5 +1,3 @@
-where this code. Does it show me where the logo location and and size
-
 import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
@@ -421,7 +419,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Logo centered left, girl on right */}
+      {/* Hero Section - Logo moved 1 inch left, size reduced by 15% */}
       <div className="relative min-h-screen flex items-center">
         {/* Girl Image - Right side */}
         <div 
@@ -444,12 +442,12 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - Size reduced by half (h-40 = 160px), centered left */}
-            <div className="mb-8 flex justify-start">
+            {/* Logo - Moved 1 inch left with -ml-8, size reduced to h-34 (approx 15% smaller than h-40) */}
+            <div className="mb-8 flex justify-start -ml-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-40 w-auto object-contain" 
+                className="h-34 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
