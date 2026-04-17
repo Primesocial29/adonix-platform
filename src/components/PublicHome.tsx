@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Home, Calendar, Users, User, X } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import TrainerDashboard from "./TrainerDashboard";
@@ -372,11 +372,11 @@ Despite our best efforts to ensure accessibility, some pages or features may not
 We are actively working to improve accessibility. If you experience any issues, please contact us immediately.`;
 
   return (
-    <div className="min-h-screen bg-black text-white font-['Montserrat']">
-      {/* Top Navigation - ADONIX left, LOGIN/SETUP right */}
+    <div className="min-h-screen bg-black text-white">
+      {/* Navbar - ADONIX top left, LOGIN/SETUP top right */}
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white font-['Playfair_Display']">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white">
             ADONIX
           </h1>
           <div className="flex items-center gap-6">
@@ -418,111 +418,70 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Split Panel */}
-      <div className="relative min-h-screen flex">
-        {/* Left Panel (50%) - Solid Black with Radial Gradient Glow */}
-        <div className="relative w-1/2 flex flex-col justify-center items-center bg-black">
-          {/* Radial Gradient Glow - Crimson Red halo */}
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle at center, rgba(220,20,60,0.15) 0%, rgba(0,0,0,0) 70%)'
-            }}
-          />
-          
-          <div className="relative z-10 max-w-lg px-8">
-            {/* Inline SVG Logo - Flame shape with embrace arcs */}
-            <div className="flex justify-center mb-8">
-              <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Left Embrace Arc */}
-                <path d="M20,50 Q20,20 50,20" stroke="#DC143C" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                {/* Right Embrace Arc */}
-                <path d="M80,50 Q80,80 50,80" stroke="#DC143C" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                {/* Flame Shape */}
-                <path d="M50,30 Q55,40 55,50 Q55,60 50,65 Q45,60 45,50 Q45,40 50,30Z" fill="#FF4500"/>
-                <path d="M50,35 Q53,42 53,50 Q53,58 50,62 Q47,58 47,50 Q47,42 50,35Z" fill="#FFFFFF" opacity="0.8"/>
-                {/* Small flame flicker */}
-                <path d="M50,25 Q52,32 52,38 Q52,42 50,44 Q48,42 48,38 Q48,32 50,25Z" fill="#DC143C" opacity="0.6"/>
-              </svg>
-            </div>
-            
-            {/* Headline - Playfair Display */}
-            <h2 className="text-4xl md:text-5xl font-bold text-center mb-6 font-['Playfair_Display'] tracking-wide">
-              AUTHENTICITY<br />EXCELLENCE.
-            </h2>
-            
-            {/* Subtext - Montserrat */}
-            <div className="text-center space-y-1 mb-10">
-              <p className="text-lg text-gray-300">Curated Meetups.</p>
-              <p className="text-lg text-gray-300">High-Standard</p>
-              <p className="text-lg text-gray-300">Community.</p>
-            </div>
-            
-            {/* Primary Button - Gradient Orange-Red to Crimson */}
-            <div className="flex justify-center">
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="px-10 py-4 bg-gradient-to-r from-[#FF4500] to-[#DC143C] rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
-              >
-                EXPLORE CURATION
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Hero Section - Centered content exactly like screenshot */}
+      <div className="relative min-h-screen flex flex-col items-center justify-center">
+        {/* Background Image - Girl as full background */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: 'url("/girl_image_backgroundinterface.jpg")',
+            backgroundPosition: 'center center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            opacity: 0.3
+          }}
+        />
         
-        {/* Right Panel (50%) - Image with filters */}
-        <div className="relative w-1/2 overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&auto=format"
-            alt="Female runner"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              filter: 'grayscale(100%) brightness(70%) blur(4px)'
-            }}
-          />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 z-0 bg-black/60" />
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          {/* Pyramid Logo - Centered */}
+          <div className="mb-8 flex justify-center">
+            <img 
+              src="/adonixlogo.png" 
+              alt="Adonix Logo" 
+              className="h-32 w-auto object-contain" 
+              style={{ background: 'transparent' }}
+              onError={(e) => {
+                console.error('Logo failed to load');
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
           
-          {/* Right-side Overlay Text */}
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-8 z-10">
-            <p className="text-3xl md:text-4xl font-light text-white leading-tight font-['Playfair_Display']">
+          {/* Subheadline - Exactly like screenshot */}
+          <div className="mb-8">
+            <p className="text-4xl md:text-5xl font-light text-white leading-tight">
               Verified Public
             </p>
-            <p className="text-3xl md:text-4xl font-light text-red-500 leading-tight mt-2 font-['Playfair_Display']">
+            <p className="text-4xl md:text-5xl font-light text-red-500 leading-tight mt-1">
               Meetups<span className="text-white">|</span>
             </p>
-            <p className="text-2xl md:text-3xl font-light text-white leading-tight mt-4 font-['Playfair_Display']">
+            <p className="text-3xl md:text-4xl font-light text-white leading-tight mt-4">
               Real-World Connections.
             </p>
           </div>
           
-          {/* Black gradient overlay on the right panel edge */}
-          <div className="absolute inset-0 z-5 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Fixed Bottom Navigation Bar */}
-      <div className="fixed bottom-0 w-full z-40 bg-black/80 backdrop-blur-md border-t border-white/10">
-        <div className="max-w-md mx-auto px-6 py-3 flex justify-around items-center">
-          <button className="flex flex-col items-center gap-1 text-crimson">
-            <Home className="w-5 h-5 text-[#DC143C]" />
-            <span className="text-[10px] text-[#DC143C]">Home</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
-            <Calendar className="w-5 h-5" />
-            <span className="text-[10px]">Meetups</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
-            <Users className="w-5 h-5" />
-            <span className="text-[10px]">Partners</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors">
-            <User className="w-5 h-5" />
-            <span className="text-[10px]">Profile</span>
+          {/* Text lines - Exactly like screenshot */}
+          <div className="space-y-1 mb-10">
+            <p className="text-sm text-gray-400 tracking-wider">AUTHENTICITY EXCELLENCE</p>
+            <p className="text-sm text-gray-400 tracking-wider">Curated Meetups.</p>
+            <p className="text-sm text-gray-400 tracking-wider">High-Standard Community</p>
+          </div>
+          
+          {/* CTA Button */}
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
+          >
+            EXPLORE CURATION
           </button>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm pb-20">
+      <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
