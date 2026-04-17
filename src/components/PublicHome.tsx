@@ -436,7 +436,7 @@ We are actively working to improve accessibility. If you experience any issues, 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '580px',       // ← Change this number to make BIGGER or SMALLER
+                  width: '680px',       // ← Change this number to make BIGGER or SMALLER
                   height: '285px',
                   background: 'transparent'
                 }}
