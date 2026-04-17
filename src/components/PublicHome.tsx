@@ -431,10 +431,10 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-            {/* LOGO - MOVED UP 1 INCH (96px) */}
+            {/* LOGO - MOVED UP HALF INCH (48px) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '9px',      // Changed from 105px to 9px (moved up 96px)
+              marginBottom: '-39px',     // Changed from 9px to -39px (moved up 48px)
               marginLeft: '-17px'
             }}>
               <img 
@@ -453,9 +453,9 @@ We are actively working to improve accessibility. If you experience any issues, 
               />
             </div>
             
-            {/* Text lines */}
+            {/* Text lines - MOVED UP HALF INCH (48px) */}
             <div className="mb-10" style={{ 
-              marginTop: '-20px',
+              marginTop: '-68px',       // Changed from -20px to -68px (moved up 48px)
               marginLeft: '0px'
             }}>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
@@ -464,9 +464,9 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Right Side Text - MOVED DOWN 1.5 INCHES (144px) */}
+            {/* Right Side Text - MOVED UP ALMOST AN INCH (90px) */}
             <div className="absolute left-0 z-20" style={{ 
-              top: '44px',           // Changed from -100px to 44px (moved down 144px)
+              top: '-46px',            // Changed from 44px to -46px (moved up 90px)
               left: '250px'
             }}>
               <div className="text-left">
