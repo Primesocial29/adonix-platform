@@ -481,8 +481,8 @@ We are actively working to improve accessibility. If you experience any issues, 
         {/* Right Side - Girl Image */}
         <div className="relative w-2/5 flex items-center justify-center">
           <div style={{ 
-            width: '750px',
-            height: '750px',
+            width: '780px',
+            height: '780px',
             position: 'relative',
             top: '-40px'
           }}>
