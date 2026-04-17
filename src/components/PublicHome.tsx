@@ -434,7 +434,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '120px',
+              marginBottom: '120px',    // Changed from -160px to -220px (moved HIGHER)
               marginLeft: '-17px'
             }}>
               <img 
@@ -482,17 +482,13 @@ We are actively working to improve accessibility. If you experience any issues, 
               </div>
             </div>
             
-            {/* ========================================================= */}
-            {/* CTA BUTTON - TWICE AS WIDE AND MUCH LOWER */}
-            {/* Changed: w-full (full width), py-6 (taller), text-xl (larger text), mt-20 (moved down) */}
-            {/* ========================================================= */}
+            {/* CTA Button */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-full py-6 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30 mt-20"
+              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
             >
               EXPLORE CURATION
             </button>
-            {/* ========================================================= */}
           </div>
         </div>
         
