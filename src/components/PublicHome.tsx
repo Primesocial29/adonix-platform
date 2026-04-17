@@ -480,7 +480,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             ============================================================
           */}
           <div className="relative" style={{ 
-            width: '1700px',      // ← Change this to make image wider/narrower
+            width: '900px',      // ← Change this to make image wider/narrower
             height: '1900px',     // ← Change this to make image taller/shorter
             top: '0px',          // ← Change to move image DOWN (positive) or UP (negative)
             left: '0px'          // ← Change to move image RIGHT (positive) or LEFT (negative)
