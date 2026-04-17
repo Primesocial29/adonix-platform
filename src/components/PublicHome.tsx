@@ -437,8 +437,8 @@ We are actively working to improve accessibility. If you experience any issues, 
           }}
         />
         
-       {/* Black gradient overlay on the left */}
-<div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+       {/* Black gradient overlay on the left - shrunk and moved left */}
+<div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/60 to-transparent" style={{ right: 'auto', width: '40%' }} />
 
 <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
   <div className="max-w-2xl">
