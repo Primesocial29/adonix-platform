@@ -374,10 +374,10 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar - ADONIX top left, LOGIN/SETUP top right */}
+      {/* Navbar - ADONIX top left in CAPS, LOGIN/SETUP top right */}
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide text-white uppercase">
             ADONIX
           </h1>
           <div className="flex items-center gap-6">
@@ -419,9 +419,9 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - Logo centered left, girl on right */}
       <div className="relative min-h-screen flex items-center">
-        {/* Girl Image - 30% smaller (width 35% instead of 50%) */}
+        {/* Girl Image - Right side */}
         <div 
           className="absolute inset-0 z-0"
           style={{
@@ -442,8 +442,8 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - 5 times bigger (h-80 = 320px), center-left */}
-            <div className="mb-8">
+            {/* Logo - h-80 (320px), centered left */}
+            <div className="mb-8 flex justify-start">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
