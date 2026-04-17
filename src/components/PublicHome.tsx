@@ -476,21 +476,22 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image (full size) */}
-        <div className="relative w-2/5 overflow-hidden">
-          <img 
-            src="/girl_image_backgroundinterface.jpg" 
-            alt="Female runner"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              filter: 'grayscale(100%) brightness(70%)'
-            }}
-          />
-          
-          {/* Black gradient overlay on the right panel edge for blending */}
-          <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
-        </div>
-      </div>
+        {/* Right Side - Girl Image (control size with pixels) */}
+<div className="relative w-2/5 flex items-center justify-center">
+  <div className="relative" style={{ width: '500px', height: '600px' }}>
+    <img 
+      src="/girl_image_backgroundinterface.jpg" 
+      alt="Female runner"
+      className="w-full h-full object-cover rounded-2xl"
+      style={{
+        filter: 'grayscale(100%) brightness(70%)'
+      }}
+    />
+  </div>
+  
+  {/* Black gradient overlay on the right panel edge for blending */}
+  <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+</div>
 
       {/* Footer - At the bottom */}
       <footer className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-sm">
