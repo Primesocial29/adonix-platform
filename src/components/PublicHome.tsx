@@ -437,7 +437,7 @@ We are actively working to improve accessibility. If you experience any issues, 
                 alt="Adonix Logo" 
                 style={{
                   width: '600px',       // ← Change this number to make BIGGER or SMALLER
-                  height: '280px',
+                  height: '260px',
                   background: 'transparent'
                 }}
                 onError={(e) => {
