@@ -421,8 +421,8 @@ We are actively working to improve accessibility. If you experience any issues, 
 
       {/* Hero Section */}
 <div className="relative min-h-screen flex">
-  {/* Left Side - Solid Black Background (covers left half + a bit of center) */}
-  <div className="relative w-1/2 bg-black flex flex-col justify-center">
+  {/* Left Side - Solid Black Background (covers 60% = 10% more than half) */}
+  <div className="relative w-3/5 bg-black flex flex-col justify-center">
     {/* Radial Gradient Glow - Crimson Red halo */}
     <div 
       className="absolute inset-0 pointer-events-none"
@@ -435,7 +435,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       {/* Logo */}
       <div className="mb-6">
         <img 
-          src="/adonixlogo.png?t=8" 
+          src="/adonixlogo.png?t=9" 
           alt="Adonix Logo" 
           className="h-60 w-auto object-contain" 
           style={{ background: 'transparent' }}
@@ -476,8 +476,8 @@ We are actively working to improve accessibility. If you experience any issues, 
     </div>
   </div>
   
-  {/* Right Side - Girl Image */}
-  <div className="relative w-1/2 overflow-hidden">
+  {/* Right Side - Girl Image (covers remaining 40%) */}
+  <div className="relative w-2/5 overflow-hidden">
     <img 
       src="/girl_image_backgroundinterface.jpg" 
       alt="Female runner"
