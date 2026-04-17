@@ -439,7 +439,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             */}
             <div style={{ 
               marginBottom: '-105px',
-              marginLeft: '-45px'
+              marginLeft: '-30px'
             }}>
               <img 
                 src="/adonixlogo.png" 
