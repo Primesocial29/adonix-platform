@@ -489,7 +489,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             
             {/* Text lines */}
             <div className="space-y-1 mb-10" style={{ 
-  marginBottom: '90px',    // ← Pixel control for position
+  marginBottom: '150px',    // ← Pixel control for position
   marginLeft: '0px'        // ← Pixel control for position
 }}>
   <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>AUTHENTICITY EXCELLENCE</p>
