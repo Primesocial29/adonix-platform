@@ -419,18 +419,10 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - Pure Black Background (no red glow) */}
       <div className="relative min-h-screen flex">
-        {/* Left Side - Solid Black Background (covers 60%) */}
+        {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
-          {/* Radial Gradient Glow - Crimson Red halo */}
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle at center, rgba(220,20,60,0.15) 0%, rgba(0,0,0,0) 70%)'
-            }}
-          />
-          
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
             {/* Logo */}
             <div className="mb-6">
@@ -476,13 +468,27 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image (control size with pixels) */}
+        {/* Right Side - Girl Image (PIXEL CONTROLS - YOU CAN CHANGE THESE VALUES) */}
         <div className="relative w-2/5 flex items-center justify-center">
-          <div className="relative" style={{ width: '500px', height: '600px' }}>
+          {/* 
+            ============================================================
+            GIRL IMAGE CONTROLS - Change these pixel values as needed:
+            - width: Width of the image in pixels
+            - height: Height of the image in pixels  
+            - top: Moves image down (positive number) or up (negative number)
+            - left: Moves image right (positive) or left (negative)
+            ============================================================
+          */}
+          <div className="relative" style={{ 
+            width: '500px',      // ← Change this to make image wider/narrower
+            height: '600px',     // ← Change this to make image taller/shorter
+            top: '0px',          // ← Change to move image DOWN (positive) or UP (negative)
+            left: '0px'          // ← Change to move image RIGHT (positive) or LEFT (negative)
+          }}>
             <img 
               src="/girl_image_backgroundinterface.jpg" 
               alt="Female runner"
-              className="w-full h-full object-cover rounded-2xl"
+              className="w-full h-full object-contain"
               style={{
                 filter: 'grayscale(100%) brightness(70%)'
               }}
