@@ -426,26 +426,29 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
             
             {/* ========================================================= */}
-{/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
-{/* ========================================================= */}
-<div style={{ 
-  marginBottom: '-105px',    // ← Change to move DOWN (increase) or UP (decrease)
-  marginLeft: '-100px'        // ← Change to move RIGHT (positive) or LEFT (negative)
-}}>
-  <img 
-    src="/adonixlogo.png" 
-    alt="Adonix Logo" 
-    style={{
-      width: '600px',        // ← Change this to control size (300px to 900px)
-      height: 'auto',        // ← DO NOT CHANGE - keeps logo proportional
-      background: 'transparent'
-    }}
-    onError={(e) => {
-      console.error('Logo failed to load');
-      e.currentTarget.style.display = 'none';
-    }}
-  />
-</div>
+<div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
+  
+  {/* ========================================================= */}
+  {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
+  {/* ========================================================= */}
+  <div style={{ 
+    marginBottom: '-105px',
+    marginLeft: '-17px'
+  }}>
+    <img 
+      src="/adonixlogo.png" 
+      alt="Adonix Logo" 
+      style={{
+        width: '600px',
+        height: 'auto',
+        background: 'transparent'
+      }}
+      onError={(e) => {
+        console.error('Logo failed to load');
+        e.currentTarget.style.display = 'none';
+      }}
+    />
+  </div>
             {/* ========================================================= */}
             
             {/* Subheadline */}
