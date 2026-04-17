@@ -475,7 +475,7 @@ We are actively working to improve accessibility. If you experience any issues, 
     alt="Female runner"
     className="relative"
     style={{
-      width: '1000px',              // ← Change this to make image WIDER or NARROWER
+      width: '10000px',              // ← Change this to make image WIDER or NARROWER
       height: 'auto',              // ← Keeps aspect ratio (don't change)
       top: '-50px',                // ← Negative moves UP, Positive moves DOWN
       filter: 'grayscale(100%) brightness(70%)',
