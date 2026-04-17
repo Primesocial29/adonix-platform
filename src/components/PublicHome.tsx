@@ -478,7 +478,7 @@ We are actively working to improve accessibility. If you experience any issues, 
   
   {/* Right Side - Girl Image (smaller size) */}
   <div className="relative w-2/5 flex items-center justify-center overflow-hidden">
-    <div className="relative w-4/5 h-auto">
+    <div className="relative w-8/9 h-auto">
       <img 
         src="/girl_image_backgroundinterface.jpg" 
         alt="Female runner"
