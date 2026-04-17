@@ -419,7 +419,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         </div>
       </nav>
 
-      {/* Hero Section - Logo moved 1 inch left, size reduced by 15% */}
+      {/* Hero Section - Logo moved 1 inch left, size reduced by 25% */}
       <div className="relative min-h-screen flex items-center">
         {/* Girl Image - Right side */}
         <div 
@@ -447,7 +447,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-250000 w-auto object-contain" 
+                className="h-34 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
