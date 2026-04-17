@@ -431,14 +431,14 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* ========================================================= */}
             <div style={{ 
               marginBottom: '-105px',    // ← Change to move DOWN (increase) or UP (decrease)
-              marginLeft: '-17px'        // ← Changed from -65px to -17px (moves 48px = 1/2 inch to the right)
+              marginLeft: '-17px'        // ← Change to move RIGHT (positive) or LEFT (negative)
             }}>
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '600px',        // ← Change this number to make BIGGER or SMALLER
-                  height: 'auto',        // ← Changed to 'auto' - maintains aspect ratio, no distortion
+                  width: '750px',        // ← BIGGER! Changed from 600px to 750px
+                  height: 'auto',        // ← DO NOT CHANGE - keeps logo proportional
                   background: 'transparent'
                 }}
                 onError={(e) => {
