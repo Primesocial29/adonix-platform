@@ -474,7 +474,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       Verified Public
     </p>
     <p className="text-2xl md:text-5xl font-light text-red-500 leading-tight mt-1">
-      Meetups<span className="text-white">|</span>
+      Meetups<span className="text-white">
     </p>
     <p className="text-2xl md:text-4xl font-light text-white leading-tight mt-4">
       Real-World Connections.
