@@ -445,7 +445,7 @@ We are actively working to improve accessibility. If you experience any issues, 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '270px',
+                  width: '70px',
                   height: 'auto',
                   maxWidth: 'none',
                   background: 'transparent'
