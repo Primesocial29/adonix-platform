@@ -437,12 +437,7 @@ We are actively working to improve accessibility. If you experience any issues, 
           }}
         />
         
-        {/* Black gradient overlay on the left */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-        
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
-          <div className="max-w-2xl">
-            {/* Black gradient overlay on the left */}
+       {/* Black gradient overlay on the left */}
 <div className="absolute inset-0 z-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
 
 <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
