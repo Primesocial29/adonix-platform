@@ -447,7 +447,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-40w-auto object-contain" 
+                className="h-400 w-auto object-contain" 
                 style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
