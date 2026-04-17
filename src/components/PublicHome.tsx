@@ -458,18 +458,29 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Subheadline */}
-            <div className="mb-8">
-              <p className="text-3xl md:text-4xl font-light text-white leading-tight">
-                Verified Public
-              </p>
-              <p className="text-3xl md:text-4xl font-light text-red-500 leading-tight mt-1">
-                Meetups<span className="text-white">|</span>
-              </p>
-              <p className="text-2xl md:text-3xl font-light text-white leading-tight mt-4">
-                Real-World Connections.
-              </p>
-            </div>
+            {/* Right Side Text - Positioned above the girl's head */}
+{/*   TO CHANGE COLORS:
+  - text-white = white text
+  - text-red-500 = red text
+  - text-gray-400 = gray text
+*/}
+
+<div className="absolute right-0 z-20" style={{ 
+  top: '150px',      // ← Change this to move UP (smaller number) or DOWN (larger number)
+  right: '50px'      // ← Change this to move LEFT (smaller) or RIGHT (larger)
+}}>
+  <div className="text-right">
+    <p className="text-4xl md:text-5xl font-light text-white leading-tight">
+      Verified Public
+    </p>
+    <p className="text-4xl md:text-5xl font-light text-red-500 leading-tight mt-1">
+      Meetups<span className="text-white">|</span>
+    </p>
+    <p className="text-3xl md:text-4xl font-light text-white leading-tight mt-4">
+      Real-World Connections.
+    </p>
+  </div>
+</div>
             
             {/* Text lines */}
             <div className="space-y-1 mb-10">
