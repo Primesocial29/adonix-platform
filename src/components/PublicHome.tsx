@@ -462,9 +462,9 @@ We are actively working to improve accessibility. If you experience any issues, 
               />
             </div>
             
-            {/* Text lines - MOVED UNDER LOGO, LARGER AND BOLD */}
+            {/* Text lines - MOVED UP 1.5 INCHES (144px) */}
             <div className="mb-10" style={{ 
-              marginTop: '-20px',
+              marginTop: '-164px',    // Moved up 144px (from -20px to -164px)
               marginLeft: '0px'
             }}>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
@@ -497,10 +497,10 @@ We are actively working to improve accessibility. If you experience any issues, 
   </div>
 </div>
             
-            {/* CTA Button */}
+            {/* CTA Button - MADE FULL WIDTH */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
+              className="w-full py-6 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
             >
               EXPLORE CURATION
             </button>
