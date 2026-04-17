@@ -383,8 +383,6 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="flex items-center gap-6">
             {user ? (
               <>
-                <div className="fixed top-[72px] w-full z-40">
-  <div className="w-full h-px bg-white/30"></div>
                 <span className="text-gray-300 text-sm">
                   Welcome, {profile?.first_name || (role === 'trainer' ? 'Partner' : 'Fitness Enthusiast')}!
                 </span>
@@ -420,6 +418,11 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
       </nav>
+
+      {/* White line directly below the navbar */}
+      <div className="fixed top-[72px] w-full z-40">
+        <div className="w-full h-px bg-white/30"></div>
+      </div>
 
       {/* Hero Section - Pure Black Background */}
       <div className="relative min-h-screen flex">
@@ -468,7 +471,7 @@ We are actively working to improve accessibility. If you experience any issues, 
 */}
 
 <div className="absolute left-0 z-20" style={{ 
-  top: '-115px',       // ← Change this to move UP (smaller number) or DOWN (larger number)
+  top: '-125px',       // ← Change this to move UP (smaller number) or DOWN (larger number)
   left: '250px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
 }}>
   <div className="text-left">
