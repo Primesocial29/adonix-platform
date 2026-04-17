@@ -436,8 +436,8 @@ We are actively working to improve accessibility. If you experience any issues, 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '0x',       // ← Change this number to make BIGGER or SMALLER
-                  height: 'auto',
+                  width: '450px',       // ← Change this number to make BIGGER or SMALLER
+                  height: '450px',
                   background: 'transparent'
                 }}
                 onError={(e) => {
