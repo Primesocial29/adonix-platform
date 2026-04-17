@@ -468,20 +468,23 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image (CONTROL SIZE & POSITION WITH PIXELS) */}
-<div className="relative w-2/5 flex items-center justify-center overflow-hidden">
-  <img 
-    src="/girl_image_backgroundinterface.jpg" 
-    alt="Female runner"
-    className="relative"
-    style={{
-      width: '10000px',              // ← Change this to make image WIDER or NARROWER
-      height: 'auto',              // ← Keeps aspect ratio (don't change)
-      top: '-50px',                // ← Negative moves UP, Positive moves DOWN
-      filter: 'grayscale(100%) brightness(70%)',
-      objectFit: 'contain'
-    }}
-  />
+       {/* Right Side - Girl Image (CONTROL SIZE & POSITION WITH PIXELS) */}
+<div className="relative w-2/5 flex items-center justify-center">
+  <div style={{ 
+    width: '600px',           // ← CHANGE THIS TO MAKE IMAGE BIGGER/SMALLER
+    height: '600px',          // ← CHANGE THIS TO MATCH WIDTH (keeps square)
+    position: 'relative',
+    top: '-50px'              // ← CHANGE THIS TO MOVE UP/DOWN
+  }}>
+    <img 
+      src="/girl_image_backgroundinterface.jpg" 
+      alt="Female runner"
+      className="w-full h-full object-cover"
+      style={{
+        filter: 'grayscale(100%) brightness(70%)'
+      }}
+    />
+  </div>
   
   {/* Black gradient overlay on the right panel edge for blending */}
   <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
