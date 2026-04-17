@@ -474,7 +474,7 @@ We are actively working to improve accessibility. If you experience any issues, 
     width: '700px',           // ← CHANGE THIS TO MAKE IMAGE BIGGER/SMALLER
     height: '700px',          // ← CHANGE THIS TO MATCH WIDTH (keeps square)
     position: 'relative',
-    top: '-30px'              // ← CHANGE THIS TO MOVE UP/DOWN
+    top: '-40px'              // ← CHANGE THIS TO MOVE UP/DOWN
   }}>
     <img 
       src="/girl_image_backgroundinterface.jpg" 
