@@ -431,19 +431,10 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-            {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
+            {/* LOGO - MOVED UP 1.5 INCHES (144px) */}
             {/* ========================================================= */}
-            {/* 
-              TO CHANGE LOGO SIZE:
-              - Change the number after 'width:' to make it bigger or smaller
-              - Example: '300px' = small, '600px' = medium, '900px' = large
-              
-              TO CHANGE LOGO POSITION:
-              - marginBottom: negative number moves UP, positive number moves DOWN
-              - marginLeft: negative number moves LEFT, positive number moves RIGHT
-            */}
             <div style={{ 
-              marginBottom: '105px',
+              marginBottom: '-39px',    // Changed from 105px to -39px (moved up 144px)
               marginLeft: '-17px'
             }}>
               <img 
@@ -462,9 +453,9 @@ We are actively working to improve accessibility. If you experience any issues, 
               />
             </div>
             
-            {/* Text lines - MOVED UP 1.5 INCHES (144px) */}
+            {/* Text lines */}
             <div className="mb-10" style={{ 
-              marginTop: '-164px',    // Moved up 144px (from -20px to -164px)
+              marginTop: '-20px',
               marginLeft: '0px'
             }}>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
@@ -473,34 +464,28 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Right Side Text - Positioned above the girl's head */}
-{/*   TO CHANGE COLORS:
-  - text-white = white text
-  - text-red-500 = red text
-  - text-gray-400 = gray text
-*/}
-
-<div className="absolute left-0 z-20" style={{ 
-  top: '-100px',       // ← Change this to move UP (smaller number) or DOWN (larger number)
-  left: '250px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
-}}>
-  <div className="text-left">
-    <p className="text-1.75xl md:text-5xl font-bold text-white leading-tight whitespace-nowrap">
-      Verified Public
-    </p>
-    <p className="text-1.75xl md:text-5xl font-bold text-red-500 leading-tight mt-1">
-      Meetups<span className="text-white"></span>
-    </p>
-    <p className="text-1.75xl md:text-4xl font-bold text-white leading-tight mt-1">
-      Real-World Connections.
-    </p>
-  </div>
-</div>
+            {/* Right Side Text - MOVED DOWN 1 INCH (96px) */}
+            <div className="absolute left-0 z-20" style={{ 
+              top: '-4px',          // Changed from -100px to -4px (moved down 96px)
+              left: '250px'
+            }}>
+              <div className="text-left">
+                <p className="text-1.75xl md:text-5xl font-bold text-white leading-tight whitespace-nowrap">
+                  Verified Public
+                </p>
+                <p className="text-1.75xl md:text-5xl font-bold text-red-500 leading-tight mt-1">
+                  Meetups<span className="text-white"></span>
+                </p>
+                <p className="text-1.75xl md:text-4xl font-bold text-white leading-tight mt-1">
+                  Real-World Connections.
+                </p>
+              </div>
+            </div>
             
-            {/* CTA Button - MADE FULL WIDTH */}
+            {/* CTA Button */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-full py-6 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-xl hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
+              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
             >
               EXPLORE CURATION
             </button>
