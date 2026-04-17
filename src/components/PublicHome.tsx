@@ -443,14 +443,14 @@ We are actively working to improve accessibility. If you experience any issues, 
               - marginLeft: negative number moves LEFT, positive number moves RIGHT
             */}
             <div style={{ 
-              marginBottom: '220px',
+              marginBottom: '105px',
               marginLeft: '-17px'
             }}>
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '180px',
+                  width: '170px',
                   height: 'auto',
                   maxWidth: 'none',
                   background: 'transparent'
@@ -464,7 +464,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             
             {/* Text lines - MOVED UP 1.5 INCHES (144px) */}
             <div className="mb-10" style={{ 
-              marginTop: '-64px',    // Moved up 144px (from -20px to -164px)
+              marginTop: '-164px',    // Moved up 144px (from -20px to -164px)
               marginLeft: '0px'
             }}>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
