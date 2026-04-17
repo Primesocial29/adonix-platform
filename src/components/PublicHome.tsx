@@ -430,7 +430,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* ========================================================= */}
             <div style={{ 
               marginBottom: '-105px',    // ← Change to move DOWN (increase) or UP (decrease)
-              marginLeft: '-80px'        // ← Change to move RIGHT (positive) or LEFT (negative)
+              marginLeft: '-70px'        // ← Change to move RIGHT (positive) or LEFT (negative)
             }}>
               <img 
                 src="/adonixlogo.png" 
