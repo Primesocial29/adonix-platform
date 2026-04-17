@@ -431,15 +431,11 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* 
               TO CHANGE LOGO SIZE:
               - Change the number after 'width:' to make it bigger or smaller
-              - Example: '300px' = small, '600px' = medium, '900px' = large, '1200px' = extra large
+              - Example: '300px' = small, '600px' = medium, '900px' = large
               
               TO CHANGE LOGO POSITION:
               - marginBottom: negative number moves UP, positive number moves DOWN
               - marginLeft: negative number moves LEFT, positive number moves RIGHT
-              
-              TRANSPARENCY FIX:
-              - mixBlendMode: 'screen' removes black backgrounds from PNG images
-              - filter adds a crimson glow to make the logo stand out
             */}
             <div style={{ 
               marginBottom: '-105px',
@@ -449,12 +445,10 @@ We are actively working to improve accessibility. If you experience any issues, 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '250px',
+                  width: '900px',
                   height: 'auto',
                   maxWidth: 'none',
-                  background: 'transparent',
-                  mixBlendMode: 'screen',
-                  filter: 'drop-shadow(0 0 15px rgba(220,20,60,0.4))'
+                  background: 'transparent'
                 }}
                 onError={(e) => {
                   console.error('Logo failed to load');
