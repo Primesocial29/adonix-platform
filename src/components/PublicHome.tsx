@@ -461,6 +461,16 @@ We are actively working to improve accessibility. If you experience any issues, 
                 }}
               />
             </div>
+            
+            {/* Text lines - MOVED UNDER LOGO, LARGER AND BOLD */}
+            <div className="mb-10" style={{ 
+              marginTop: '-20px',
+              marginLeft: '0px'
+            }}>
+              <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>AUTHENTICITY EXCELLENCE</p>
+              <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>Curated Meetups.</p>
+              <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px' }}>High-Standard Community</p>
+            </div>
             {/* ========================================================= */}
             
             {/* Right Side Text - Positioned above the girl's head */}
@@ -485,16 +495,6 @@ We are actively working to improve accessibility. If you experience any issues, 
       Real-World Connections.
     </p>
   </div>
-</div>
-            
-            {/* Text lines */}
-            <div className="space-y-1 mb-10" style={{ 
-  marginBottom: '-140px',    // ← Pixel control for position
-  marginLeft: '0px'        // ← Pixel control for position
-}}>
-  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>AUTHENTICITY EXCELLENCE</p>
-  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>Curated Meetups.</p>
-  <p className="text-gray-400 tracking-wider" style={{ fontSize: '14px' }}>High-Standard Community</p>
 </div>
             
             {/* CTA Button */}
