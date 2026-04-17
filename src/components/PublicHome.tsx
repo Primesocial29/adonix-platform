@@ -431,10 +431,10 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-            {/* PNG LOGO - MOVED UP (negative margin pushes it up) */}
+            {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '-160px',    // Changed from -120px to -160px (moved UP more)
+              marginBottom: '-220px',    // Changed from -160px to -220px (moved HIGHER)
               marginLeft: '-17px'
             }}>
               <img 
