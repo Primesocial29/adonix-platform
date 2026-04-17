@@ -430,19 +430,11 @@ We are actively working to improve accessibility. If you experience any issues, 
   marginLeft: '0px'          // ← Change to move RIGHT (positive) or LEFT (negative)
 }}>
   <img 
-    src="/adonixlogo.png" 
-    alt="Adonix Logo" 
-    style={{
-      width: '9000px',        // ← Change to make BIGGER (increase) or SMALLER (decrease)
-      height: 'auto',
-      background: 'transparent'
-    }}
-    onError={(e) => {
-      console.error('Logo failed to load');
-      e.currentTarget.style.display = 'none';
-    }}
-  />
-</div>
+  src="/adonixlogo.png" 
+  alt="Adonix Logo" 
+  className="h-60 w-auto object-contain"   // ← REMOVE THIS LINE
+  style={{ background: 'transparent' }}
+/>
             
             {/* Subheadline */}
             <div className="mb-8">
