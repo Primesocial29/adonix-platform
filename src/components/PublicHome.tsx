@@ -436,19 +436,25 @@ We are actively working to improve accessibility. If you experience any issues, 
               TO CHANGE LOGO POSITION:
               - marginBottom: negative number moves UP, positive number moves DOWN
               - marginLeft: negative number moves LEFT, positive number moves RIGHT
+              
+              TRANSPARENCY FIX:
+              - mixBlendMode: 'screen' removes black backgrounds from PNG images
+              - filter adds a crimson glow to make the logo stand out
             */}
             <div style={{ 
               marginBottom: '-105px',
-              marginLeft: '-55px'
+              marginLeft: '-17px'
             }}>
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
                 style={{
-                  width: '275px',
+                  width: '900px',
                   height: 'auto',
                   maxWidth: 'none',
-                  background: 'transparent'
+                  background: 'transparent',
+                  mixBlendMode: 'screen',
+                  filter: 'drop-shadow(0 0 15px rgba(220,20,60,0.4))'
                 }}
                 onError={(e) => {
                   console.error('Logo failed to load');
