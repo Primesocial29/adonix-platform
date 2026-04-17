@@ -486,7 +486,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* CTA BUTTON - Wide, Tall, Gradient */}
 <button
   onClick={() => setShowAuthModal(true)}
-  className="w-full py-10 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-3xl transition-all duration-300 whitespace-nowrap"
+  className="w-full max-w-5xl mx-auto py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300 whitespace-nowrap"
 >
   EXPLORE CURATION
 </button>
