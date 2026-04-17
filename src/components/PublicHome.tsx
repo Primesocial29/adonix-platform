@@ -442,7 +442,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
           <div className="max-w-2xl">
-            {/* Logo - 5% bigger (h-56), moved left (-ml-25), brought lower (mt-8) */}
+            {/* Logo - 5% bigger (h-56), moved left (-ml-125), brought lower (mt-8) */}
             <div className="mb-4 flex justify-start -ml-8 mt-8">
               <img 
                 src="/adonixlogo.png?t=5" 
