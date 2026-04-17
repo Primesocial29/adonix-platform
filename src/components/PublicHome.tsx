@@ -505,7 +505,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             width: '780px',
             height: '780px',
             position: 'relative',
-            top: '0x'
+            top: '-95x'
           }}>
             <img 
               src="/girl_image_backgroundinterface.jpg" 
