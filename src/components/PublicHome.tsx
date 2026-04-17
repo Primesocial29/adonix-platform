@@ -466,7 +466,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             
             {/* Right Side Text */}
             <div className="absolute left-0 z-20" style={{ 
-              top: '-100px',
+              top: '-1100px',
               left: '250px'
             }}>
               <div className="text-left">
