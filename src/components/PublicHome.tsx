@@ -427,7 +427,7 @@ We are actively working to improve accessibility. If you experience any issues, 
            <img 
   src="/adonixlogo.png" 
   alt="Adonix Logo" 
-  className="h-60 w-auto object-contain"   // ← REMOVE THIS LINE
+  className="h-90 w-auto object-contain"   // ← REMOVE THIS LINE
   style={{ background: 'transparent' }}
 />
             
