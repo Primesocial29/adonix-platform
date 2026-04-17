@@ -470,13 +470,13 @@ We are actively working to improve accessibility. If you experience any issues, 
   left: '195px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
 }}>
   <div className="text-left">
-    <p className="text-2xl md:text-5xl font-light text-white leading-tight">
+    <p className="text-1.75xl md:text-5xl font-light text-white leading-tight">
       Verified Public
     </p>
-    <p className="text-2xl md:text-5xl font-light text-red-500 leading-tight mt-1">
+    <p className="text-1.75xl md:text-5xl font-light text-red-500 leading-tight mt-1">
       Meetups<span className="text-white">|</span>
     </p>
-    <p className="text-2xl md:text-4xl font-light text-white leading-tight mt-1">
+    <p className="text-1.75xl md:text-4xl font-light text-white leading-tight mt-1">
       Real-World Connections.
     </p>
   </div>
