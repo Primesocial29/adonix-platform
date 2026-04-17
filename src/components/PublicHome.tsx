@@ -431,10 +431,10 @@ We are actively working to improve accessibility. If you experience any issues, 
           <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
-            {/* LOGO - MOVED UP MORE */}
+            {/* PNG LOGO - MOVED UP (negative margin pushes it up) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '-80px',     // Changed from -39px to -80px (moved up more)
+              marginBottom: '-120px',    // Changed from -80px to -120px (moved UP more)
               marginLeft: '-17px'
             }}>
               <img 
@@ -464,9 +464,9 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             {/* ========================================================= */}
             
-            {/* Right Side Text - MOVED UP MORE */}
+            {/* Right Side Text - MOVED DOWN A LITTLE */}
             <div className="absolute left-0 z-20" style={{ 
-              top: '-100px',            // Changed from -46px to -100px (moved up more)
+              top: '-85px',             // Changed from -100px to -85px (moved DOWN 15px)
               left: '250px'
             }}>
               <div className="text-left">
