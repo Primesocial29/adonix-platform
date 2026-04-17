@@ -428,7 +428,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       <div className="relative min-h-screen flex">
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
-          <div className="relative z-10 px-0">
+          <div className="relative z-10 px-8">
             
             {/* ========================================================= */}
             {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
