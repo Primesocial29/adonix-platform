@@ -480,7 +480,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       Real-World Connections.
     </p>
   </div>
-</div>>
+</div>
             
             {/* Text lines */}
             <div className="space-y-1 mb-10">
