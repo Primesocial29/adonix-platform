@@ -465,11 +465,11 @@ We are actively working to improve accessibility. If you experience any issues, 
   - text-gray-400 = gray text
 */}
 
-<div className="absolute right-0 z-20" style={{ 
-  top: '150px',      // ← Change this to move UP (smaller number) or DOWN (larger number)
-  right: '-150px'      // ← Change this to move LEFT (smaller) or RIGHT (larger)
+<div className="absolute left-0 z-20" style={{ 
+  top: '150px',       // ← Change this to move UP (smaller number) or DOWN (larger number)
+  left: '50px'        // ← Change this to move RIGHT (larger) or LEFT (smaller)
 }}>
-  <div className="text-right">
+  <div className="text-left">
     <p className="text-4xl md:text-5xl font-light text-white leading-tight">
       Verified Public
     </p>
@@ -480,7 +480,7 @@ We are actively working to improve accessibility. If you experience any issues, 
       Real-World Connections.
     </p>
   </div>
-</div>
+</div>>
             
             {/* Text lines */}
             <div className="space-y-1 mb-10">
