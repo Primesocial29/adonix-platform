@@ -476,7 +476,7 @@ We are actively working to improve accessibility. If you experience any issues, 
     className="w-full h-full object-cover"
     style={{
       position: 'relative',
-      top: '-80px',           // ← Negative moves UP, Positive moves DOWN
+      top: '-40px',           // ← Negative moves UP, Positive moves DOWN
       filter: 'grayscale(100%) brightness(70%)'
     }}
   />
