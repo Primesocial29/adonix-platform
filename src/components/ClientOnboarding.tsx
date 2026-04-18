@@ -620,6 +620,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     setShowTermsModal(null);
   };
   
+  const handleClose = () => {
+    window.location.href = '/';
+  };
+  
   const handleNext = async () => {
     if (step === 1) {
       if (!firstName || firstNameError) {
@@ -1028,6 +1032,24 @@ California Residents:
       </div>
       
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Close Button - Top Right */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        {/* Hero Section with 🔥 I Want to Sweat */}
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3">🔥</div>
+          <h1 className="text-3xl font-bold text-white">I Want to Sweat</h1>
+          <p className="text-lg text-gray-300 mt-1">💸 You will pay for sessions</p>
+        </div>
+        
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
             <span>Step {step} of 4</span>
@@ -1044,8 +1066,7 @@ California Residents:
         {/* Step 1: Create Your Account */}
         {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
-            <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
+            <h2 className="text-2xl font-bold text-center mb-6">Create Your Account</h2>
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
