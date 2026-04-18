@@ -424,29 +424,19 @@ We are actively working to improve accessibility. If you experience any issues, 
         {/* Left Side - Solid Black Background */}
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
           <div className="relative z-10 max-w-2xl ml-auto mr-0 px-8">
-            
-            {/* ========================================================= */}
-            {/* LOGO - CHANGE SIZE & POSITION WITH PIXELS HERE */}
-            {/* ========================================================= */}
-            <div style={{ 
-              marginBottom: '24px',    // ← Change to move DOWN (increase) or UP (decrease)
-              marginLeft: '0px'        // ← Change to move RIGHT (positive) or LEFT (negative)
-            }}>
+            {/* Logo */}
+            <div className="mb-6">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                style={{
-                  width: '240px',       // ← Change this number to make BIGGER or SMALLER
-                  height: 'auto',
-                  background: 'transparent'
-                }}
+                className="h-60 w-auto object-contain" 
+                style={{ background: 'transparent' }}
                 onError={(e) => {
                   console.error('Logo failed to load');
                   e.currentTarget.style.display = 'none';
                 }}
               />
             </div>
-            {/* ========================================================= */}
             
             {/* Subheadline */}
             <div className="mb-8">
@@ -478,27 +468,27 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
         
-        {/* Right Side - Girl Image */}
-        <div className="relative w-2/5 flex items-center justify-center">
-          <div style={{ 
-            width: '750px',
-            height: '750px',
-            position: 'relative',
-            top: '-60px'
-          }}>
-            <img 
-              src="/girl_image_backgroundinterface.jpg" 
-              alt="Female runner"
-              className="w-full h-full object-cover"
-              style={{
-                filter: 'grayscale(100%) brightness(70%)'
-              }}
-            />
-          </div>
-          
-          {/* Black gradient overlay on the right panel edge for blending */}
-          <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
-        </div>
+       {/* Right Side - Girl Image (CONTROL SIZE & POSITION WITH PIXELS) */}
+<div className="relative w-2/5 flex items-center justify-center">
+  <div style={{ 
+    width: '750px',           // ← CHANGE THIS TO MAKE IMAGE BIGGER/SMALLER
+    height: '750px',          // ← CHANGE THIS TO MATCH WIDTH (keeps square)
+    position: 'relative',
+    top: '-60px'              // ← CHANGE THIS TO MOVE UP/DOWN
+  }}>
+    <img 
+      src="/girl_image_backgroundinterface.jpg" 
+      alt="Female runner"
+      className="w-full h-full object-cover"
+      style={{
+        filter: 'grayscale(100%) brightness(70%)'
+      }}
+    />
+  </div>
+  
+  {/* Black gradient overlay on the right panel edge for blending */}
+  <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
+</div>
       </div>
 
       {/* Footer - At the bottom */}
