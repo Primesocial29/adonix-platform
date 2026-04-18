@@ -456,11 +456,11 @@ We are actively working to improve accessibility. If you experience any issues, 
             
             {/* CTA Button */}
             <button
-              onClick={() => setShowAuthModal(true)}
-              className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300 whitespace-nowrap"
-            >
-              EXPLORE CURATION
-            </button>
+  onClick={() => window.location.href = '/client-setup'}
+  className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600..."
+>
+  EXPLORE CURATION
+</button>
           </div>
         </div>
         
