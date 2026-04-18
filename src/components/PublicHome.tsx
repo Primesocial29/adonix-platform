@@ -122,6 +122,17 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 
 export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
+  useEffect(() => {
+  const clearStuckUser = async () => {
+    if (user) {
+      console.log('Auto-signing out stuck user:', user.email);
+      await signOut();
+      localStorage.clear();
+      window.location.href = '/';
+    }
+  };
+  clearStuckUser();
+}, []);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
