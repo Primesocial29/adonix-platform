@@ -642,10 +642,18 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       }
       
       const ageValidation = validateAgeFromDropdowns();
-      if (!ageValidation.isValid) {
-        setStep1Error(ageValidation.error);
-        return;
-      }
+if (!ageValidation.isValid) {
+  setStep1Error(ageValidation.error);
+  return;
+}
+if (!ageVerifyConsent) {
+  setStep1Error('You must consent to age verification to create an account.');
+  return;
+}
+if (!facialAgeConsent) {
+  setStep1Error('You must consent to facial age estimation to create an account.');
+  return;
+}
       if (!ageVerifyConsent) {
         setStep1Error('You must consent to age verification to create an account.');
         return;
