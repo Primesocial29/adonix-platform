@@ -44,10 +44,8 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 const TURNSTILE_SITE_KEY = '0x4AAAAAAC85hzmi4sizIJ-y';
 
 // DISABLE TURNSTILE COMPLETELY FOR DEVELOPMENT
-// Set to false to completely disable Turnstile
-const ENABLE_TURNSTILE = false; // 👈 CHANGE THIS TO true FOR PRODUCTION
+const ENABLE_TURNSTILE = false;
 
-// Load Turnstile script
 declare global {
   interface Window {
     turnstile: any;
@@ -130,6 +128,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -154,6 +154,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Step 3: Your Vibe
   const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [city, setCity] = useState('');
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -189,6 +190,48 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
+  // Validate username (letters + numbers only, no blocked words)
+  const validateUsername = (username: string) => {
+    if (username.length < 3) {
+      return { isValid: false, error: 'Username must be at least 3 characters' };
+    }
+    if (username.length > 20) {
+      return { isValid: false, error: 'Username cannot exceed 20 characters' };
+    }
+    
+    const validPattern = /^[a-zA-Z0-9]+$/;
+    if (!validPattern.test(username)) {
+      return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
+    }
+    
+    if (containsBlockedWords(username)) {
+      const blocked = getBlockedWordsInText(username);
+      return { isValid: false, error: `Username contains blocked words: ${blocked.slice(0, 3).join(', ')}` };
+    }
+    
+    return { isValid: true, error: null };
+  };
+
+  // Validate age (must be 18+)
+  const validateAge = (birthDate: string) => {
+    if (!birthDate) return { isValid: false, error: 'Please enter your birth date' };
+    
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    if (age < 18) {
+      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit' };
+    }
+    
+    return { isValid: true, error: null };
+  };
+  
   // Calculate distance between two coordinates
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 3959;
@@ -215,7 +258,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         if (script.parentNode) script.parentNode.removeChild(script);
       };
     } else {
-      // Turnstile disabled - just mark as loaded
       setTurnstileLoaded(true);
     }
   }, []);
@@ -312,10 +354,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         return { ...partner, _distance: null };
       });
       
-      // Filter by radius
       filtered = filtered.filter(p => p._distance !== null && p._distance <= searchRadius);
       
-      // Filter by selected services
       if (selectedServices.length > 0) {
         filtered = filtered.filter(partner => {
           const partnerServices = [...(partner.service_types || []), ...(partner.custom_service_types || [])];
@@ -323,7 +363,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         });
       }
       
-      // Filter by selected days
       if (selectedDays.length > 0) {
         filtered = filtered.filter(partner => {
           const partnerDays = (partner.availability || []).filter(a => a.times.length > 0).map(a => a.day);
@@ -331,7 +370,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         });
       }
       
-      // Sort by distance
       filtered.sort((a, b) => (a._distance || 999) - (b._distance || 999));
       
       setAllPartners(filtered);
@@ -595,7 +633,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep1Error('You must acknowledge the social fitness platform agreement.');
         return;
       }
-      // Only check Turnstile if enabled
+      if (!birthDate || birthDateError) {
+        setStep1Error('Please enter a valid birth date. You must be 18 or older.');
+        return;
+      }
       if (ENABLE_TURNSTILE && !turnstileToken) {
         setStep1Error('Please complete the human verification.');
         return;
@@ -604,7 +645,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       setLoading(true);
       try {
         const username = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', username, new Date().toISOString());
+        await signUp(email, password, 'member', username, birthDate);
         setStep(2);
       } catch (err: any) {
         setStep1Error(err.message || 'Failed to create account. Please try again.');
@@ -636,16 +677,19 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep3Error('Please enter a username.');
         return;
       }
+      
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.isValid) {
+        setStep3Error(usernameValidation.error);
+        return;
+      }
+      
       if (!city) {
         setStep3Error('Please enter your city.');
         return;
       }
       if (selectedGoals.length === 0) {
         setStep3Error('Please select at least one fitness goal.');
-        return;
-      }
-      if (containsBlockedWords(username)) {
-        setStep3Error('Username contains blocked words.');
         return;
       }
       setStep3Error('');
@@ -669,17 +713,15 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/client-dashboard';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && (ENABLE_TURNSTILE ? turnstileToken : true);
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthDate && !birthDateError && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
-  const isStep3Complete = username && city && selectedGoals.length > 0 && !containsBlockedWords(username);
+  const isStep3Complete = username && !usernameError && city && selectedGoals.length > 0;
   
-  // Pagination
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
   const endIndex = startIndex + partnersPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
   
-  // Terms content
   const termsContent = `ADONIX - SOCIAL NETWORKING AGREEMENT
 
 1. This is a social fitness network, not a professional service marketplace.
@@ -721,10 +763,8 @@ Data Retention:
 California Residents:
 - You have the right to opt out of data sharing under CPRA`;
   
-  // Step 4 Content
   const Step4Content = () => (
     <div className="space-y-6">
-      {/* Activities Selection */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-4">Select Your Activities</h2>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -766,7 +806,6 @@ California Residents:
         {customServiceError && <p className="text-red-400 text-sm mt-2">{customServiceError}</p>}
       </div>
       
-      {/* Day Selection */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-4">What days work for you?</h2>
         <div className="flex flex-wrap gap-2">
@@ -786,7 +825,6 @@ California Residents:
         </div>
       </div>
       
-      {/* Search Preferences */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-4">Search Area</h2>
         
@@ -824,7 +862,6 @@ California Residents:
         )}
       </div>
       
-      {/* Partners Results */}
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-2">Partners Ready to Move</h2>
         <p className="text-sm text-gray-400 mb-6">
@@ -881,7 +918,6 @@ California Residents:
               })}
             </div>
             
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-6">
                 <button
@@ -904,7 +940,6 @@ California Residents:
           </>
         )}
         
-        {/* Encouragement Message */}
         {userLocation && !searching && currentPartners.length === 0 && (
           <p className="text-center text-gray-400 mt-4">
             Not seeing your match? Try adjusting your activities, free days, or expanding your search radius. The right partner is out there.
@@ -912,9 +947,7 @@ California Residents:
         )}
       </div>
       
-      {/* Legal Footer with Fee Transparency */}
       <div className="space-y-4">
-        {/* Legal Reminders */}
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
           <h3 className="font-semibold mb-3 text-red-400">⚡ BEFORE YOU GO</h3>
           <ul className="space-y-2 text-sm text-gray-300">
@@ -926,7 +959,6 @@ California Residents:
           </ul>
         </div>
         
-        {/* Fee Transparency Box */}
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-5">
           <h3 className="font-semibold mb-3 text-blue-400">💰 FEE TRANSPARENCY</h3>
           <div className="space-y-2 text-sm text-gray-300">
@@ -949,7 +981,6 @@ California Residents:
   
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar */}
       <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
@@ -965,7 +996,6 @@ California Residents:
       </div>
       
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
             <span>Step {step} of 4</span>
@@ -979,7 +1009,6 @@ California Residents:
           </div>
         </div>
         
-        {/* Step 1: Account Setup */}
         {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
@@ -1069,9 +1098,25 @@ California Residents:
                 </div>
                 {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
               </div>
+              
+              {/* Birth Date Field */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Birth Date <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => {
+                    setBirthDate(e.target.value);
+                    const ageCheck = validateAge(e.target.value);
+                    setBirthDateError(ageCheck.error);
+                  }}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                />
+                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+              </div>
             </div>
             
-            {/* Legal Warnings Box */}
             <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
               <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
               <ul className="space-y-1 text-xs text-yellow-200/80">
@@ -1084,7 +1129,6 @@ California Residents:
               </ul>
             </div>
             
-            {/* Terms Checkboxes */}
             <div className="mt-6 space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -1125,14 +1169,12 @@ California Residents:
               </label>
             </div>
             
-            {/* Turnstile Human Verification - COMPLETELY REMOVED IN DEV */}
             {ENABLE_TURNSTILE && (
               <div className="mt-6">
                 <div ref={turnstileRef} className="cf-turnstile flex justify-center"></div>
               </div>
             )}
             
-            {/* Development notice */}
             {!ENABLE_TURNSTILE && (
               <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
                 <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification is disabled</p>
@@ -1144,7 +1186,6 @@ California Residents:
           </div>
         )}
         
-        {/* Step 2: Photo & Bio */}
         {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story</h2>
@@ -1201,21 +1242,29 @@ California Residents:
           </div>
         )}
         
-        {/* Step 3: Your Vibe */}
         {step === 3 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
             
             <div className="space-y-6">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Username</label>
+                <label className="block text-sm text-gray-400 mb-2">Username <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="@username"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                  onChange={(e) => {
+                    const newUsername = e.target.value.toLowerCase();
+                    setUsername(newUsername);
+                    const validation = validateUsername(newUsername);
+                    setUsernameError(validation.error);
+                  }}
+                  placeholder="username (letters and numbers only, 3-20 chars)"
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:border-red-500 focus:outline-none ${
+                    usernameError ? 'border-red-500' : 'border-white/20'
+                  }`}
                 />
+                {usernameError && <p className="text-red-400 text-xs mt-1">{usernameError}</p>}
+                <p className="text-xs text-gray-500 mt-1">Letters and numbers only. 3-20 characters.</p>
               </div>
               
               <div className="relative">
@@ -1288,7 +1337,6 @@ California Residents:
                 {customGoalError && <p className="text-red-400 text-sm mt-2">{customGoalError}</p>}
               </div>
               
-              {/* Self-Reported Disclaimer */}
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
                 <p className="text-xs text-blue-300 text-center">
                   ℹ️ Profile information is self-reported and not verified by Adonix.
@@ -1300,10 +1348,8 @@ California Residents:
           </div>
         )}
         
-        {/* Step 4: Find Partners */}
         {step === 4 && <Step4Content />}
         
-        {/* Navigation Buttons */}
         <div className="flex justify-between gap-4 mt-8">
           {step > 1 && (
             <button
@@ -1333,7 +1379,6 @@ California Residents:
         </div>
       </div>
       
-      {/* Camera Modal */}
       {showCamera && (
         <LiveCameraCapture
           onCapture={handleCameraCapture}
@@ -1342,7 +1387,6 @@ California Residents:
         />
       )}
       
-      {/* Terms Modal */}
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
@@ -1351,7 +1395,6 @@ California Residents:
         content={termsContent}
       />
       
-      {/* Privacy Modal */}
       <TermsModal
         isOpen={showTermsModal === 'privacy'}
         onClose={() => setShowTermsModal(null)}
