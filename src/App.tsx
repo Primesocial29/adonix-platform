@@ -65,9 +65,12 @@ function App() {
   }
 
   // Complete profile route
-  if (currentRoute === '/complete-profile') {
-    return <CompleteProfile />;
-  }
+  // Complete profile route - redirect to proper onboarding
+if (currentRoute === '/complete-profile') {
+  return <ClientOnboarding onComplete={() => {
+    window.location.href = '/client-dashboard';
+  }} />;
+}
 
   // Settings route
   if (currentRoute === '/settings') {
