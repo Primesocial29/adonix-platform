@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import TrainerDashboard from "./TrainerDashboard";
 import BookingFlow, { BookingDetails } from './BookingFlow';
 import CheckoutScreen from './CheckoutScreen';
