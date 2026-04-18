@@ -191,18 +191,6 @@ export default function PublicHome() {
     fetchClientBookings();
   }, [user, role]);
 
-  // ============================================================
-  // TEMPORARILY DISABLED - These redirects are commented out for testing
-  // ============================================================
-  
-  /*
-  // Redirect to browse if client is logged in (they should see browse page, not homepage)
-  if (!loading && user && role === 'client' && profile?.profile_complete) {
-    window.location.href = '/browse';
-    return null;
-  }
-  */
-
   // Don't render anything while loading
   if (loading) {
     return (
@@ -211,27 +199,6 @@ export default function PublicHome() {
       </div>
     );
   }
-
-  /*
-  // If no profile_complete, show setup prompt
-  if (user && profile && !profile.profile_complete) {
-    const setupUrl = role === 'trainer' ? '/partner-setup' : '/client-setup';
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Complete Your Profile</h2>
-          <p className="text-gray-400 mb-6">You need to complete your profile before continuing.</p>
-          <button
-            onClick={() => window.location.href = setupUrl}
-            className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition"
-          >
-            Complete Profile →
-          </button>
-        </div>
-      </div>
-    );
-  }
-  */
 
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 17, 2026 | Prime Social LLC
@@ -413,12 +380,12 @@ We are actively working to improve accessibility. If you experience any issues, 
                 </button>
               </>
             ) : (
-             <button
-  onClick={() => window.location.href = '/client-setup'}
-  className="text-gray-400 hover:text-white transition-colors"
->
-  LOGIN/SETUP
-</button>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                LOGIN/SETUP
+              </button>
             )}
           </div>
         </div>
@@ -439,7 +406,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
             {/* ========================================================= */}
             <div style={{ 
-              marginBottom: '120px',    // Changed from -160px to -220px (moved HIGHER)
+              marginBottom: '120px',
               marginLeft: '-17px'
             }}>
               <img 
@@ -488,13 +455,12 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             
             {/* CTA Button */}
-            {/* CTA BUTTON - Wide, Tall, Gradient */}
-<button
-  onClick={() => window.location.href = '/client-setup'}
-  className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600..."
->
-  EXPLORE CURATION
-</button>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300 whitespace-nowrap"
+            >
+              EXPLORE CURATION
+            </button>
           </div>
         </div>
         
@@ -569,25 +535,11 @@ We are actively working to improve accessibility. If you experience any issues, 
       )}
 
       {showAuthModal && (
-  <AuthModal 
-    isOpen={showAuthModal} 
-    onClose={() => setShowAuthModal(false)}
-    onSuccess={() => {
-      // After successful signup/login, check if profile is complete
-      setTimeout(() => {
-        if (profile?.profile_complete) {
-          // Redirect to appropriate dashboard
-          if (role === 'client') window.location.href = '/browse';
-          else if (role === 'trainer') window.location.href = '/partner-dashboard';
-        } else {
-          // Redirect to onboarding
-          if (role === 'client') window.location.href = '/client-setup';
-          else if (role === 'trainer') window.location.href = '/partner-setup';
-        }
-      }, 500);
-    }}
-  />
-)}
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
 
       {/* Terms Modal - requires scrolling to bottom (for legal agreement) */}
       <TermsModal
