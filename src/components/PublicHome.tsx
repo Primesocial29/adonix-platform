@@ -534,12 +534,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         />
       )}
 
-      {showAuthModal && (
-        <AuthModal 
-          isOpen={showAuthModal} 
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
+    
 
       {/* Terms Modal - requires scrolling to bottom (for legal agreement) */}
       <TermsModal
