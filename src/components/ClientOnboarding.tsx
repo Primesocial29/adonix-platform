@@ -1114,19 +1114,76 @@ California Residents:
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Birth Date <span className="text-red-500">*</span></label>
                 <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => {
-                    setBirthDate(e.target.value);
-                    const ageCheck = validateAge(e.target.value);
-                    setBirthDateError(ageCheck.error);
-                  }}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                />
-                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-              </div>
-            </div>
+                  {/* Birth Date with Dropdowns */}
+<div>
+  <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
+  <div className="grid grid-cols-3 gap-2">
+    <select
+      value={birthMonth}
+      onChange={(e) => setBirthMonth(e.target.value)}
+      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Month</option>
+      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+        <option key={month} value={month}>{month}</option>
+      ))}
+    </select>
+
+    <select
+      value={birthDay}
+      onChange={(e) => setBirthDay(e.target.value)}
+      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Day</option>
+      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+        <option key={day} value={day}>{day}</option>
+      ))}
+    </select>
+
+    <select
+      value={birthYear}
+      onChange={(e) => setBirthYear(e.target.value)}
+      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Year</option>
+      {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+        <option key={year} value={year}>{year}</option>
+      ))}
+    </select>
+  </div>
+  {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+  <p className="text-xs text-gray-500 mt-2">
+    Used only to verify you are 18+. Deleted immediately after confirmation.
+  </p>
+
+  {/* Age verification consent */}
+  <div className="flex items-start gap-2 mt-3">
+    <input
+      type="checkbox"
+      id="ageVerifyConsent"
+      checked={ageVerifyConsent}
+      onChange={(e) => setAgeVerifyConsent(e.target.checked)}
+      className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+    />
+    <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
+      I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
+    </label>
+  </div>
+
+  {/* Facial age estimation consent (optional) */}
+  <div className="flex items-start gap-2 mt-2">
+    <input
+      type="checkbox"
+      id="facialAgeConsent"
+      checked={facialAgeConsent}
+      onChange={(e) => setFacialAgeConsent(e.target.checked)}
+      className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+    />
+    <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
+      I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
+    </label>
+  </div>
+</div>
             
             <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
               <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
