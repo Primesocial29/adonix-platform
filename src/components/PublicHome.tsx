@@ -381,11 +381,11 @@ We are actively working to improve accessibility. If you experience any issues, 
               </>
             ) : (
               <button
-                onClick={() => setShowAuthModal(true)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                LOGIN/SETUP
-              </button>
+  onClick={() => window.location.href = '/client-setup'}
+  className="text-gray-400 hover:text-white transition-colors"
+>
+  LOGIN/SETUP
+</button>
             )}
           </div>
         </div>
