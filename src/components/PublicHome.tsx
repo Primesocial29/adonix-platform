@@ -568,8 +568,25 @@ We are actively working to improve accessibility. If you experience any issues, 
       )}
 
       {showAuthModal && (
-        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      )}
+  <AuthModal 
+    isOpen={showAuthModal} 
+    onClose={() => setShowAuthModal(false)}
+    onSuccess={() => {
+      // After successful signup/login, check if profile is complete
+      setTimeout(() => {
+        if (profile?.profile_complete) {
+          // Redirect to appropriate dashboard
+          if (role === 'client') window.location.href = '/browse';
+          else if (role === 'trainer') window.location.href = '/partner-dashboard';
+        } else {
+          // Redirect to onboarding
+          if (role === 'client') window.location.href = '/client-setup';
+          else if (role === 'trainer') window.location.href = '/partner-setup';
+        }
+      }, 500);
+    }}
+  />
+)}
 
       {/* Terms Modal - requires scrolling to bottom (for legal agreement) */}
       <TermsModal
