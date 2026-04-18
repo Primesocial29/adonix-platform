@@ -680,16 +680,29 @@ const validateUsername = (username: string) => {
       await supabase.from('profiles').update({ bio }).eq('id', user?.id);
       setStep(3);
     } else if (step === 3) {
-      if (!username) {
-        setStep3Error('Please enter a username.');
-        return;
-      }
-      
-      const usernameValidation = validateUsername(username);
-      if (!usernameValidation.isValid) {
-        setStep3Error(usernameValidation.error);
-        return;
-      }
+  if (!username) {
+    setStep3Error('Please enter a username.');
+    return;
+  }
+  
+  // Re-validate username one more time
+  const usernameValidation = validateUsername(username);
+  if (!usernameValidation.isValid) {
+    setStep3Error(usernameValidation.error);
+    return;
+  }
+  
+  if (!city) {
+    setStep3Error('Please enter your city.');
+    return;
+  }
+  if (selectedGoals.length === 0) {
+    setStep3Error('Please select at least one fitness goal.');
+    return;
+  }
+  setStep3Error('');
+  // ... rest of code
+}
       
       if (!city) {
         setStep3Error('Please enter your city.');
