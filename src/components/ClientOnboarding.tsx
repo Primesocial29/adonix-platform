@@ -128,12 +128,12 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
   const { signUp, user, refreshProfile, profile } = useAuth();
   
-  // If user already exists and profile is complete, redirect to browse
-  useEffect(() => {
-    if (user && profile?.profile_complete) {
-      window.location.href = '/browse';
-    }
-  }, [user, profile]);
+  // If user already exists and profile is complete, redirect to browse, but not if we're already there.
+useEffect(() => {
+  if (user && profile?.profile_complete && window.location.pathname !== '/browse') {
+    window.location.replace('/browse');
+  }
+}, [user, profile]);
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
