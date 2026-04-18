@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import TrainerDashboard from "./TrainerDashboard";
 import BookingFlow, { BookingDetails } from './BookingFlow';
 import CheckoutScreen from './CheckoutScreen';
@@ -224,114 +224,110 @@ export default function PublicHome() {
     );
   }
 
-  // Full Terms of Service Content (short version for modal)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
-Effective: April 9, 2026 | Last updated: April 9, 2026
+Effective: April 17, 2026 | Prime Social LLC
 
-1. Acceptance of Terms
-By accessing Adonix (Adonix Fit), you agree to these Terms. Adonix Fit is strictly a fitness and wellness platform. It is not a dating app or escort service.
+1. ACCEPTANCE
+Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dating or escort services. Solicitation results in a permanent ban.
 
-2. USA-Only Service & 18+ Eligibility
-Available only within the USA. You must be at least 18 years old.
+2. ELIGIBILITY & SAFETY WARRANTY
+You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender. Providing false information constitutes a material breach of these Terms.
 
-3. Biometric Information (Illinois BIPA)
-If facial age estimation is used, we obtain separate written consent.
+3. BIPA COMPLIANCE
+Facial estimation data is deleted immediately after verification. Separate written consent required before any biometric data is collected.
 
-4. Username Policy
-Usernames must be 3-20 characters (letters, numbers, underscore, period only).
+4. USERNAMES
+3-20 characters; no offensive or impersonating handles.
 
-5. Prohibited Conduct (Zero-Tolerance)
-Immediate permanent ban for nudity, cross-promotion, external payments, AI impersonation, harassment.
+5. ZERO-TOLERANCE
+Immediate permanent ban for: Harassment, Stalking, Non-Consensual Photos, Nudity, AI Impersonation, Cross-Promotion, or External Payments (Venmo, CashApp, PayPal, Zelle, etc.).
 
-6. Chat & Security Monitoring
-We monitor communications for safety.
+6. MONITORING
+Prime Social LLC monitors in-app chat for safety and fraud prevention. By using Adonix Fit, you consent to this monitoring.
 
-7. Payment System
-ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
+7. PAYMENTS
+Stripe is the exclusive payment provider. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. External payment apps are a material breach.
 
-8. Location Tracking
-GPS is mandatory to verify both parties are within 0.75 miles.
+8. GPS & SOS DISCLAIMER
+GPS is mandatory for session verification. The SOS feature is a "best effort" tool only and is NOT a replacement for calling 911 directly.
 
-9. Public Locations Only
-Public venues only. Private residences prohibited.
+9. PUBLIC ONLY
+Meetings in private residences, hotels, or any non-public location are a material breach. Three-strike policy: (1) warning, (2) 7-day suspension, (3) permanent ban.
 
-10. In-Person Safety & Assumption of Risk
-YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH.
+10. ASSUMPTION OF RISK
+YOU VOLUNTARILY ASSUME ALL RISKS OF PHYSICAL ACTIVITY. PRIME SOCIAL LLC DOES NOT VERIFY CRIMINAL HISTORIES. PHYSICAL ACTIVITIES INVOLVE INHERENT RISKS OF SERIOUS INJURY, INCLUDING PARALYSIS OR DEATH.
 
-11. Wellness & Medical Disclaimer
-Consult a physician before beginning any exercise program.
+11. MEDICAL DISCLAIMER
+Consult a physician before use. Adonix Fit is a general wellness platform — not a medical device.
 
-12. Independent Contractor Status
-Partners are Independent Contractors.
+12. INDEPENDENT CONTRACTOR STATUS
+Partners are Independent Contractors, not employees, agents, or franchisees of Prime Social LLC.
 
-13. Artificial Intelligence Use
-We may use AI for matching and content moderation.
+13. CONDUCT STANDARDS & RIGHT TO LEAVE
+The "Right to Leave" is absolute — users may end sessions at any time they feel unsafe with no penalty. All communication must remain within the App.
 
-14. User Content and License
-You grant us a license to use content you upload.
+14. TWO-PERSON LIMIT
+Sessions limited to two (2) participants only. No spectators, guests, or pets (except ADA service animals).
 
-15. DMCA / Copyright Compliance
-Send notices to primesocial@primesocial.xyz.
+15. AI USE
+AI is used for content moderation and partner matching. Human review available upon request within 30 days.
 
-16. Data Rights & Privacy
-You have rights to access, delete, correct, and opt-out.
+16. CONTENT LICENSE
+You grant Prime Social LLC a license to use your uploaded human-generated content to operate the App.
 
-17. Use of Information for Marketing
-You may opt out of marketing.
+17. DMCA
+Report copyright issues to primesocial@primesocial.xyz.
 
-18. No Refunds (Reiterated)
-ALL PAYMENTS ARE FINAL.
+18. PRIVACY
+Data handled per CCPA/SB 1722 and all applicable US state privacy laws.
 
-19. Indemnification
-You agree to indemnify Prime Social LLC.
+19. INDEMNIFICATION
+You agree to defend and indemnify Prime Social LLC against all claims arising from your conduct or use of the App.
 
-20. Limitation of Liability
-Our total liability shall not exceed $100.
+20. LIMITATION OF LIABILITY
+TOTAL AGGREGATE LIABILITY OF PRIME SOCIAL LLC SHALL NOT EXCEED $100. NO INDIRECT, INCIDENTAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
 
-21. Dispute Resolution – Binding Arbitration
-All disputes resolved through binding arbitration. You waive class action rights.
+21. ARBITRATION & CLASS ACTION WAIVER
+Binding arbitration in Orange County, FL. CLASS ACTION WAIVER INCLUDED — YOU WAIVE THE RIGHT TO BRING OR PARTICIPATE IN ANY CLASS ACTION AGAINST PRIME SOCIAL LLC.
 
-22. Force Majeure
-We are not liable for delays outside our control.
+22. FORCE MAJEURE
+Prime Social LLC is not liable for acts of God, server failures, cyberattacks, or causes outside our reasonable control.
 
-34. No Personal Liability
-Recourse limited to Company assets.
+23. NO PERSONAL LIABILITY
+Recourse is limited to Company assets only. No member, manager, or employee of Prime Social LLC has personal liability.
 
-35. Two-Person Only Sessions
-Sessions limited to client and partner only.
+24. JURY WAIVER
+YOU WAIVE THE RIGHT TO A TRIAL BY JURY IN ANY DISPUTE ARISING FROM THESE TERMS.
 
-36. Waiver of Jury Trial
-You waive any right to a trial by jury.
+25. TERMINATION
+Prime Social LLC may terminate accounts for any policy violation at any time, with or without notice.
 
-37. No Third-Party Beneficiaries
-These Terms are for you and Prime Social LLC only.
-
-By creating an account, you agree to these Terms.`;
+26. CONTACT
+primesocial@primesocial.xyz | Prime Social LLC | Orange County, Florida`;
 
   const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
-Effective: April 9, 2026 | Last updated: April 9, 2026
+Effective: April 17, 2026 | Prime Social LLC
 
-1. Information We Collect: Email, username, age (deleted immediately), city, fitness goals, photos, bio, chat messages, location data, and biometric data (with consent).
+1. DATA COLLECTION
+Prime Social LLC collects identifiers (email, username, IP address, device ID) and fitness data. Age verification data is deleted immediately after 18+ confirmation and is not retained for any other purpose.
 
-2. Location Data: GPS used to verify both parties within 0.75 miles. Not sold.
+2. LOCATION DATA
+GPS is used only for session check-in verification and the SOS emergency safety feature. Location data is not retained after the session ends and is never sold to third parties.
 
-3. Age Verification & Biometric Data: Birth date collected to verify age 18+ and deleted immediately.
+3. BIOMETRICS
+Per BIPA, facial estimation data is processed and purged instantly. Separate written consent is required. We do not sell, share, or trade biometric data.
 
-4. How We Use Your Information: To operate the App, verify age, process payments, enforce Terms, protect safety.
+4. AI MODERATION
+AI scans user-generated content for safety violations. Human review of any AI decision is available upon request to primesocial@primesocial.xyz.
 
-5. Sharing of Information: We do not sell your data.
+5. NO SALE OF DATA
+Prime Social LLC does not sell personal data to third parties.
 
-6. Data Retention: Age verification data deleted immediately. Account data: until deletion + 30 days.
+6. RETENTION
+Account records are purged within 30 days after account deletion. Age verification data is deleted immediately.
 
-7. Security: We use reasonable security measures.
-
-8. Children's Privacy: Strictly 18+.
-
-9. Your Rights: You have rights to know, delete, correct, and opt-out.
-
-10. State-Specific Rights: California, Colorado, Virginia, Utah, Washington, Nevada, Illinois, Florida, Texas residents have additional rights.
-
-By using Adonix Fit, you agree to this Privacy Policy.`;
+7. YOUR RIGHTS
+Per CCPA/CPRA, Florida SB 1722, and all applicable US state privacy laws, you have the right to access, correct, delete, and port your data. Email primesocial@primesocial.xyz. We respond within 45 days.`;
 
   const contactContent = `ADONIX FIT - CONTACT INFORMATION
 
@@ -483,20 +479,21 @@ We are actively working to improve accessibility. If you experience any issues, 
             </div>
             
             {/* CTA Button */}
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="px-10 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-full font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/30"
-            >
-              EXPLORE CURATION
-            </button>
+            {/* CTA BUTTON - Wide, Tall, Gradient */}
+<button
+  onClick={() => setShowAuthModal(true)}
+  className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300 whitespace-nowrap"
+>
+  EXPLORE CURATION
+</button>
           </div>
         </div>
         
         {/* Right Side - Girl Image */}
         <div className="relative w-2/5 flex items-center justify-center">
           <div style={{ 
-            width: '780px',
-            height: '780px',
+            width: '880px',
+            height: '880px',
             position: 'relative',
             top: '-40'
           }}>
