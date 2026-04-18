@@ -484,15 +484,18 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
 
             <div className="flex flex-col gap-4">
               <button
-                onClick={() => handleRoleSelect('member')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-                <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💸 I will pay for sessions
-                </div>
-              </button>
+  onClick={() => {
+    onClose();
+    window.location.href = '/client-setup';
+  }}
+  className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
+>
+  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
+  <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
+  <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+    💸 I will pay for sessions
+  </div>
+</button>
 
               <button
                 onClick={() => handleRoleSelect('partner')}
