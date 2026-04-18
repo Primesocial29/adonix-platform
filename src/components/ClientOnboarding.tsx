@@ -134,8 +134,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthDateError, setBirthDateError] = useState('');
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -149,6 +147,14 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   const [turnstileLoaded, setTurnstileLoaded] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
+  
+  // Birth date dropdowns
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
+  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
+  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
   
   // Step 2: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
@@ -220,21 +226,28 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return { isValid: true, error: null };
   };
 
-  // Validate age (must be 18+)
-  const validateAge = (birthDate: string) => {
-    if (!birthDate) return { isValid: false, error: 'Please enter your birth date' };
-    
+  // Calculate age from dropdowns
+  const calculateAge = (month: string, day: string, year: string): number | null => {
+    if (!month || !day || !year) return null;
+    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
+    return age;
+  };
+
+  // Validate age from dropdowns
+  const validateAgeFromDropdowns = () => {
+    if (!birthMonth || !birthDay || !birthYear) {
+      return { isValid: false, error: 'Please enter your full birth date.' };
+    }
     
-    if (age < 18) {
-      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit' };
+    const age = calculateAge(birthMonth, birthDay, birthYear);
+    if (age === null || age < 18) {
+      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit.' };
     }
     
     return { isValid: true, error: null };
@@ -641,10 +654,18 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep1Error('You must acknowledge the social fitness platform agreement.');
         return;
       }
-      if (!birthDate || birthDateError) {
-        setStep1Error('Please enter a valid birth date. You must be 18 or older.');
+      
+      // Validate birth date from dropdowns
+      const ageValidation = validateAgeFromDropdowns();
+      if (!ageValidation.isValid) {
+        setStep1Error(ageValidation.error);
         return;
       }
+      if (!ageVerifyConsent) {
+        setStep1Error('You must consent to age verification to create an account.');
+        return;
+      }
+      
       if (ENABLE_TURNSTILE && !turnstileToken) {
         setStep1Error('Please complete the human verification.');
         return;
@@ -653,7 +674,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       setLoading(true);
       try {
         const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', autoUsername, birthDate);
+        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+        await signUp(email, password, 'member', autoUsername, formattedBirthDate);
         setTimeout(() => {
           setStep(2);
           setLoading(false);
@@ -723,7 +745,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/browse';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthDate && !birthDateError && (ENABLE_TURNSTILE ? turnstileToken : true);
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
   const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
@@ -1110,139 +1132,136 @@ California Residents:
                 {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
               </div>
               
-              {/* Birth Date Field */}
+              {/* Birth Date with Dropdowns */}
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Birth Date <span className="text-red-500">*</span></label>
-                <input
-                  {/* Birth Date with Dropdowns */}
-<div>
-  <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-  <div className="grid grid-cols-3 gap-2">
-    <select
-      value={birthMonth}
-      onChange={(e) => setBirthMonth(e.target.value)}
-      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Month</option>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-        <option key={month} value={month}>{month}</option>
-      ))}
-    </select>
+                <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Month</option>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                      <option key={month} value={month}>{month}</option>
+                    ))}
+                  </select>
 
-    <select
-      value={birthDay}
-      onChange={(e) => setBirthDay(e.target.value)}
-      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Day</option>
-      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-        <option key={day} value={day}>{day}</option>
-      ))}
-    </select>
+                  <select
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                      <option key={day} value={day}>{day}</option>
+                    ))}
+                  </select>
 
-    <select
-      value={birthYear}
-      onChange={(e) => setBirthYear(e.target.value)}
-      className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Year</option>
-      {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-        <option key={year} value={year}>{year}</option>
-      ))}
-    </select>
-  </div>
-  {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-  <p className="text-xs text-gray-500 mt-2">
-    Used only to verify you are 18+. Deleted immediately after confirmation.
-  </p>
+                  <select
+                    value={birthYear}
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Year</option>
+                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+                <p className="text-xs text-gray-500 mt-2">
+                  Used only to verify you are 18+. Deleted immediately after confirmation.
+                </p>
 
-  {/* Age verification consent */}
-  <div className="flex items-start gap-2 mt-3">
-    <input
-      type="checkbox"
-      id="ageVerifyConsent"
-      checked={ageVerifyConsent}
-      onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-      className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-    />
-    <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-      I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
-    </label>
-  </div>
+                {/* Age verification consent */}
+                <div className="flex items-start gap-2 mt-3">
+                  <input
+                    type="checkbox"
+                    id="ageVerifyConsent"
+                    checked={ageVerifyConsent}
+                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
+                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
+                  </label>
+                </div>
 
-  {/* Facial age estimation consent (optional) */}
-  <div className="flex items-start gap-2 mt-2">
-    <input
-      type="checkbox"
-      id="facialAgeConsent"
-      checked={facialAgeConsent}
-      onChange={(e) => setFacialAgeConsent(e.target.checked)}
-      className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-    />
-    <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-      I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
-    </label>
-  </div>
-</div>
-            
-            <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
-              <ul className="space-y-1 text-xs text-yellow-200/80">
-                <li>• Adonix is a social fitness network, not a professional service.</li>
-                <li>• You are joining to meet fitness partners in public locations only.</li>
-                <li>• No professional fitness services are provided or implied.</li>
-                <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
-                <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
-              </ul>
-            </div>
-            
-            <div className="mt-6 space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={() => setShowTermsModal('terms')}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I have read and agree to the{' '}
-                  <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
-                </span>
-              </label>
-              
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={() => setShowTermsModal('privacy')}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I have read and agree to the{' '}
-                  <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
-                </span>
-              </label>
-              
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={gatekeeperAccepted}
-                  onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
-                </span>
-              </label>
-            </div>
-            
-            {!ENABLE_TURNSTILE && (
-              <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
-                <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification is disabled</p>
+                {/* Facial age estimation consent (optional) */}
+                <div className="flex items-start gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="facialAgeConsent"
+                    checked={facialAgeConsent}
+                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
+                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
+                  </label>
+                </div>
               </div>
-            )}
-            
-            {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
+              
+              <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
+                <ul className="space-y-1 text-xs text-yellow-200/80">
+                  <li>• Adonix is a social fitness network, not a professional service.</li>
+                  <li>• You are joining to meet fitness partners in public locations only.</li>
+                  <li>• No professional fitness services are provided or implied.</li>
+                  <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
+                  <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
+                </ul>
+              </div>
+              
+              <div className="mt-6 space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={() => setShowTermsModal('terms')}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={() => setShowTermsModal('privacy')}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gatekeeperAccepted}
+                    onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
+                  </span>
+                </label>
+              </div>
+              
+              {!ENABLE_TURNSTILE && (
+                <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
+                  <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification is disabled</p>
+                </div>
+              )}
+              
+              {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
+            </div>
           </div>
         )}
         
