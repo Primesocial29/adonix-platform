@@ -1,6 +1,6 @@
 import { useAuth } from '../hooks/useAuth';
 import PartnerProfileSetup from './PartnerProfileSetup';
-import ClientOnboarding from './ClientOnboarding';  // ← Make sure this is correct
+import ClientOnboarding from './ClientOnboarding';
 import { Loader2 } from 'lucide-react';
 
 export default function CompleteProfile() {
@@ -14,21 +14,22 @@ export default function CompleteProfile() {
     );
   }
 
-  // Partner route
+  // If user is a partner → show partner setup
   if (user?.role === 'partner') {
     return <PartnerProfileSetup onComplete={() => {
       window.location.href = '/partner-dashboard';
     }} />;
   }
 
-  // Client route - uses the 4-step ClientOnboarding
-  if (user?.role === 'member') {
+  // If user is a client/member → show client onboarding (4-step flow)
+  if (user?.role === 'member' || user?.role === 'client') {
     return <ClientOnboarding onComplete={() => {
       window.location.href = '/client-dashboard';
     }} />;
   }
 
-  // No valid role - go home
+  // No valid user or role → go home
+  console.warn('CompleteProfile: No valid user role', user);
   window.location.href = '/';
   return null;
 }
