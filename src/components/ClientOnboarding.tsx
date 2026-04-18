@@ -968,6 +968,7 @@ California Residents:
   
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Navbar - Stays at top */}
       <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
@@ -982,27 +983,28 @@ California Residents:
         </div>
       </div>
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => window.location.href = '/'}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-6 h-6 text-gray-400 hover:text-white" />
-          </button>
-        </div>
-        
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🔥</div>
-          <h1 className="text-3xl font-bold text-white">I Want to Sweat</h1>
-          <p className="text-lg text-gray-300 mt-1">💸 You will pay for sessions</p>
-        </div>
-        
-        <div className="mb-8">
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} of 4</span>
-            <span>{Math.round(step / 4 * 100)}%</span>
+      {/* Sticky Progress Bar Section - Stays at top when scrolling */}
+      <div className="sticky top-[73px] z-10 bg-black border-b border-white/10">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-400 hover:text-white" />
+              </button>
+              <div className="text-center">
+                <div className="text-2xl">🔥</div>
+                <h1 className="text-lg font-bold text-white">I Want to Sweat</h1>
+                <p className="text-xs text-gray-300">💸 You will pay for sessions</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-400">Step {step} of 4</div>
+              <div className="text-red-500 font-mono font-bold">{Math.round(step / 4 * 100)}%</div>
+            </div>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
@@ -1010,13 +1012,33 @@ California Residents:
               style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {['Account', 'Photo', 'Vibe', 'Partners'].map((s, i) => (
+              <span
+                key={s}
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  step > i ? 'bg-green-500/20 text-green-400' : step === i + 1 ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-gray-500'
+                }`}
+              >
+                {step > i ? '✓' : step === i + 1 ? '●' : '○'} {s}
+              </span>
+            ))}
+          </div>
         </div>
-        
+      </div>
+      
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Step 1: Create Your Account */}
         {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
             <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
+            
+            {step1Error && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                {step1Error}
+              </div>
+            )}
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1222,8 +1244,6 @@ California Residents:
                   </span>
                 </label>
               </div>
-              
-              {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
             </div>
           </div>
         )}
@@ -1436,7 +1456,7 @@ California Residents:
           )}
         </div>
         
-        {/* Footer Links - Terms, Privacy, Safety (visible on all pages) */}
+        {/* Footer Links - Terms, Privacy, Safety */}
         <div className="mt-8 pt-6 border-t border-white/10 text-center">
           <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-500">
             <button onClick={() => setShowTermsModal('terms')} className="hover:text-white transition-colors">
