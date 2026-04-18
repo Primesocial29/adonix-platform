@@ -33,7 +33,6 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
     onClose();
   };
 
-  // Reset scroll state when modal opens
   useEffect(() => {
     if (isOpen) {
       setHasScrolledToBottom(false);
@@ -109,22 +108,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Track if user has read both documents
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   
-  // Birth date fields (replacing isOver18)
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
-  
-  // Facial age estimation consent (for future implementation)
   const [facialAgeConsent, setFacialAgeConsent] = useState(false);
 
   if (!isOpen) return null;
 
-  // Username validation
   const validateUsername = (value: string) => {
     if (!value) return '';
     if (value.length < 3) return 'Username must be at least 3 characters';
@@ -133,7 +127,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return '';
   };
 
-  // Check username availability
   useEffect(() => {
     const checkAvailability = async () => {
       if (!username || username.length < 3 || validateUsername(username)) {
@@ -217,7 +210,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setHasReadPrivacy(false);
   };
 
-  // Calculate age from birth date
   const calculateAge = (month: string, day: string, year: string): number | null => {
     if (!month || !day || !year) return null;
     const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -230,19 +222,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return age;
   };
 
-  // Handle Terms agreement from modal
   const handleTermsAgreed = () => {
     setHasReadTerms(true);
-    // Only auto-check if both have been read
     if (hasReadPrivacy) {
       setAcceptedTerms(true);
     }
   };
 
-  // Handle Privacy agreement from modal
   const handlePrivacyAgreed = () => {
     setHasReadPrivacy(true);
-    // Only auto-check if both have been read
     if (hasReadTerms) {
       setAcceptedTerms(true);
     }
@@ -266,9 +254,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    // Sign-up validations
-    
-    // Birth date validation
     if (!birthMonth || !birthDay || !birthYear) {
       setError('Please enter your full birth date.');
       setLoading(false);
@@ -317,19 +302,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    // Facial age estimation consent is optional for now
-    // Uncomment the following block when implementing facial age estimation
-    // if (!facialAgeConsent) {
-    //   setError('You must consent to facial age estimation to use this feature.');
-    //   setLoading(false);
-    //   return;
-    // }
-
-    // Format birth date for database (YYYY-MM-DD)
     const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
 
     try {
-      // Pass birthDate to signUp function
       await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
       onClose();
       
@@ -345,219 +320,115 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  // Full Terms of Service Content (37 sections - matching TermsPage.tsx with updated rates)
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
 
 1. Acceptance of Terms
-By accessing Adonix (also referred to as Adonix Fit) (the "App"), you agree to these Terms. The App is operated by Prime Social LLC ("Company", "we", "us").
-
-Adonix Fit is strictly a fitness and wellness platform. It is not a dating app, escort service, or platform for romantic or sexual encounters. Any user attempting to use the App for such purposes will be permanently banned.
+By accessing Adonix (Adonix Fit), you agree to these Terms. Adonix Fit is strictly a fitness and wellness platform. It is not a dating app or escort service.
 
 2. USA-Only Service & 18+ Eligibility
-Location: Available only within the United States of America, including its territories and possessions (Puerto Rico, Guam, US Virgin Islands, Northern Mariana Islands, American Samoa). VPN use to bypass this restriction is prohibited and may result in account termination.
-Human-Only: Use of Artificial Intelligence (AI) to act as a user, generate fake personas, or automate chat is strictly prohibited. Violation results in immediate permanent ban.
-Age: You must be at least 18 years old. Underage accounts are deleted within 24 hours of discovery per Florida SB 1722.
-Age Verification Methods: We use commercially reasonable age verification methods including birth date collection, the right to request government-issued identification, and the right to use facial age estimation technology (with separate written consent).
-Purpose Limitation: Age verification data is used ONLY to confirm you are 18 or older. It is NOT used for marketing, analytics, personalization, or any other purpose.
-Data Deletion: Age verification data is deleted immediately after confirmation. We do not retain birth dates or age estimation data.
-Florida SB 1722, Texas AGE APT Act, Utah App Store Accountability Act, Louisiana Act 172, and California CAADCA compliance included.
+Available only within the USA. You must be at least 18 years old.
 
 3. Biometric Information (Illinois BIPA)
-If facial age estimation is used, we obtain separate written consent before collecting any biometric data. Biometric data is used only for age verification and is deleted immediately after verification. We do not sell, share, trade, or otherwise disclose biometric data to any third party. You may withdraw consent at any time.
+If facial age estimation is used, we obtain separate written consent.
 
 4. Username Policy
-Usernames must be 3-20 characters and may only contain letters, numbers, underscores (_), and periods (.). Emojis, spaces, and special characters are prohibited. Offensive, impersonating, or inappropriate usernames will be removed or changed.
+Usernames must be 3-20 characters (letters, numbers, underscore, period only).
 
 5. Prohibited Conduct (Zero-Tolerance)
-Immediate permanent ban for: nudity/explicit content, cross-promotion of social media, screenshots without permission, AI impersonation, AI-generated profile content, deepfakes, harassment, impersonation, automated tools, and external payment apps (Venmo, PayPal, CashApp, Zelle, etc.).
+Immediate permanent ban for nudity, cross-promotion, external payments, AI impersonation, harassment.
 
 6. Chat & Security Monitoring
-The Company monitors App communications for safety and fraud prevention. Do not share personal contact information in chat. Do not discuss payments outside of the App.
+We monitor communications for safety.
 
-7. Payment System & Multi-Vendor Fee Disclosure
-All transactions must be processed via Stripe. External payment apps are prohibited. ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. Payment is authorized but not captured until QR scan or no-show occurs.
+7. Payment System
+ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE.
 
-8. Location Tracking, QR-Code & Signal Disclaimer
-GPS is mandatory to verify both parties are within 0.75 miles of the agreed location. We are not liable for signal failures.
+8. Location Tracking
+GPS is mandatory to verify both parties are within 0.75 miles.
 
 9. Public Locations Only
-Public venues only (parks, gyms, studios). Private residences are prohibited. Three-strike policy: warning → 7-day suspension → permanent ban.
+Public venues only. Private residences prohibited.
 
 10. In-Person Safety & Assumption of Risk
-YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH. We do NOT conduct background checks. We do NOT verify certifications. You release us from liability for any harm, including assault, theft, or criminal acts.
+YOU VOLUNTARILY ASSUME ALL RISKS OF INJURY OR DEATH.
 
 11. Wellness & Medical Disclaimer
-Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
+Consult a physician before beginning any exercise program.
 
 12. Independent Contractor Status
-Partners are Independent Contractors, not employees, agents, joint venturers, or franchisees of Prime Social LLC. Partners are solely responsible for their own federal, state, and local taxes, business licenses, insurance, professional conduct, and compliance with all applicable laws. Nothing in these Terms creates an employment relationship. Partners set their own hourly rates (subject to minimum and maximum limits set by the Company: minimum $50 per hour, maximum $500 per hour). Half-hour session rates (if enabled) are subject to minimum $30 and maximum $250. Partners have no authority to bind the Company to any contract or obligation.
+Partners are Independent Contractors.
 
 13. Artificial Intelligence Use
-We may use AI for matching, content moderation, and recommendations. No liability for AI output. You may opt out of automated decisions.
+We may use AI for matching and content moderation.
 
 14. User Content and License
-You grant us a license to use content you upload for operating the App. Content must be of a real human (no AI-generated images).
+You grant us a license to use content you upload.
 
 15. DMCA / Copyright Compliance
-Send copyright infringement notices to primesocial@primesocial.xyz.
+Send notices to primesocial@primesocial.xyz.
 
 16. Data Rights & Privacy
-You have rights to access, delete, correct, and opt-out. Email primesocial@primesocial.xyz.
+You have rights to access, delete, correct, and opt-out.
 
 17. Use of Information for Marketing
-We may use your data for internal marketing and remarketing pixels. You may opt out.
+You may opt out of marketing.
 
 18. No Refunds (Reiterated)
-ALL PAYMENTS ARE FINAL AND NON-REFUNDABLE. No exceptions.
+ALL PAYMENTS ARE FINAL.
 
 19. Indemnification
-You agree to indemnify Prime Social LLC from claims arising from your use of the App.
+You agree to indemnify Prime Social LLC.
 
 20. Limitation of Liability
 Our total liability shall not exceed $100.
 
-21. Dispute Resolution – Binding Arbitration & Class Action Waiver
-All disputes resolved through binding arbitration in Orange County, Florida. You waive class action rights. You may opt out within 30 days.
+21. Dispute Resolution – Binding Arbitration
+All disputes resolved through binding arbitration. You waive class action rights.
 
 22. Force Majeure
-We are not liable for delays caused by events outside our control.
-
-23. Beta Testing Terms
-Beta testers must keep non-public information confidential.
-
-24. Referral Program Terms
-Referral rewards are non-cash credits that expire after 90 days.
-
-25. Gift Card / Credit Terms
-Credits expire 12 months after issuance.
-
-26. Accessibility Statement
-We strive to make the App accessible to all users.
-
-27. Severability
-If any provision is unenforceable, the rest remain in effect.
-
-28. Entire Agreement
-These Terms constitute the entire agreement.
-
-29. Consent to Electronic Signatures
-By clicking 'I agree,' you consent to electronic signatures.
-
-30. Right to Change Terms
-We may update these Terms. Continued use constitutes acceptance.
-
-31. Termination
-We may terminate your account at any time.
-
-32. Contact Information
-Email: primesocial@primesocial.xyz | Orange County, Florida
-
-33. Other State Laws (All 50 States + Territories)
-We comply with all applicable state privacy laws including CCPA/CPRA, VCDPA, ColoPA, CTDPA, UCPA, and others.
+We are not liable for delays outside our control.
 
 34. No Personal Liability
-Recourse against Prime Social LLC shall be limited to the assets of the Company. No member, manager, employee, or agent shall have personal liability.
+Recourse limited to Company assets.
 
 35. Two-Person Only Sessions
-Sessions are strictly limited to two (2) participants: the client and the partner. No additional persons (including friends, family, children, pets, other trainers, or spectators) are permitted. Service animals as defined by the ADA are permitted. Violation may result in account termination and forfeiture of payments.
+Sessions limited to client and partner only.
 
 36. Waiver of Jury Trial
-To the fullest extent permitted by law, you waive any right to a trial by jury.
+You waive any right to a trial by jury.
 
 37. No Third-Party Beneficiaries
-These Terms are for the benefit of you and Prime Social LLC only. No third party (including any other user) has any right to enforce these Terms.
+These Terms are for you and Prime Social LLC only.
 
-By creating an account, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service, including the arbitration agreement, class action waiver, limitation of liability, assumption of risk, indemnification, force majeure, no refund policy, no personal liability, and two-person only session requirement. You further acknowledge that you are located within the United States of America (including its territories) and are at least 18 years old.`;
+By creating an account, you agree to these Terms.`;
 
-  // Full Privacy Policy Content
   const fullPrivacyContent = `ADONIX FIT - PRIVACY POLICY
 Effective: April 9, 2026 | Last updated: April 9, 2026
 
-1. Information We Collect
-Identifiers: Email address, username, IP address, device ID
-Demographic information: Age (for verification only, deleted immediately), city
-Fitness information: Fitness goals, workout preferences, exercise history
-User content: Profile photos, bio, fitness goals, chat messages
-Payment information: Processed by Stripe; we do not store full payment details
-Location data: Precise GPS location (see Section 2)
-Biometric data: Facial age estimation data (see Section 3) — only with separate written consent
+1. Information We Collect: Email, username, age (deleted immediately), city, fitness goals, photos, bio, chat messages, location data, and biometric data (with consent).
 
-2. Location Data
-We collect GPS to verify both parties are within 0.75 miles (1207 meters) of the agreed location. Signal failures are not our liability. Location data is not sold and is used only for session verification and SOS features.
+2. Location Data: GPS used to verify both parties within 0.75 miles. Not sold.
 
-3. Age Verification & Biometric Data
-Birth date is collected to verify age 18+ and deleted immediately. Facial age estimation requires separate written consent and is deleted immediately after verification. We comply with Illinois BIPA.
+3. Age Verification & Biometric Data: Birth date collected to verify age 18+ and deleted immediately.
 
-4. How We Use Your Information
-To operate the App, verify age, communicate, process payments, enforce Terms, protect safety, comply with laws, personalize recommendations, and prevent fraud.
+4. How We Use Your Information: To operate the App, verify age, process payments, enforce Terms, protect safety.
 
-5. Sharing of Information
-We do not sell your data. We share with other users (profile info), Stripe (payments), emergency services (SOS), law enforcement (legal obligations), AI providers (moderation), and marketing partners (remarketing pixels - you may opt out).
+5. Sharing of Information: We do not sell your data.
 
-6. Data Retention and Deletion
-Age verification data: deleted immediately. Account data: until deletion + 30 days. Chat messages: until deletion + 30 days. Location data: not retained. Payment info: not stored by us.
+6. Data Retention: Age verification data deleted immediately. Account data: until deletion + 30 days.
 
-7. Security & Data Breach Notification
-We use reasonable security measures but cannot guarantee 100% security. We will notify you of data breaches as required by state laws.
+7. Security: We use reasonable security measures.
 
-8. Children's Privacy
-Strictly 18+. Underage accounts deleted within 24 hours. COPPA compliant.
+8. Children's Privacy: Strictly 18+.
 
-9. Your Rights (All US States & Territories)
-You have rights to know, delete, portability, correct, opt-out of sale/sharing, opt-out of automated decisions, and appeal. Email primesocial@primesocial.xyz. Response within 45 days.
+9. Your Rights: You have rights to know, delete, correct, and opt-out.
 
-10. State-Specific Privacy Rights
-California (CCPA/CPRA): Right to know, delete, opt-out, non-discrimination, Shine the Light.
-Colorado, Connecticut, Virginia, Utah, Oregon, Montana, Texas, Indiana, Iowa, Tennessee, New Hampshire, New Jersey, Delaware, Kentucky, Maryland, Minnesota, Nebraska: Same rights as Section 9.
-Washington (My Health My Data Act): Right to withdraw consent for health data.
-Nevada (SB 370): Right to opt out of sale.
-Illinois (BIPA): Separate consent for facial age estimation.
-Florida (SB 1722): Age verification compliance.
-Texas (AGE APT Act, TDPSA): Age ratings and verification.
+10. State-Specific Rights: California, Colorado, Virginia, Utah, Washington, Nevada, Illinois, Florida, Texas residents have additional rights.
 
-11. Artificial Intelligence Use
-We use AI for partner matching, content moderation, and recommendations. You may opt out of automated decisions. No liability for AI output.
+By using Adonix Fit, you agree to this Privacy Policy.`;
 
-12. Marketing & Remarketing Pixels
-We use pixels (Facebook, Google, TikTok) for targeted ads. You may opt out via email, App Settings, or device settings.
-
-13. Cookies and Tracking Technologies
-We use cookies for authentication, preferences, analytics, and advertising. Do Not Track (DNT) signals are not currently responded to.
-
-14. Data Broker Registration
-We are not a data broker.
-
-15. International Data Transfers
-USA only. Data stored in the USA.
-
-16. Third-Party Links
-We are not responsible for third-party content or privacy practices.
-
-17. No Medical Advice
-Adonix is a general wellness platform. Consult a physician before beginning any exercise program.
-
-18. No Verification of Users
-We do not conduct criminal background checks. Partners' certifications are self-reported. You are responsible for your own safety.
-
-19. No Guaranteed Results
-We do not guarantee fitness results.
-
-20. Consent to Electronic Signatures & Records
-By creating an account, you consent to electronic signatures and records.
-
-21. Changes to This Policy
-We may update this policy. Notice will be provided by email or in-app.
-
-22. Contact Us
-Email: primesocial@primesocial.xyz
-Entity: Prime Social LLC
-Jurisdiction: Orange County, Florida
-Data Protection Officer available at same email for California residents.
-
-By using Adonix Fit, you acknowledge that you have read, understood, and agree to this Privacy Policy.`;
-
-  // ========== WELCOME STEP ==========
+  // ========== WELCOME STEP - STACKED VERTICALLY (TOP TO BOTTOM) ==========
   if (step === 'welcome') {
     return (
       <>
@@ -575,10 +446,11 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
               <p className="text-xl text-gray-300">What brings that body here?</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* VERTICAL STACK (Top to Bottom) - Changed from grid grid-cols-2 to flex flex-col */}
+            <div className="flex flex-col gap-4">
               <button
                 onClick={() => handleRoleSelect('member')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
+                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
               >
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
                 <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
@@ -589,7 +461,7 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
 
               <button
                 onClick={() => handleRoleSelect('partner')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center"
+                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
               >
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
                 <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
@@ -610,7 +482,6 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
           </div>
         </div>
 
-        {/* Terms Modal - Welcome Step */}
         <TermsModal
           isOpen={showTermsModal === 'terms'}
           onClose={() => setShowTermsModal(null)}
@@ -676,7 +547,6 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username field - only for sign-up */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium mb-2 text-white">
@@ -747,35 +617,23 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
               />
             </div>
 
-            {/* Birth Date Fields - replaces 18+ checkbox */}
             {!isLogin && (
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-white">
                   Birth Date <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {/* Month Dropdown */}
                   <select
                     value={birthMonth}
                     onChange={(e) => setBirthMonth(e.target.value)}
                     className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Month</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                      <option key={month} value={month}>{month}</option>
+                    ))}
                   </select>
 
-                  {/* Day Dropdown */}
                   <select
                     value={birthDay}
                     onChange={(e) => setBirthDay(e.target.value)}
@@ -787,7 +645,6 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                     ))}
                   </select>
 
-                  {/* Year Dropdown */}
                   <select
                     value={birthYear}
                     onChange={(e) => setBirthYear(e.target.value)}
@@ -800,12 +657,10 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                   </select>
                 </div>
 
-                {/* Disclosure text */}
                 <p className="text-xs text-gray-500">
                   Used only to verify you are 18+. Deleted immediately after confirmation.
                 </p>
 
-                {/* Age verification consent checkbox */}
                 <div className="flex items-start gap-2 mt-2">
                   <input
                     type="checkbox"
@@ -819,7 +674,6 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                   </label>
                 </div>
 
-                {/* Facial Age Estimation Consent Checkbox - For future implementation */}
                 <div className="flex items-start gap-2 mt-2">
                   <input
                     type="checkbox"
@@ -829,14 +683,12 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
                     className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
                   />
                   <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. 
-                    This complies with Illinois BIPA.
+                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
                   </label>
                 </div>
               </div>
             )}
 
-            {/* Terms & Conditions - MODAL BUTTONS with read tracking */}
             {!isLogin && (
               <div className="space-y-3">
                 <div className="flex items-start gap-2">
@@ -903,7 +755,6 @@ By using Adonix Fit, you acknowledge that you have read, understood, and agree t
         </div>
       </div>
 
-      {/* Terms Modal - Credentials Step */}
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
