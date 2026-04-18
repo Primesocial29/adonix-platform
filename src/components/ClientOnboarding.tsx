@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X } from 'lucide-react';
+import { X, Camera, RefreshCw, Check } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -154,11 +154,14 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Step 2: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
+  const [tempPhotoUrl, setTempPhotoUrl] = useState(''); // For preview before accept
+  const [photoAccepted, setPhotoAccepted] = useState(false);
   const [bio, setBio] = useState('');
   const [bioError, setBioError] = useState('');
   const [bioBlockedWords, setBioBlockedWords] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoConfirmed, setPhotoConfirmed] = useState(false); // For the community guidelines checkbox
   
   // Step 3: Your Vibe
   const [username, setUsername] = useState('');
@@ -369,11 +372,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   };
   
   const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
-    if (!user) {
-      alert('Please complete step 1 first.');
-      return;
-    }
-    
     setUploadingPhoto(true);
     try {
       let jpegBlob: Blob;
@@ -382,22 +380,54 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       } else {
         jpegBlob = blobOrDataURL;
       }
+      // Convert blob to URL for preview
+      const previewUrl = URL.createObjectURL(jpegBlob);
+      setTempPhotoUrl(previewUrl);
+      setPhotoAccepted(false);
+      setShowCamera(false);
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert('Failed to capture photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+  
+  const handleAcceptPhoto = async () => {
+    if (!tempPhotoUrl) return;
+    if (!user) {
+      alert('Please complete step 1 first.');
+      return;
+    }
+    
+    setUploadingPhoto(true);
+    try {
+      // Fetch the blob from the preview URL
+      const response = await fetch(tempPhotoUrl);
+      const blob = await response.blob();
+      
       const fileName = `${user.id}/avatar.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, jpegBlob, { upsert: true, contentType: 'image/jpeg' });
+        .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName);
       const url = `${urlData.publicUrl}?t=${Date.now()}`;
       setLivePhotoUrl(url);
+      setPhotoAccepted(true);
       await supabase.from('profiles').update({ live_photo_url: url }).eq('id', user.id);
     } catch (err) {
       console.error('Upload error:', err);
       alert('Failed to upload photo. Please try again.');
     } finally {
       setUploadingPhoto(false);
-      setShowCamera(false);
     }
+  };
+  
+  const handleRetakePhoto = () => {
+    setTempPhotoUrl('');
+    setPhotoAccepted(false);
+    setShowCamera(true);
   };
   
   const handleBioChange = (val: string) => {
@@ -636,8 +666,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setLoading(false);
       }
     } else if (step === 2) {
-      if (!livePhotoUrl) {
-        alert('Please capture a live photo.');
+      if (!photoAccepted || !livePhotoUrl) {
+        alert('Please take and accept a live photo.');
         return;
       }
       if (bio.length < 20) {
@@ -650,6 +680,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       }
       if (containsBlockedWords(bio)) {
         alert('Your bio contains blocked words. Please remove them before continuing.');
+        return;
+      }
+      if (!photoConfirmed) {
+        alert('You must confirm that your photo follows community guidelines.');
         return;
       }
       if (!gatekeeperAccepted) {
@@ -701,7 +735,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   };
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent;
-  const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && gatekeeperAccepted;
+  const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
   const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
@@ -1254,26 +1288,57 @@ California Residents:
             <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story</h2>
             
             <div className="text-center mb-8">
-              <div className="w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4">
-                {livePhotoUrl ? (
-                  <img src={livePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
+              {!tempPhotoUrl && !livePhotoUrl && (
+                <>
+                  <div className="w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4 flex items-center justify-center">
+                    <Camera className="w-12 h-12 text-gray-500" />
+                  </div>
                   <button
                     onClick={() => setShowCamera(true)}
-                    className="w-full h-full flex items-center justify-center text-3xl hover:bg-white/10 transition"
+                    className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium"
                   >
-                    📷
+                    Take Live Photo
                   </button>
-                )}
-              </div>
-              {!livePhotoUrl && (
-                <button
-                  onClick={() => setShowCamera(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium"
-                >
-                  Capture Live Photo
-                </button>
+                </>
               )}
+              
+              {(tempPhotoUrl || livePhotoUrl) && (
+                <>
+                  <div className="w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-4">
+                    <img 
+                      src={tempPhotoUrl || livePhotoUrl} 
+                      alt="Profile Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={handleRetakePhoto}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium flex items-center gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Retake
+                    </button>
+                    {!photoAccepted && tempPhotoUrl && (
+                      <button
+                        onClick={handleAcceptPhoto}
+                        disabled={uploadingPhoto}
+                        className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-lg text-sm font-medium flex items-center gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        {uploadingPhoto ? 'Saving...' : 'Accept'}
+                      </button>
+                    )}
+                    {photoAccepted && livePhotoUrl && (
+                      <div className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm font-medium flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Photo Accepted
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              
               <p className="text-xs text-gray-500 mt-3">
                 AUTHENTICITY CHECK: Live Camera Only. AI-generated faces or filters are prohibited and result in immediate suspension.
               </p>
@@ -1303,14 +1368,47 @@ California Residents:
               )}
             </div>
             
-            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+            {/* Community Guidelines Message - Option 5 */}
+            <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">💪</div>
+                <div>
+                  <p className="font-semibold text-white mb-1">You. Right Now. No Filters.</p>
+                  <p className="text-sm text-gray-300 mb-3">
+                    Adonix is about real people showing up as themselves. That means live photos only — taken inside the app, in this moment.
+                  </p>
+                  <p className="text-sm text-gray-300 mb-2">What we're looking for:</p>
+                  <ul className="text-sm text-gray-300 space-y-1 ml-4">
+                    <li>• <span className="text-white">You.</span> (authentic, confident, ready to move)</li>
+                    <li>• <span className="text-white">Real.</span> (sweat, smile, or serious game face — just be you)</li>
+                    <li>• <span className="text-white">Appropriate.</span> (active wear that makes you feel powerful)</li>
+                  </ul>
+                  <p className="text-sm text-gray-300 mt-3 italic">Your energy is your best accessory.</p>
+                  
+                  <label className="flex items-start gap-3 mt-4 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={photoConfirmed}
+                      onChange={(e) => setPhotoConfirmed(e.target.checked)}
+                      className="mt-1 w-5 h-5 accent-purple-600"
+                    />
+                    <span className="text-sm text-gray-300">
+                      I confirm this is a live photo of me, taken right now, and follows community guidelines.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Gatekeeper Acknowledgment */}
+            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   id="gatekeeperAccept"
                   checked={gatekeeperAccepted}
                   onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                  className="mt-1 w-4 h-4"
+                  className="mt-1 w-5 h-5 accent-blue-600"
                 />
                 <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
                   I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
