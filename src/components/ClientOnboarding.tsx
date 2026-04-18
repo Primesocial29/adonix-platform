@@ -190,27 +190,34 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
-  // Validate username (letters + numbers only, no blocked words)
-  const validateUsername = (username: string) => {
-    if (username.length < 3) {
-      return { isValid: false, error: 'Username must be at least 3 characters' };
+  // Validate username (letters + numbers only, no blocked words, length limits)
+const validateUsername = (username: string) => {
+  // Check length FIRST
+  if (username.length < 3) {
+    return { isValid: false, error: 'Username must be at least 3 characters' };
+  }
+  if (username.length > 20) {
+    return { isValid: false, error: 'Username cannot exceed 20 characters' };
+  }
+  
+  // Check for letters and numbers only
+  const validPattern = /^[a-zA-Z0-9]+$/;
+  if (!validPattern.test(username)) {
+    return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
+  }
+  
+  // Check for blocked words (case insensitive)
+  const lowerUsername = username.toLowerCase();
+  const blockedWordsList = ['fuck', 'shit', 'bitch', 'cunt', 'asshole', 'dick', 'pussy', 'nigger', 'faggot', 'retard', 'whore', 'slut', 'cock', 'porn', 'sex', 'escort', 'dating'];
+  
+  for (const blocked of blockedWordsList) {
+    if (lowerUsername.includes(blocked)) {
+      return { isValid: false, error: `Username contains blocked word: "${blocked}"` };
     }
-    if (username.length > 20) {
-      return { isValid: false, error: 'Username cannot exceed 20 characters' };
-    }
-    
-    const validPattern = /^[a-zA-Z0-9]+$/;
-    if (!validPattern.test(username)) {
-      return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
-    }
-    
-    if (containsBlockedWords(username)) {
-      const blocked = getBlockedWordsInText(username);
-      return { isValid: false, error: `Username contains blocked words: ${blocked.slice(0, 3).join(', ')}` };
-    }
-    
-    return { isValid: true, error: null };
-  };
+  }
+  
+  return { isValid: true, error: null };
+};
 
   // Validate age (must be 18+)
   const validateAge = (birthDate: string) => {
