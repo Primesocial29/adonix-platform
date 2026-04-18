@@ -99,23 +99,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
-  const [usernameError, setUsernameError] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [acceptedGatekeeper, setAcceptedGatekeeper] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  const [hasReadTerms, setHasReadTerms] = useState(false);
-  const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
-  
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
-  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
+  const [birthDate, setBirthDate] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
 
   if (!isOpen) return null;
 
@@ -125,6 +123,26 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     if (value.length > 20) return 'Username cannot exceed 20 characters';
     if (!/^[a-zA-Z0-9_.]+$/.test(value)) return 'Use only letters, numbers, underscore (_), and period (.)';
     return '';
+  };
+
+  // Validate age (must be 18+)
+  const validateAge = (birthDate: string) => {
+    if (!birthDate) return { isValid: false, error: 'Please enter your birth date' };
+    
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    if (age < 18) {
+      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit' };
+    }
+    
+    return { isValid: true, error: null };
   };
 
   useEffect(() => {
@@ -144,7 +162,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         if (error) throw error;
         setUsernameAvailable(!data);
-        setUsernameError('');
       } catch (err) {
         console.error('Error checking username:', err);
         setUsernameAvailable(null);
@@ -169,15 +186,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setError('');
       setEmail('');
       setPassword('');
+      setFirstName('');
+      setLastName('');
+      setPhone('');
       setUsername('');
-      setBirthMonth('');
-      setBirthDay('');
-      setBirthYear('');
-      setAgeVerifyConsent(false);
-      setFacialAgeConsent(false);
+      setBirthDate('');
       setAcceptedTerms(false);
-      setHasReadTerms(false);
-      setHasReadPrivacy(false);
+      setAcceptedPrivacy(false);
+      setAcceptedGatekeeper(false);
     } else {
       setStep('welcome');
       setSelectedRole(null);
@@ -199,41 +215,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setSelectedRole(null);
     setEmail('');
     setPassword('');
+    setFirstName('');
+    setLastName('');
+    setPhone('');
     setUsername('');
+    setBirthDate('');
     setAcceptedTerms(false);
-    setBirthMonth('');
-    setBirthDay('');
-    setBirthYear('');
-    setAgeVerifyConsent(false);
-    setFacialAgeConsent(false);
-    setHasReadTerms(false);
-    setHasReadPrivacy(false);
-  };
-
-  const calculateAge = (month: string, day: string, year: string): number | null => {
-    if (!month || !day || !year) return null;
-    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const handleTermsAgreed = () => {
-    setHasReadTerms(true);
-    if (hasReadPrivacy) {
-      setAcceptedTerms(true);
-    }
-  };
-
-  const handlePrivacyAgreed = () => {
-    setHasReadPrivacy(true);
-    if (hasReadTerms) {
-      setAcceptedTerms(true);
-    }
+    setAcceptedPrivacy(false);
+    setAcceptedGatekeeper(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,32 +243,62 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    if (!birthMonth || !birthDay || !birthYear) {
-      setError('Please enter your full birth date.');
+    // Sign up validation
+    if (!firstName) {
+      setError('Please enter your first name.');
+      setLoading(false);
+      return;
+    }
+    if (!lastName) {
+      setError('Please enter your last name.');
+      setLoading(false);
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      setLoading(false);
+      return;
+    }
+    if (!phone || phone.replace(/\D/g, '').length !== 10) {
+      setError('Please enter a valid 10-digit phone number.');
+      setLoading(false);
+      return;
+    }
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      setLoading(false);
+      return;
+    }
+    if (!birthDate) {
+      setError('Please enter your birth date.');
       setLoading(false);
       return;
     }
     
-    const age = calculateAge(birthMonth, birthDay, birthYear);
-    if (age === null || age < 18) {
-      setError('You must be at least 18 years old to use Adonix Fit.');
-      setLoading(false);
-      return;
-    }
-    
-    if (!ageVerifyConsent) {
-      setError('You must consent to age verification to create an account.');
+    const ageCheck = validateAge(birthDate);
+    if (!ageCheck.isValid) {
+      setError(ageCheck.error);
       setLoading(false);
       return;
     }
     
     if (!acceptedTerms) {
-      setError('You must read and agree to the Terms of Service and Privacy Policy to create an account.');
+      setError('You must agree to the Terms of Service.');
+      setLoading(false);
+      return;
+    }
+    if (!acceptedPrivacy) {
+      setError('You must agree to the Privacy Policy.');
+      setLoading(false);
+      return;
+    }
+    if (!acceptedGatekeeper) {
+      setError('You must acknowledge the social fitness platform agreement.');
       setLoading(false);
       return;
     }
     if (!selectedRole) {
-      setError('Something went wrong. Please go back and select a role.');
+      setError('Please select a role.');
       setLoading(false);
       return;
     }
@@ -302,13 +321,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
 
-    const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-
     try {
-      await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
+      await signUp(email, password, selectedRole, username.toLowerCase(), birthDate);
       onClose();
-      
-      console.log('Signup complete, redirecting to:', selectedRole === 'partner' ? '/partner-setup' : '/client-setup');
       
       setTimeout(() => {
         if (selectedRole === 'partner') {
@@ -323,6 +338,22 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setLoading(false);
     }
   };
+
+  const handlePhoneChange = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+    setPhone(formatted);
+  };
+
+  // Password strength checks
+  const passwordMinLength = password.length >= 8;
+  const passwordHasUpper = /[A-Z]/.test(password);
+  const passwordHasLower = /[a-z]/.test(password);
+  const passwordHasNumber = /[0-9]/.test(password);
+  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
 
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
@@ -446,21 +477,22 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
             </button>
 
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">Let's get real.</h2>
-              <p className="text-xl text-gray-300">What brings that body here?</p>
+              <div className="text-5xl mb-3">🔥</div>
+              <h2 className="text-3xl font-bold text-white mb-2">I Want to Sweat</h2>
+              <p className="text-lg text-gray-300">Join the social fitness network</p>
             </div>
 
             <div className="flex flex-col gap-4">
               <button
-  onClick={() => handleRoleSelect('member')}
-  className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
->
-  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-  <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
-  <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-    💸 I will pay for sessions
-  </div>
-</button>
+                onClick={() => handleRoleSelect('member')}
+                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
+              >
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
+                <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
+                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+                  💸 I will pay for sessions
+                </div>
+              </button>
 
               <button
                 onClick={() => handleRoleSelect('partner')}
@@ -490,7 +522,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
           onClose={() => setShowTermsModal(null)}
           title="Terms of Service"
           content={fullTermsContent}
-          onAgree={handleTermsAgreed}
+          onAgree={() => {}}
         />
         
         <TermsModal
@@ -498,286 +530,310 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
           onClose={() => setShowTermsModal(null)}
           title="Privacy Policy"
           content={fullPrivacyContent}
-          onAgree={handlePrivacyAgreed}
+          onAgree={() => {}}
         />
       </>
     );
   }
 
-  // ========== CREDENTIALS STEP ==========
+  // ========== CREDENTIALS STEP (Sign Up Form) ==========
   return (
     <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative">
-          {/* Close button - top right */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {/* Back button - top left (returns to role selection) */}
-          <button
-            onClick={handleBack}
-            className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
-          >
-            ← Back
-          </button>
-
-          <div className="text-center mb-6">
-            {!isLogin && (
-              <>
-                <div className="text-center mb-6">
-  {!isLogin && selectedRole === 'member' && (
-    <>
-      <div className="text-5xl mb-2">🔥</div>
-      <h2 className="text-2xl font-bold text-white">I Want to Sweat</h2>
-      <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-        💸 You will pay for sessions
-      </p>
-    </>
-  )}
-  {!isLogin && selectedRole === 'partner' && (
-    <>
-      <div className="text-5xl mb-2">💰</div>
-      <h2 className="text-2xl font-bold text-white">I Make People Sweat</h2>
-      <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-        💵 You will earn money
-      </p>
-    </>
-  )}
-  {isLogin && (
-    <>
-      <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-      <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
-    </>
-  )}
-</div>
-
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-6 text-red-300 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">
-                  Username <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    className={`w-full pl-7 pr-10 py-3 bg-white/5 border rounded-xl focus:outline-none text-white placeholder-gray-500 ${
-                      usernameAvailable === true
-                        ? 'border-green-500 focus:border-green-500'
-                        : usernameAvailable === false
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-white/10 focus:border-red-500'
-                    }`}
-                    placeholder="jess_fit"
-                  />
-                  {checkingUsername && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                    </div>
-                  )}
-                  {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Check className="w-5 h-5 text-green-500" />
-                    </div>
-                  )}
-                  {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  3-20 characters • letters, numbers, underscore (_), period (.) only
-                </p>
-                {usernameAvailable === false && (
-                  <p className="text-xs text-red-400 mt-1">Username already taken</p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Email Address</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {!isLogin && (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-white">
-                  Birth Date <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={birthMonth}
-                    onChange={(e) => setBirthMonth(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Month</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <option key={month} value={month}>{month}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={birthDay}
-                    onChange={(e) => setBirthDay(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Day</option>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value)}
-                    className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Year</option>
-                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <p className="text-xs text-gray-500">
-                  Used only to verify you are 18+. Deleted immediately after confirmation.
-                </p>
-
-                <div className="flex items-start gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="ageVerifyConsent"
-                    checked={ageVerifyConsent}
-                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                  />
-                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
-                  </label>
-                </div>
-
-                <div className="flex items-start gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="facialAgeConsent"
-                    checked={facialAgeConsent}
-                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
-                  />
-                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {!isLogin && (
-              <div className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    disabled={!hasReadTerms || !hasReadPrivacy}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <label htmlFor="terms" className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button 
-                      type="button"
-                      onClick={() => setShowTermsModal('terms')} 
-                      className="text-red-500 hover:underline"
-                    >
-                      Terms of Service
-                    </button>{' '}
-                    and{' '}
-                    <button 
-                      type="button"
-                      onClick={() => setShowTermsModal('privacy')} 
-                      className="text-red-500 hover:underline"
-                    >
-                      Privacy Policy
-                    </button>.
-                  </label>
-                </div>
-                {(!hasReadTerms || !hasReadPrivacy) && (
-                  <p className="text-xs text-yellow-400 mt-1">
-                    ⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking this box.
-                  </p>
-                )}
-                {hasReadTerms && hasReadPrivacy && !acceptedTerms && (
-                  <p className="text-xs text-green-400 mt-1">
-                    ✓ You have read both documents. Check the box to agree.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || (!isLogin && (!birthMonth || !birthDay || !birthYear || !ageVerifyConsent || !acceptedTerms || !usernameAvailable))}
-              className="w-full py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-xl font-semibold transition-all transform hover:scale-105 text-white"
-            >
-              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-gray-900 border-b border-white/10 p-4 flex justify-between items-center">
+            <button onClick={handleBack} className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1">
+              ← Back
             </button>
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+          
+          <div className="p-6">
+            {/* Header with role info */}
+            <div className="text-center mb-6">
+              {!isLogin && selectedRole === 'member' && (
+                <>
+                  <div className="text-5xl mb-2">🔥</div>
+                  <h2 className="text-2xl font-bold text-white">I Want to Sweat</h2>
+                  <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+                    💸 You will pay for sessions
+                  </p>
+                </>
+              )}
+              {!isLogin && selectedRole === 'partner' && (
+                <>
+                  <div className="text-5xl mb-2">💰</div>
+                  <h2 className="text-2xl font-bold text-white">I Make People Sweat</h2>
+                  <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+                    💵 You will earn money
+                  </p>
+                </>
+              )}
+              {isLogin && (
+                <>
+                  <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+                  <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
+                </>
+              )}
+            </div>
 
-            {isLogin && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={handleSignUpClick}
-                  className="text-sm text-gray-400 hover:text-white transition-colors"
-                >
-                  Don't have an account? <span className="text-red-500">Sign up</span>
-                </button>
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                {error}
               </div>
             )}
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <>
+                  {/* First & Last Name */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  
+                  {/* Username */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Username</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                        className={`w-full pl-7 pr-10 py-2 bg-white/10 border rounded-lg focus:outline-none text-white ${
+                          usernameAvailable === true
+                            ? 'border-green-500'
+                            : usernameAvailable === false
+                            ? 'border-red-500'
+                            : 'border-white/20 focus:border-red-500'
+                        }`}
+                        placeholder="jess_fit"
+                      />
+                      {checkingUsername && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                        </div>
+                      )}
+                      {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Check className="w-4 h-4 text-green-500" />
+                        </div>
+                      )}
+                      {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">3-20 characters • letters, numbers, underscore (_), period (.) only</p>
+                  </div>
+                  
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Password</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    />
+                    <div className="mt-2 space-y-1 text-xs">
+                      <p className={passwordMinLength ? 'text-green-400' : 'text-gray-500'}>
+                        {passwordMinLength ? '✓' : '○'} At least 8 characters
+                      </p>
+                      <p className={passwordHasUpper ? 'text-green-400' : 'text-gray-500'}>
+                        {passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter
+                      </p>
+                      <p className={passwordHasLower ? 'text-green-400' : 'text-gray-500'}>
+                        {passwordHasLower ? '✓' : '○'} At least 1 lowercase letter
+                      </p>
+                      <p className={passwordHasNumber ? 'text-green-400' : 'text-gray-500'}>
+                        {passwordHasNumber ? '✓' : '○'} At least 1 number
+                      </p>
+                      <p className={passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}>
+                        {passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Birth Date */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Birth Date</label>
+                    <input
+                      type="text"
+                      value={birthDate}
+                      onChange={(e) => {
+                        setBirthDate(e.target.value);
+                        const ageCheck = validateAge(e.target.value);
+                        setBirthDateError(ageCheck.error || '');
+                      }}
+                      placeholder="mm/dd/yyyy"
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    />
+                    {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+                    <p className="text-xs text-gray-500 mt-1">Used only to verify you are 18+. Deleted immediately after confirmation.</p>
+                  </div>
+                  
+                  {/* Important Information Box */}
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
+                    <ul className="space-y-1 text-xs text-yellow-200/80">
+                      <li>• Adonix is a social fitness network, not a professional service.</li>
+                      <li>• You are joining to meet fitness partners in public locations only.</li>
+                      <li>• No professional fitness services are provided or implied.</li>
+                      <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
+                      <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
+                    </ul>
+                  </div>
+                  
+                  {/* Terms Checkboxes */}
+                  <div className="space-y-2">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptedTerms}
+                        onChange={() => setAcceptedTerms(!acceptedTerms)}
+                        className="mt-0.5 w-4 h-4 accent-red-600"
+                      />
+                      <span className="text-sm text-gray-300">
+                        I have read and agree to the{' '}
+                        <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">
+                          Terms of Service
+                        </button>.
+                      </span>
+                    </label>
+                    
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptedPrivacy}
+                        onChange={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                        className="mt-0.5 w-4 h-4 accent-red-600"
+                      />
+                      <span className="text-sm text-gray-300">
+                        I have read and agree to the{' '}
+                        <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">
+                          Privacy Policy
+                        </button>.
+                      </span>
+                    </label>
+                    
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptedGatekeeper}
+                        onChange={() => setAcceptedGatekeeper(!acceptedGatekeeper)}
+                        className="mt-0.5 w-4 h-4 accent-red-600"
+                      />
+                      <span className="text-sm text-gray-300">
+                        I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
+                      </span>
+                    </label>
+                  </div>
+                </>
+              )}
 
-            {/* Cancel Button - Bottom of the form */}
-            <div className="text-center pt-4 border-t border-white/10 mt-4">
+              {isLogin && (
+                <>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Password</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                </>
+              )}
+              
               <button
-                type="button"
-                onClick={onClose}
-                className="text-gray-500 hover:text-red-400 transition-colors text-sm font-medium"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-lg font-semibold transition-all text-white"
               >
-                Cancel
+                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
               </button>
-            </div>
-          </form>
+              
+              {!isLogin && (
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSignUpClick}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Already have an account? <span className="text-red-500">Sign in</span>
+                  </button>
+                </div>
+              )}
+              
+              {isLogin && (
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSignUpClick}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Don't have an account? <span className="text-red-500">Sign up</span>
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
         </div>
       </div>
 
@@ -786,7 +842,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
         onClose={() => setShowTermsModal(null)}
         title="Terms of Service"
         content={fullTermsContent}
-        onAgree={handleTermsAgreed}
+        onAgree={() => {}}
       />
       
       <TermsModal
@@ -794,7 +850,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
         onClose={() => setShowTermsModal(null)}
         title="Privacy Policy"
         content={fullPrivacyContent}
-        onAgree={handlePrivacyAgreed}
+        onAgree={() => {}}
       />
     </>
   );
