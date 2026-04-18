@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X, Camera, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { X, Camera, RefreshCw, Check, AlertCircle, MapPin, DollarSign, Calendar, Star } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -19,6 +19,8 @@ interface Partner {
   service_areas_center_lng: number;
   availability: { day: string; times: string[] }[];
   _distance?: number;
+  certifications?: string[];
+  city?: string;
 }
 
 interface CitySuggestion {
@@ -119,10 +121,155 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
   );
 }
 
+// Partner Profile Popup Modal
+function PartnerProfilePopup({ partner, onClose }: { partner: Partner | null; onClose: () => void }) {
+  if (!partner) return null;
+
+  const allServices = [...(partner.service_types || []), ...(partner.custom_service_types || [])];
+  const primaryService = allServices[0] || 'Fitness';
+  const rate = partner.service_rates?.[primaryService]?.hourly || 75;
+  const halfHourRate = partner.service_rates?.[primaryService]?.halfHour;
+  const hasHalfHour = halfHourRate && halfHourRate > 0;
+
+  // Get available days
+  const availableDays = (partner.availability || [])
+    .filter(a => a.times.length > 0)
+    .map(a => a.day.substring(0, 3))
+    .join(', ');
+
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto border border-white/20" onClick={(e) => e.stopPropagation()}>
+        {/* Header with close button */}
+        <div className="sticky top-0 bg-gray-900 border-b border-white/10 p-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white">Partner Profile</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        <div className="p-6">
+          {/* Photo */}
+          <div className="flex justify-center mb-4">
+            <div className="w-32 h-32 rounded-full overflow-hidden bg-red-500/20 border-4 border-red-500/30">
+              {partner.live_photo_url ? (
+                <img src={partner.live_photo_url} alt={partner.first_name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
+              )}
+            </div>
+          </div>
+          
+          {/* Name & Rating */}
+          <div className="text-center mb-4">
+            <h3 className="text-2xl font-bold text-white">🔥 {partner.first_name}</h3>
+            <div className="flex justify-center items-center gap-1 mt-1">
+              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-sm text-gray-300">{partner.avg_rating || 'New'}</span>
+              <span className="text-xs text-gray-500">• {partner._distance ? `${Math.round(partner._distance)} miles away` : 'Location available'}</span>
+            </div>
+          </div>
+          
+          {/* Bio */}
+          {partner.bio && (
+            <div className="mb-4 p-3 bg-white/5 rounded-xl">
+              <p className="text-sm text-gray-300">{partner.bio}</p>
+            </div>
+          )}
+          
+          {/* Services & Rates */}
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-green-400" />
+              Suggested Contributions
+            </h4>
+            <div className="space-y-2">
+              {allServices.slice(0, 3).map(service => {
+                const serviceRate = partner.service_rates?.[service]?.hourly || 75;
+                const serviceHalfHour = partner.service_rates?.[service]?.halfHour;
+                return (
+                  <div key={service} className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                    <span className="text-sm text-white">{service}</span>
+                    <div className="text-right">
+                      <span className="text-sm text-green-400">${serviceRate}/hr</span>
+                      {hasHalfHour && serviceHalfHour && (
+                        <span className="text-xs text-gray-400 ml-2">or ${serviceHalfHour}/30min</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {allServices.length > 3 && (
+                <p className="text-xs text-gray-500 text-center">+{allServices.length - 3} more activities</p>
+              )}
+            </div>
+          </div>
+          
+          {/* Location */}
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-red-400" />
+              Service Area
+            </h4>
+            <p className="text-sm text-gray-300">
+              {partner.city || 'Various locations'} • Serves within area
+            </p>
+          </div>
+          
+          {/* Availability */}
+          {availableDays && (
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                Availability
+              </h4>
+              <p className="text-sm text-gray-300">Available: {availableDays}</p>
+            </div>
+          )}
+          
+          {/* Certifications */}
+          {partner.certifications && partner.certifications.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-gray-400 mb-2">Credentials</h4>
+              <div className="flex flex-wrap gap-1">
+                {partner.certifications.slice(0, 3).map(cert => (
+                  <span key={cert} className="text-xs bg-white/10 px-2 py-1 rounded-full">{cert}</span>
+                ))}
+                {partner.certifications.length > 3 && (
+                  <span className="text-xs text-gray-500">+{partner.certifications.length - 3} more</span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Legal Disclaimer */}
+          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+            <p className="text-xs text-yellow-300 text-center">
+              ⚡ This is a social meetup platform — not a professional service.<br />
+              Meet only at verified public locations. GPS check-in required.
+            </p>
+          </div>
+        </div>
+        
+        {/* Close Button */}
+        <div className="sticky bottom-0 bg-gray-900 border-t border-white/10 p-4">
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
   const { signUp, user, refreshProfile, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
   
   // Step 1: Account Setup
   const [firstName, setFirstName] = useState('');
@@ -193,6 +340,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searching, setSearching] = useState(false);
+  const [selectedPartnerForPopup, setSelectedPartnerForPopup] = useState<Partner | null>(null);
   const partnersPerPage = 6;
   
   // Password strength checks
@@ -202,6 +350,13 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const passwordHasNumber = /[0-9]/.test(password);
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
+  
+  // Scroll to top when entering Step 4
+  useEffect(() => {
+    if (step === 4 && contentRef.current) {
+      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [step]);
   
   const validateUsername = (username: string) => {
     if (username.length < 3) {
@@ -818,7 +973,7 @@ California Residents:
 - You have the right to opt out of data sharing under CPRA`;
   
   const Step4Content = () => (
-    <div className="space-y-6">
+    <div ref={contentRef} className="space-y-6">
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-4">SELECT YOUR SOCIAL ACTIVITIES</h2>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -964,7 +1119,10 @@ California Residents:
                     {daysDisplay && (
                       <p className="text-xs text-gray-400 text-center mt-1">Available: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
                     )}
-                    <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
+                    <button 
+                      onClick={() => setSelectedPartnerForPopup(partner)}
+                      className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition"
+                    >
                       View Profile
                     </button>
                   </div>
@@ -1657,6 +1815,12 @@ California Residents:
         onAccept={handlePrivacyAccept}
         title="Privacy Policy"
         content={privacyContent}
+      />
+      
+      {/* Partner Profile Popup */}
+      <PartnerProfilePopup 
+        partner={selectedPartnerForPopup} 
+        onClose={() => setSelectedPartnerForPopup(null)} 
       />
     </div>
   );
