@@ -154,14 +154,14 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Step 2: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
-  const [tempPhotoUrl, setTempPhotoUrl] = useState(''); // For preview before accept
+  const [tempPhotoUrl, setTempPhotoUrl] = useState('');
   const [photoAccepted, setPhotoAccepted] = useState(false);
   const [bio, setBio] = useState('');
   const [bioError, setBioError] = useState('');
   const [bioBlockedWords, setBioBlockedWords] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoConfirmed, setPhotoConfirmed] = useState(false); // For the community guidelines checkbox
+  const [photoConfirmed, setPhotoConfirmed] = useState(false);
   
   // Step 3: Your Vibe
   const [username, setUsername] = useState('');
@@ -201,7 +201,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
-  // Validate username (letters + numbers only, no blocked words, length limits)
   const validateUsername = (username: string) => {
     if (username.length < 3) {
       return { isValid: false, error: 'Username must be at least 3 characters' };
@@ -225,7 +224,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return { isValid: true, error: null };
   };
 
-  // Calculate age from dropdowns
   const calculateAge = (month: string, day: string, year: string): number | null => {
     if (!month || !day || !year) return null;
     const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -238,7 +236,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return age;
   };
 
-  // Validate age from dropdowns
   const validateAgeFromDropdowns = () => {
     if (!birthMonth || !birthDay || !birthYear) {
       return { isValid: false, error: 'Please enter your full birth date.' };
@@ -252,7 +249,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return { isValid: true, error: null };
   };
   
-  // Calculate distance between two coordinates
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 3959;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -264,7 +260,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return R * c;
   };
   
-  // Search city with OpenStreetMap
   const searchCity = async (query: string) => {
     if (query.length < 2) {
       setCitySuggestions([]);
@@ -302,7 +297,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     setShowCitySuggestions(false);
   };
   
-  // Fetch and filter partners
   useEffect(() => {
     if (step === 4 && userLocation) {
       fetchAndFilterPartners();
@@ -380,7 +374,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       } else {
         jpegBlob = blobOrDataURL;
       }
-      // Convert blob to URL for preview
       const previewUrl = URL.createObjectURL(jpegBlob);
       setTempPhotoUrl(previewUrl);
       setPhotoAccepted(false);
@@ -402,7 +395,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     
     setUploadingPhoto(true);
     try {
-      // Fetch the blob from the preview URL
       const response = await fetch(tempPhotoUrl);
       const blob = await response.blob();
       
@@ -642,20 +634,16 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       }
       
       const ageValidation = validateAgeFromDropdowns();
-if (!ageValidation.isValid) {
-  setStep1Error(ageValidation.error);
-  return;
-}
-if (!ageVerifyConsent) {
-  setStep1Error('You must consent to age verification to create an account.');
-  return;
-}
-if (!facialAgeConsent) {
-  setStep1Error('You must consent to facial age estimation to create an account.');
-  return;
-}
+      if (!ageValidation.isValid) {
+        setStep1Error(ageValidation.error);
+        return;
+      }
       if (!ageVerifyConsent) {
-        setStep1Error('You must consent to age verification to create an account.');
+        setStep1Error('You must consent to age verification using your birth date.');
+        return;
+      }
+      if (!facialAgeConsent) {
+        setStep1Error('You must consent to facial age estimation.');
         return;
       }
       
