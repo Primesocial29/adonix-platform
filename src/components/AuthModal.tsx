@@ -903,3 +903,32 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   <button
                     type="button"
                     onClick={handleSignUpClick}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Don't have an account? <span className="text-red-500">Sign up</span>
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <TermsModal
+        isOpen={showTermsModal === 'terms'}
+        onClose={() => setShowTermsModal(null)}
+        title="Terms of Service"
+        content={fullTermsContent}
+        onAgree={handleTermsAgreed}
+      />
+      
+      <TermsModal
+        isOpen={showTermsModal === 'privacy'}
+        onClose={() => setShowTermsModal(null)}
+        title="Privacy Policy"
+        content={fullPrivacyContent}
+        onAgree={handlePrivacyAgreed}
+      />
+    </>
+  );
+}
