@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,12 +38,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       if (isLogin) {
         await signIn(email, password);
         onClose();
+        window.location.href = '/dashboard';
       } else {
-        // Sign up with selected role
         const finalUsername = username || email.split('@')[0];
-        const birthDate = new Date().toISOString();
-        await signUp(email, password, selectedRole!, finalUsername, birthDate);
+        const finalBirthDate = birthDate || new Date().toISOString();
+        await signUp(email, password, selectedRole!, finalUsername, finalBirthDate);
         onClose();
+        window.location.href = selectedRole === 'partner' ? '/partner-setup' : '/client-setup';
       }
     } catch (err: any) {
       setError(err.message);
@@ -54,6 +56,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleBack = () => {
     setStep('welcome');
     setSelectedRole(null);
+    setIsLogin(false);
     setError('');
   };
 
@@ -62,7 +65,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="bg-gray-900 rounded-2xl max-w-md w-full border border-white/10">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">
-            {step === 'welcome' ? 'Join Adonix' : (isLogin ? 'LOGIN' : 'CREATE ACCOUNT')}
+            {step === 'welcome' ? 'Welcome to Adonix' : (isLogin ? 'Welcome Back' : 'Create Account')}
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
             <X className="w-5 h-5 text-gray-400" />
@@ -71,33 +74,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         
         {step === 'welcome' ? (
           <div className="p-6 space-y-4">
-            <p className="text-center text-gray-400 mb-4">Choose your path:</p>
+            <p className="text-center text-gray-400 mb-2">I am a...</p>
             
-            {/* I Want to Sweat - Client/Member */}
             <button
               onClick={() => handleRoleSelect('member')}
-              className="w-full p-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl transition-all text-left"
+              className="w-full p-5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl transition-all"
             >
-              <div className="flex items-center gap-4">
-                <span className="text-4xl">🔥</span>
-                <div>
-                  <h3 className="text-xl font-bold text-white">I Want to Sweat</h3>
-                  <p className="text-sm text-green-200">Find fitness partners and get moving</p>
-                </div>
+              <div className="text-center">
+                <div className="text-3xl mb-2">🔥</div>
+                <div className="font-bold text-white text-lg">Member</div>
+                <div className="text-sm text-green-200">I want to find fitness partners</div>
               </div>
             </button>
             
-            {/* I Want to Make People Sweat - Partner/Trainer */}
             <button
               onClick={() => handleRoleSelect('partner')}
-              className="w-full p-6 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl transition-all text-left"
+              className="w-full p-5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl transition-all"
             >
-              <div className="flex items-center gap-4">
-                <span className="text-4xl">💪</span>
-                <div>
-                  <h3 className="text-xl font-bold text-white">I Want to Make People Sweat</h3>
-                  <p className="text-sm text-orange-200">Become a partner and share your expertise</p>
-                </div>
+              <div className="text-center">
+                <div className="text-3xl mb-2">💪</div>
+                <div className="font-bold text-white text-lg">Partner</div>
+                <div className="text-sm text-orange-200">I want to help others sweat</div>
               </div>
             </button>
             
@@ -106,7 +103,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-gray-900 text-gray-500">Already have an account?</span>
+                <span className="px-2 bg-gray-900 text-gray-500">Already a member?</span>
               </div>
             </div>
             
@@ -117,22 +114,34 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               }}
               className="w-full py-3 border border-white/20 rounded-xl text-white hover:bg-white/5 transition"
             >
-              Login Instead
+              Login
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {!isLogin && (
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="@username"
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    required={!isLogin}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Birth Date</label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    required={!isLogin}
+                  />
+                </div>
+              </>
             )}
             
             <div>
@@ -172,7 +181,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               onClick={handleBack}
               className="w-full text-center text-sm text-gray-400 hover:text-white"
             >
-              ← Back to role selection
+              ← Back
             </button>
           </form>
         )}
