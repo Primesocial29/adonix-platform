@@ -11,7 +11,7 @@ interface AuthModalProps {
 type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
-// Terms Modal Component with scroll-to-bottom requirement
+// Terms Modal Component with scroll-to-bottom requirement (MUST SCROLL TO AGREE)
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -50,7 +50,8 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
       <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {hasScrolledToBottom && (
+          {/* Only show close button if they have scrolled to bottom OR already agreed */}
+          {(hasScrolledToBottom || hasAgreed) && (
             <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
               <X className="w-5 h-5 text-gray-400 hover:text-white" />
             </button>
@@ -66,7 +67,7 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
         </div>
         
         <div className="p-4 border-t border-white/10">
-          {!hasScrolledToBottom && (
+          {!hasScrolledToBottom && !hasAgreed && (
             <div className="text-center mb-3">
               <p className="text-xs text-yellow-400 animate-pulse">
                 ⚠️ Please scroll to the bottom to read the complete {title} before agreeing ⚠️
@@ -107,6 +108,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Terms acceptance - must read and agree to both
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [acceptedGatekeeper, setAcceptedGatekeeper] = useState(false);
@@ -203,6 +208,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setBirthMonth('');
       setBirthDay('');
       setBirthYear('');
+      setHasReadTerms(false);
+      setHasReadPrivacy(false);
       setAcceptedTerms(false);
       setAcceptedPrivacy(false);
       setAcceptedGatekeeper(false);
@@ -234,9 +241,22 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setBirthMonth('');
     setBirthDay('');
     setBirthYear('');
+    setHasReadTerms(false);
+    setHasReadPrivacy(false);
     setAcceptedTerms(false);
     setAcceptedPrivacy(false);
     setAcceptedGatekeeper(false);
+  };
+
+  // Handle terms agreement from modal
+  const handleTermsAgreed = () => {
+    setHasReadTerms(true);
+    setAcceptedTerms(true);
+  };
+
+  const handlePrivacyAgreed = () => {
+    setHasReadPrivacy(true);
+    setAcceptedPrivacy(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -292,13 +312,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
     
-    if (!acceptedTerms) {
-      setError('You must agree to the Terms of Service.');
+    // MUST have read AND agreed to both terms and privacy
+    if (!hasReadTerms || !acceptedTerms) {
+      setError('You must read and agree to the Terms of Service.');
       setLoading(false);
       return;
     }
-    if (!acceptedPrivacy) {
-      setError('You must agree to the Privacy Policy.');
+    if (!hasReadPrivacy || !acceptedPrivacy) {
+      setError('You must read and agree to the Privacy Policy.');
       setLoading(false);
       return;
     }
@@ -537,7 +558,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
           onClose={() => setShowTermsModal(null)}
           title="Terms of Service"
           content={fullTermsContent}
-          onAgree={() => {}}
+          onAgree={handleTermsAgreed}
         />
         
         <TermsModal
@@ -545,7 +566,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
           onClose={() => setShowTermsModal(null)}
           title="Privacy Policy"
           content={fullPrivacyContent}
-          onAgree={() => {}}
+          onAgree={handlePrivacyAgreed}
         />
       </>
     );
@@ -769,18 +790,23 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                     </ul>
                   </div>
                   
-                  {/* Terms Checkboxes */}
+                  {/* Terms Checkboxes - DISABLED until documents are read */}
                   <div className="space-y-2">
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={acceptedTerms}
                         onChange={() => setAcceptedTerms(!acceptedTerms)}
-                        className="mt-0.5 w-4 h-4 accent-red-600"
+                        disabled={!hasReadTerms}
+                        className="mt-0.5 w-4 h-4 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm text-gray-300">
                         I have read and agree to the{' '}
-                        <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">
+                        <button 
+                          type="button" 
+                          onClick={() => setShowTermsModal('terms')} 
+                          className="text-red-400 underline hover:text-red-300"
+                        >
                           Terms of Service
                         </button>.
                       </span>
@@ -791,15 +817,26 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                         type="checkbox"
                         checked={acceptedPrivacy}
                         onChange={() => setAcceptedPrivacy(!acceptedPrivacy)}
-                        className="mt-0.5 w-4 h-4 accent-red-600"
+                        disabled={!hasReadPrivacy}
+                        className="mt-0.5 w-4 h-4 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm text-gray-300">
                         I have read and agree to the{' '}
-                        <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">
+                        <button 
+                          type="button" 
+                          onClick={() => setShowTermsModal('privacy')} 
+                          className="text-red-400 underline hover:text-red-300"
+                        >
                           Privacy Policy
                         </button>.
                       </span>
                     </label>
+                    
+                    {(!hasReadTerms || !hasReadPrivacy) && (
+                      <p className="text-xs text-yellow-400 mt-1">
+                        ⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking the boxes.
+                      </p>
+                    )}
                     
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
@@ -866,32 +903,3 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   <button
                     type="button"
                     onClick={handleSignUpClick}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Don't have an account? <span className="text-red-500">Sign up</span>
-                  </button>
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <TermsModal
-        isOpen={showTermsModal === 'terms'}
-        onClose={() => setShowTermsModal(null)}
-        title="Terms of Service"
-        content={fullTermsContent}
-        onAgree={() => {}}
-      />
-      
-      <TermsModal
-        isOpen={showTermsModal === 'privacy'}
-        onClose={() => setShowTermsModal(null)}
-        title="Privacy Policy"
-        content={fullPrivacyContent}
-        onAgree={() => {}}
-      />
-    </>
-  );
-}
