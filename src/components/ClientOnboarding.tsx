@@ -722,7 +722,7 @@ const validateUsername = (username: string) => {
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthDate && !birthDateError && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
-  const isStep3Complete = username && !usernameError && city && selectedGoals.length > 0;
+  const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
