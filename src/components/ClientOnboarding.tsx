@@ -1257,14 +1257,14 @@ California Residents:
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Username <span className="text-red-500">*</span></label>
                 <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => {
-                    const newUsername = e.target.value.toLowerCase();
-                    setUsername(newUsername);
-                    const validation = validateUsername(newUsername);
-                    setUsernameError(validation.error);
-                  }}
+  type="text"
+  value={username}
+  onChange={(e) => {
+    const newUsername = e.target.value.toLowerCase();
+    setUsername(newUsername);
+    const validation = validateUsername(newUsername);
+    setUsernameError(validation.error);
+  }}
                   placeholder="username (letters and numbers only, 3-20 chars)"
                   className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:border-red-500 focus:outline-none ${
                     usernameError ? 'border-red-500' : 'border-white/20'
