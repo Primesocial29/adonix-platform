@@ -50,7 +50,6 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
       <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {/* Only show close button if they have scrolled to bottom OR already agreed */}
           {(hasScrolledToBottom || hasAgreed) && (
             <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
               <X className="w-5 h-5 text-gray-400 hover:text-white" />
@@ -359,119 +358,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
       onClose();
       
-      const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setLoading(true);
-
-  if (isLogin) {
-    try {
-      await signIn(email, password);
-      onClose();
-      window.location.href = '/dashboard';
+      setTimeout(() => {
+        if (selectedRole === 'partner') {
+          window.location.replace('/partner-setup');
+        } else {
+          window.location.replace('/client-onboarding');
+        }
+      }, 1000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
-    return;
-  }
-
-  // Sign up validation
-  if (!firstName) {
-    setError('Please enter your first name.');
-    setLoading(false);
-    return;
-  }
-  if (!lastName) {
-    setError('Please enter your last name.');
-    setLoading(false);
-    return;
-  }
-  if (!email || !email.includes('@')) {
-    setError('Please enter a valid email address.');
-    setLoading(false);
-    return;
-  }
-  if (!phone || phone.replace(/\D/g, '').length !== 10) {
-    setError('Please enter a valid 10-digit phone number.');
-    setLoading(false);
-    return;
-  }
-  if (!password || password.length < 8) {
-    setError('Password must be at least 8 characters.');
-    setLoading(false);
-    return;
-  }
-  
-  // Validate birth date from dropdowns
-  const ageValidation = validateAgeFromDropdowns();
-  if (!ageValidation.isValid) {
-    setError(ageValidation.error);
-    setLoading(false);
-    return;
-  }
-  
-  // MUST have read AND agreed to both terms and privacy
-  if (!hasReadTerms || !acceptedTerms) {
-    setError('You must read and agree to the Terms of Service.');
-    setLoading(false);
-    return;
-  }
-  if (!hasReadPrivacy || !acceptedPrivacy) {
-    setError('You must read and agree to the Privacy Policy.');
-    setLoading(false);
-    return;
-  }
-  if (!acceptedGatekeeper) {
-    setError('You must acknowledge the social fitness platform agreement.');
-    setLoading(false);
-    return;
-  }
-  if (!selectedRole) {
-    setError('Please select a role.');
-    setLoading(false);
-    return;
-  }
-  if (!username) {
-    setError('Please choose a username.');
-    setLoading(false);
-    return;
-  }
-  
-  const usernameValidationError = validateUsername(username);
-  if (usernameValidationError) {
-    setError(usernameValidationError);
-    setLoading(false);
-    return;
-  }
-  
-  if (!usernameAvailable) {
-    setError('This username is already taken. Please choose another.');
-    setLoading(false);
-    return;
-  }
-
-  const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-
-  try {
-    console.log('Signing up with role:', selectedRole);
-    await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
-    onClose();
-    
-    setTimeout(() => {
-      if (selectedRole === 'partner') {
-        window.location.replace('/partner-setup');
-      } else {
-        window.location.replace('/client-onboarding');
-      }
-    }, 1000);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Sign up failed');
-  } finally {
-    setLoading(false);
-  }
-};
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {
       setLoading(false);
