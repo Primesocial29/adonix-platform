@@ -122,13 +122,6 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 
 export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
-// Auto-redirect to onboarding if profile incomplete
-useEffect(() => {
-  if (!loading && user && profile && !profile.profile_complete) {
-    console.log('Profile incomplete, redirecting to onboarding...');
-    window.location.href = '/client-setup';
-  }
-}, [user, profile, loading]);
   
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
