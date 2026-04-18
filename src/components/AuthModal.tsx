@@ -521,14 +521,6 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
             ← Back
           </button>
 
-          {/* Cancel button - bottom right (closes modal completely) */}
-          <button
-            onClick={onClose}
-            className="absolute bottom-4 right-4 text-gray-500 hover:text-red-400 transition-colors text-xs"
-          >
-            Cancel
-          </button>
-
           <div className="text-center mb-6">
             {!isLogin && (
               <>
@@ -760,6 +752,17 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                 </button>
               </div>
             )}
+
+            {/* Cancel Button - Bottom of the form */}
+            <div className="text-center pt-4 border-t border-white/10 mt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-gray-500 hover:text-red-400 transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       </div>
