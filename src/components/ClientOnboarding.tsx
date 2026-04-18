@@ -120,34 +120,61 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 }
 
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
-  const { user, refreshProfile, profile } = useAuth();
-  const [step, setStep] = useState(1); // Step 1 = Photo & Bio, Step 2 = Vibe, Step 3 = Find Partners
+  const { signUp, user, refreshProfile, profile } = useAuth();
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Step 1: Photo & Bio
-  const [livePhotoUrl, setLivePhotoUrl] = useState(profile?.live_photo_url || '');
-  const [bio, setBio] = useState(profile?.bio || '');
+  // Step 1: Account Setup
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>('dev-token');
+  const [step1Error, setStep1Error] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  
+  // Birth date dropdowns
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthYear, setBirthYear] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
+  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
+  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
+  
+  // Step 2: Photo & Bio
+  const [livePhotoUrl, setLivePhotoUrl] = useState('');
+  const [bio, setBio] = useState('');
   const [bioError, setBioError] = useState('');
   const [bioBlockedWords, setBioBlockedWords] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   
-  // Step 2: Your Vibe
-  const [username, setUsername] = useState(profile?.username || '');
+  // Step 3: Your Vibe
+  const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
-  const [city, setCity] = useState(profile?.city || '');
+  const [city, setCity] = useState('');
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [isSearchingCity, setIsSearchingCity] = useState(false);
   const citySearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(profile?.fitness_goals || []);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [customGoal, setCustomGoal] = useState('');
   const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
   const [customGoalError, setCustomGoalError] = useState('');
-  const [step2Error, setStep2Error] = useState('');
+  const [step3Error, setStep3Error] = useState('');
   
-  // Step 3: Find Partners
+  // Step 4: Find Partners
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [customService, setCustomService] = useState('');
   const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
@@ -163,10 +190,13 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
   
-  // Terms acceptance
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
+  // Password strength checks
+  const passwordMinLength = password.length >= 8;
+  const passwordHasUpper = /[A-Z]/.test(password);
+  const passwordHasLower = /[a-z]/.test(password);
+  const passwordHasNumber = /[0-9]/.test(password);
+  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
+  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
   // Validate username (letters + numbers only, no blocked words, length limits)
   const validateUsername = (username: string) => {
@@ -187,6 +217,33 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       if (lowerUsername.includes(blocked)) {
         return { isValid: false, error: `Username contains blocked word: "${blocked}"` };
       }
+    }
+    
+    return { isValid: true, error: null };
+  };
+
+  // Calculate age from dropdowns
+  const calculateAge = (month: string, day: string, year: string): number | null => {
+    if (!month || !day || !year) return null;
+    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Validate age from dropdowns
+  const validateAgeFromDropdowns = () => {
+    if (!birthMonth || !birthDay || !birthYear) {
+      return { isValid: false, error: 'Please enter your full birth date.' };
+    }
+    
+    const age = calculateAge(birthMonth, birthDay, birthYear);
+    if (age === null || age < 18) {
+      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit.' };
     }
     
     return { isValid: true, error: null };
@@ -244,7 +301,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Fetch and filter partners
   useEffect(() => {
-    if (step === 3 && userLocation) {
+    if (step === 4 && userLocation) {
       fetchAndFilterPartners();
     }
   }, [step, userLocation, selectedServices, searchRadius, selectedDays]);
@@ -313,7 +370,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
     if (!user) {
-      alert('Please sign up first.');
+      alert('Please complete step 1 first.');
       return;
     }
     
@@ -358,6 +415,72 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     } else {
       setBioError('');
       setBioBlockedWords([]);
+    }
+  };
+  
+  const handleFirstNameChange = (val: string) => {
+    setFirstName(val);
+    if (containsBlockedWords(val)) {
+      setFirstNameError('First name contains blocked words.');
+    } else {
+      setFirstNameError('');
+    }
+  };
+  
+  const handleLastNameChange = (val: string) => {
+    setLastName(val);
+    if (containsBlockedWords(val)) {
+      setLastNameError('Last name contains blocked words.');
+    } else {
+      setLastNameError('');
+    }
+  };
+  
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(val)) {
+      setEmailError('Please enter a valid email address.');
+    } else {
+      setEmailError('');
+    }
+  };
+  
+  const handlePhoneChange = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+    setPhone(formatted);
+    
+    if (digits.length === 10 && digits[0] >= '2') {
+      setPhoneError('');
+    } else if (digits.length > 0 && digits.length !== 10) {
+      setPhoneError('Please enter a valid 10-digit phone number.');
+    } else if (digits.length === 10 && digits[0] < '2') {
+      setPhoneError('Please enter a valid US phone number.');
+    } else {
+      setPhoneError('');
+    }
+  };
+  
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (!val) {
+      setPasswordError('');
+    } else if (!passwordMinLength) {
+      setPasswordError('Password must be at least 8 characters');
+    } else if (!passwordHasUpper) {
+      setPasswordError('Password must contain at least 1 uppercase letter');
+    } else if (!passwordHasLower) {
+      setPasswordError('Password must contain at least 1 lowercase letter');
+    } else if (!passwordHasNumber) {
+      setPasswordError('Password must contain at least 1 number');
+    } else if (!passwordHasSpecial) {
+      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
+    } else {
+      setPasswordError('');
     }
   };
   
@@ -455,6 +578,64 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   const handleNext = async () => {
     if (step === 1) {
+      if (!firstName || firstNameError) {
+        setStep1Error('Please enter a valid first name.');
+        return;
+      }
+      if (!lastName || lastNameError) {
+        setStep1Error('Please enter a valid last name.');
+        return;
+      }
+      if (!email || emailError) {
+        setStep1Error('Please enter a valid email address.');
+        return;
+      }
+      if (!phone || phoneError) {
+        setStep1Error('Please enter a valid phone number.');
+        return;
+      }
+      if (!isPasswordValid) {
+        setStep1Error('Please enter a valid password.');
+        return;
+      }
+      if (!termsAccepted) {
+        setStep1Error('You must agree to the Terms of Service.');
+        return;
+      }
+      if (!privacyAccepted) {
+        setStep1Error('You must agree to the Privacy Policy.');
+        return;
+      }
+      if (!gatekeeperAccepted) {
+        setStep1Error('You must acknowledge the social fitness platform agreement.');
+        return;
+      }
+      
+      const ageValidation = validateAgeFromDropdowns();
+      if (!ageValidation.isValid) {
+        setStep1Error(ageValidation.error);
+        return;
+      }
+      if (!ageVerifyConsent) {
+        setStep1Error('You must consent to age verification to create an account.');
+        return;
+      }
+      
+      setStep1Error('');
+      setLoading(true);
+      try {
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+        await signUp(email, password, 'member', autoUsername, formattedBirthDate);
+        setTimeout(() => {
+          setStep(2);
+          setLoading(false);
+        }, 500);
+      } catch (err: any) {
+        setStep1Error(err.message || 'Failed to create account. Please try again.');
+        setLoading(false);
+      }
+    } else if (step === 2) {
       if (!livePhotoUrl) {
         alert('Please capture a live photo.');
         return;
@@ -475,40 +656,36 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         alert('You must acknowledge the social fitness platform agreement.');
         return;
       }
-      if (!termsAccepted || !privacyAccepted) {
-        alert('You must agree to the Terms of Service and Privacy Policy.');
-        return;
-      }
       setBioError('');
       await supabase.from('profiles').update({ bio, live_photo_url: livePhotoUrl }).eq('id', user?.id);
-      setStep(2);
-    } else if (step === 2) {
+      setStep(3);
+    } else if (step === 3) {
       if (!username) {
-        setStep2Error('Please enter a username.');
+        setStep3Error('Please enter a username.');
         return;
       }
       
       const usernameValidation = validateUsername(username);
       if (!usernameValidation.isValid) {
-        setStep2Error(usernameValidation.error);
+        setStep3Error(usernameValidation.error);
         return;
       }
       
       if (!city) {
-        setStep2Error('Please enter your city.');
+        setStep3Error('Please enter your city.');
         return;
       }
       if (selectedGoals.length === 0) {
-        setStep2Error('Please select at least one fitness goal.');
+        setStep3Error('Please select at least one fitness goal.');
         return;
       }
-      setStep2Error('');
+      setStep3Error('');
       await supabase.from('profiles').update({ 
         username, 
         city, 
         fitness_goals: selectedGoals
       }).eq('id', user?.id);
-      setStep(3);
+      setStep(4);
     }
   };
   
@@ -523,8 +700,9 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/browse';
   };
   
-  const isStep1Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && gatekeeperAccepted && termsAccepted && privacyAccepted;
-  const isStep2Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent;
+  const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && gatekeeperAccepted;
+  const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
@@ -572,10 +750,10 @@ Data Retention:
 California Residents:
 - You have the right to opt out of data sharing under CPRA`;
   
-  const Step3Content = () => (
+  const Step4Content = () => (
     <div className="space-y-6">
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">Select Your Activities</h2>
+        <h2 className="text-xl font-semibold mb-4">SELECT YOUR SOCIAL ACTIVITIES</h2>
         <div className="flex flex-wrap gap-2 mb-4">
           {SERVICE_TYPES.map(service => (
             <button
@@ -616,7 +794,7 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">What days work for you?</h2>
+        <h2 className="text-xl font-semibold mb-4">WHAT DAYS WORK FOR YOU?</h2>
         <div className="flex flex-wrap gap-2">
           {DAYS_OF_WEEK.map(day => (
             <button
@@ -635,7 +813,7 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">Search Area</h2>
+        <h2 className="text-xl font-semibold mb-4">SEARCH AREA</h2>
         
         <button
           onClick={getCurrentLocation}
@@ -672,9 +850,9 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">Partners Ready to Move</h2>
+        <h2 className="text-xl font-semibold mb-2">PARTNERS READY TO MOVE</h2>
         <p className="text-sm text-gray-400 mb-6">
-          Based on your vibe, free days, and location — here's who's ready to sweat with you. No awkward intros. Just good energy.
+          Based on your social activities, free days, and location — here's who's ready to sweat with you. No awkward intros. Just good energy.
         </p>
         
         {!userLocation ? (
@@ -687,7 +865,7 @@ California Residents:
           </div>
         ) : currentPartners.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400">No partners found. Try adjusting your activities, free days, or expanding your radius.</p>
+            <p className="text-gray-400">No partners found. Try adjusting your social activities, free days, or expanding your radius.</p>
           </div>
         ) : (
           <>
@@ -717,7 +895,7 @@ California Residents:
                     </p>
                     <p className="text-xs text-green-400 text-center mt-1">💰 Suggested ${rate}</p>
                     {daysDisplay && (
-                      <p className="text-xs text-gray-400 text-center mt-1">🗓️ Free: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
+                      <p className="text-xs text-gray-400 text-center mt-1">Available: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
                     )}
                     <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
                       View Profile
@@ -751,7 +929,7 @@ California Residents:
         
         {userLocation && !searching && currentPartners.length === 0 && (
           <p className="text-center text-gray-400 mt-4">
-            Not seeing your match? Try adjusting your activities, free days, or expanding your search radius. The right partner is out there.
+            Not seeing your match? Try adjusting your social activities, free days, or expanding your search radius. The right partner is out there.
           </p>
         )}
       </div>
@@ -805,7 +983,6 @@ California Residents:
       </div>
       
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Close Button - Top Right */}
         <div className="flex justify-end mb-4">
           <button
             onClick={() => window.location.href = '/'}
@@ -816,7 +993,6 @@ California Residents:
           </button>
         </div>
         
-        {/* Hero Section with 🔥 I Want to Sweat */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🔥</div>
           <h1 className="text-3xl font-bold text-white">I Want to Sweat</h1>
@@ -825,19 +1001,235 @@ California Residents:
         
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} of 3</span>
-            <span>{Math.round(step / 3 * 100)}%</span>
+            <span>Step {step} of 4</span>
+            <span>{Math.round(step / 4 * 100)}%</span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all duration-300"
-              style={{ width: `${(step / 3) * 100}%` }}
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
         
-        {/* Step 1: Photo & Bio */}
+        {/* Step 1: Create Your Account */}
         {step === 1 && (
+          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
+            <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => handleFirstNameChange(e.target.value)}
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                      firstNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                    }`}
+                  />
+                  {firstNameError && <p className="text-red-400 text-xs mt-1">{firstNameError}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => handleLastNameChange(e.target.value)}
+                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                      lastNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                    }`}
+                  />
+                  {lastNameError && <p className="text-red-400 text-xs mt-1">{lastNameError}</p>}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                    emailError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                  }`}
+                />
+                {emailError && <p className="text-red-400 text-xs mt-1">{emailError}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  placeholder="(555) 123-4567"
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                    phoneError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                  }`}
+                />
+                {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                    passwordError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                  }`}
+                />
+                <div className="mt-2 space-y-1">
+                  <p className={`text-xs ${passwordMinLength ? 'text-green-400' : 'text-gray-500'}`}>
+                    {passwordMinLength ? '✓' : '○'} At least 8 characters
+                  </p>
+                  <p className={`text-xs ${passwordHasUpper ? 'text-green-400' : 'text-gray-500'}`}>
+                    {passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter
+                  </p>
+                  <p className={`text-xs ${passwordHasLower ? 'text-green-400' : 'text-gray-500'}`}>
+                    {passwordHasLower ? '✓' : '○'} At least 1 lowercase letter
+                  </p>
+                  <p className={`text-xs ${passwordHasNumber ? 'text-green-400' : 'text-gray-500'}`}>
+                    {passwordHasNumber ? '✓' : '○'} At least 1 number
+                  </p>
+                  <p className={`text-xs ${passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
+                    {passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)
+                  </p>
+                </div>
+                {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
+              </div>
+              
+              {/* Birth Date with Dropdowns */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Month</option>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                      <option key={month} value={month}>{month}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Day</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                      <option key={day} value={day}>{day}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={birthYear}
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
+                    <option value="">Year</option>
+                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+                <p className="text-xs text-gray-500 mt-2">
+                  Used only to verify you are 18+. Deleted immediately after confirmation.
+                </p>
+
+                <div className="flex items-start gap-2 mt-3">
+                  <input
+                    type="checkbox"
+                    id="ageVerifyConsent"
+                    checked={ageVerifyConsent}
+                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
+                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="facialAgeConsent"
+                    checked={facialAgeConsent}
+                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                  />
+                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
+                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
+                  </label>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
+                <ul className="space-y-1 text-xs text-yellow-200/80">
+                  <li>• Adonix is a social fitness network, not a professional service.</li>
+                  <li>• You are joining to meet fitness partners in public locations only.</li>
+                  <li>• No professional fitness services are provided or implied.</li>
+                  <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
+                  <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
+                </ul>
+              </div>
+              
+              <div className="mt-6 space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={() => setShowTermsModal('terms')}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={() => setShowTermsModal('privacy')}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gatekeeperAccepted}
+                    onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                    className="mt-1 w-5 h-5 accent-red-600"
+                  />
+                  <span className="text-sm text-gray-300">
+                    I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
+                  </span>
+                </label>
+              </div>
+              
+              {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
+            </div>
+          </div>
+        )}
+        
+        {/* Step 2: Photo & Bio */}
+        {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story</h2>
             
@@ -891,60 +1283,25 @@ California Residents:
               )}
             </div>
             
-            {/* Legal Agreements */}
-            <div className="mt-6 space-y-3">
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="gatekeeperAccept"
-                    checked={gatekeeperAccepted}
-                    onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                    className="mt-1 w-4 h-4"
-                  />
-                  <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
-                    I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
-                  </label>
-                </div>
-              </div>
-              
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="termsAccept"
-                    checked={termsAccepted}
-                    onChange={() => setShowTermsModal('terms')}
-                    className="mt-1 w-4 h-4"
-                  />
-                  <label htmlFor="termsAccept" className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
-                  </label>
-                </div>
-              </div>
-              
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="privacyAccept"
-                    checked={privacyAccepted}
-                    onChange={() => setShowTermsModal('privacy')}
-                    className="mt-1 w-4 h-4"
-                  />
-                  <label htmlFor="privacyAccept" className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
-                  </label>
-                </div>
+            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="gatekeeperAccept"
+                  checked={gatekeeperAccepted}
+                  onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4"
+                />
+                <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
+                  I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
+                </label>
               </div>
             </div>
           </div>
         )}
         
-        {/* Step 2: Your Vibe */}
-        {step === 2 && (
+        {/* Step 3: Your Vibe */}
+        {step === 3 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
             
@@ -981,11 +1338,6 @@ California Residents:
                   placeholder="Los Angeles, CA"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
                 />
-                {isSearchingCity && (
-                  <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-white/10 rounded-lg shadow-lg">
-                    <div className="px-4 py-2 text-sm text-gray-400">Searching...</div>
-                  </div>
-                )}
                 {showCitySuggestions && citySuggestions.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {citySuggestions.map((suggestion, idx) => (
@@ -1048,13 +1400,13 @@ California Residents:
                 </p>
               </div>
               
-              {step2Error && <p className="text-red-400 text-sm">{step2Error}</p>}
+              {step3Error && <p className="text-red-400 text-sm">{step3Error}</p>}
             </div>
           </div>
         )}
         
-        {/* Step 3: Find Partners */}
-        {step === 3 && <Step3Content />}
+        {/* Step 4: Find Partners */}
+        {step === 4 && <Step4Content />}
         
         <div className="flex justify-between gap-4 mt-8">
           {step > 1 && (
@@ -1065,13 +1417,13 @@ California Residents:
               Back
             </button>
           )}
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               onClick={handleNext}
-              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete)}
+              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
               className={`flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
             >
-              {loading ? 'Saving...' : 'Next'}
+              {loading ? 'Creating Account...' : 'Next'}
             </button>
           ) : (
             <button
@@ -1079,9 +1431,24 @@ California Residents:
               disabled={!userLocation}
               className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
-              Go to Dashboard
+              Find Partners
             </button>
           )}
+        </div>
+        
+        {/* Footer Links - Terms, Privacy, Safety (visible on all pages) */}
+        <div className="mt-8 pt-6 border-t border-white/10 text-center">
+          <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-500">
+            <button onClick={() => setShowTermsModal('terms')} className="hover:text-white transition-colors">
+              📄 Terms of Service
+            </button>
+            <button onClick={() => setShowTermsModal('privacy')} className="hover:text-white transition-colors">
+              🔒 Privacy Policy
+            </button>
+            <a href="/safety" className="hover:text-white transition-colors">
+              ⚡ Safety Guidelines
+            </a>
+          </div>
         </div>
       </div>
       
