@@ -40,6 +40,14 @@ const FITNESS_GOALS = [
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+// Blocked words for username
+const BLOCKED_USERNAME_WORDS = [
+  'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'dick', 'pussy', 
+  'nigger', 'faggot', 'retard', 'whore', 'slut', 'cock', 'porn', 
+  'sex', 'escort', 'dating', 'tinder', 'hookup', 'fuk', 'fck',
+  'admin', 'root', 'support', 'moderator', 'adonix'
+];
+
 // Turnstile Site Key - only used in production
 const TURNSTILE_SITE_KEY = '0x4AAAAAAC85hzmi4sizIJ-y';
 
@@ -191,33 +199,31 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
   // Validate username (letters + numbers only, no blocked words, length limits)
-const validateUsername = (username: string) => {
-  // Check length FIRST
-  if (username.length < 3) {
-    return { isValid: false, error: 'Username must be at least 3 characters' };
-  }
-  if (username.length > 20) {
-    return { isValid: false, error: 'Username cannot exceed 20 characters' };
-  }
-  
-  // Check for letters and numbers only
-  const validPattern = /^[a-zA-Z0-9]+$/;
-  if (!validPattern.test(username)) {
-    return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
-  }
-  
-  // Check for blocked words (case insensitive)
-  const lowerUsername = username.toLowerCase();
-  const blockedWordsList = ['fuck', 'shit', 'bitch', 'cunt', 'asshole', 'dick', 'pussy', 'nigger', 'faggot', 'retard', 'whore', 'slut', 'cock', 'porn', 'sex', 'escort', 'dating'];
-  
-  for (const blocked of blockedWordsList) {
-    if (lowerUsername.includes(blocked)) {
-      return { isValid: false, error: `Username contains blocked word: "${blocked}"` };
+  const validateUsername = (username: string) => {
+    // Check length FIRST
+    if (username.length < 3) {
+      return { isValid: false, error: 'Username must be at least 3 characters' };
     }
-  }
-  
-  return { isValid: true, error: null };
-};
+    if (username.length > 20) {
+      return { isValid: false, error: 'Username cannot exceed 20 characters' };
+    }
+    
+    // Check for letters and numbers only
+    const validPattern = /^[a-zA-Z0-9]+$/;
+    if (!validPattern.test(username)) {
+      return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
+    }
+    
+    // Check for blocked words (case insensitive)
+    const lowerUsername = username.toLowerCase();
+    for (const blocked of BLOCKED_USERNAME_WORDS) {
+      if (lowerUsername.includes(blocked)) {
+        return { isValid: false, error: `Username contains blocked word: "${blocked}"` };
+      }
+    }
+    
+    return { isValid: true, error: null };
+  };
 
   // Validate age (must be 18+)
   const validateAge = (birthDate: string) => {
@@ -651,8 +657,8 @@ const validateUsername = (username: string) => {
       setStep1Error('');
       setLoading(true);
       try {
-        const username = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', username, birthDate);
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        await signUp(email, password, 'member', autoUsername, birthDate);
         setStep(2);
       } catch (err: any) {
         setStep1Error(err.message || 'Failed to create account. Please try again.');
@@ -680,29 +686,17 @@ const validateUsername = (username: string) => {
       await supabase.from('profiles').update({ bio }).eq('id', user?.id);
       setStep(3);
     } else if (step === 3) {
-  if (!username) {
-    setStep3Error('Please enter a username.');
-    return;
-  }
-  
-  // Re-validate username one more time
-  const usernameValidation = validateUsername(username);
-  if (!usernameValidation.isValid) {
-    setStep3Error(usernameValidation.error);
-    return;
-  }
-  
-  if (!city) {
-    setStep3Error('Please enter your city.');
-    return;
-  }
-  if (selectedGoals.length === 0) {
-    setStep3Error('Please select at least one fitness goal.');
-    return;
-  }
-  setStep3Error('');
-  // ... rest of code
-}
+      if (!username) {
+        setStep3Error('Please enter a username.');
+        return;
+      }
+      
+      // Re-validate username one more time
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.isValid) {
+        setStep3Error(usernameValidation.error);
+        return;
+      }
       
       if (!city) {
         setStep3Error('Please enter your city.');
@@ -1270,27 +1264,27 @@ California Residents:
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Username <span className="text-red-500">*</span></label>
                 <input
-  type="text"
-  value={username}
-  onChange={(e) => {
-    // Remove any spaces or special characters as they type
-    let newUsername = e.target.value.toLowerCase();
-    // Strip anything that's not a letter or number
-    newUsername = newUsername.replace(/[^a-zA-Z0-9]/g, '');
-    // Limit to 20 characters max
-    if (newUsername.length <= 20) {
-      setUsername(newUsername);
-      const validation = validateUsername(newUsername);
-      setUsernameError(validation.error);
-    }
-  }}
+                  type="text"
+                  value={username}
+                  onChange={(e) => {
+                    // Remove any spaces or special characters as they type
+                    let newUsername = e.target.value.toLowerCase();
+                    // Strip anything that's not a letter or number
+                    newUsername = newUsername.replace(/[^a-zA-Z0-9]/g, '');
+                    // Limit to 20 characters max
+                    if (newUsername.length <= 20) {
+                      setUsername(newUsername);
+                      const validation = validateUsername(newUsername);
+                      setUsernameError(validation.error);
+                    }
+                  }}
                   placeholder="username (letters and numbers only, 3-20 chars)"
                   className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:border-red-500 focus:outline-none ${
                     usernameError ? 'border-red-500' : 'border-white/20'
                   }`}
                 />
                 {usernameError && <p className="text-red-400 text-xs mt-1">{usernameError}</p>}
-                <p className="text-xs text-gray-500 mt-1">Letters and numbers only. 3-20 characters.</p>
+                <p className="text-xs text-gray-500 mt-1">Letters and numbers only. 3-20 characters. No blocked words.</p>
               </div>
               
               <div className="relative">
