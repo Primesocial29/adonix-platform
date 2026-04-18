@@ -48,12 +48,6 @@ const BLOCKED_USERNAME_WORDS = [
   'admin', 'root', 'support', 'moderator', 'adonix'
 ];
 
-// Turnstile Site Key - only used in production
-const TURNSTILE_SITE_KEY = '0x4AAAAAAC85hzmi4sizIJ-y';
-
-// DISABLE TURNSTILE COMPLETELY FOR DEVELOPMENT
-const ENABLE_TURNSTILE = false;
-
 declare global {
   interface Window {
     turnstile: any;
@@ -127,10 +121,11 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
   const { user, refreshProfile, profile } = useAuth();
-  const [step, setStep] = useState(2); // START AT STEP 2 (Photo & Bio) instead of 1
+  const [step, setStep] = useState(1); // 1=Photo & Bio, 2=Vibe, 3=Find Partners
   const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Step 2: Photo & Bio
+  // Step 1: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
   const [bio, setBio] = useState('');
   const [bioError, setBioError] = useState('');
@@ -138,7 +133,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [showCamera, setShowCamera] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   
-  // Step 3: Your Vibe
+  // Step 2: Your Vibe
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [city, setCity] = useState('');
@@ -150,9 +145,9 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [customGoal, setCustomGoal] = useState('');
   const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
   const [customGoalError, setCustomGoalError] = useState('');
-  const [step3Error, setStep3Error] = useState('');
+  const [step2Error, setStep2Error] = useState('');
   
-  // Step 4: Find Partners
+  // Step 3: Find Partners
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [customService, setCustomService] = useState('');
   const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
@@ -168,9 +163,13 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
   
+  // Terms acceptance
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
+  
   // Validate username (letters + numbers only, no blocked words, length limits)
   const validateUsername = (username: string) => {
-    // Check length FIRST
     if (username.length < 3) {
       return { isValid: false, error: 'Username must be at least 3 characters' };
     }
@@ -178,13 +177,11 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       return { isValid: false, error: 'Username cannot exceed 20 characters' };
     }
     
-    // Check for letters and numbers only
     const validPattern = /^[a-zA-Z0-9]+$/;
     if (!validPattern.test(username)) {
       return { isValid: false, error: 'Username can only contain letters and numbers (no spaces, no special characters)' };
     }
     
-    // Check for blocked words (case insensitive)
     const lowerUsername = username.toLowerCase();
     for (const blocked of BLOCKED_USERNAME_WORDS) {
       if (lowerUsername.includes(blocked)) {
@@ -247,7 +244,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   // Fetch and filter partners
   useEffect(() => {
-    if (step === 4 && userLocation) {
+    if (step === 3 && userLocation) {
       fetchAndFilterPartners();
     }
   }, [step, userLocation, selectedServices, searchRadius, selectedDays]);
@@ -446,8 +443,18 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     );
   };
   
+  const handleTermsAccept = () => {
+    setTermsAccepted(true);
+    setShowTermsModal(null);
+  };
+  
+  const handlePrivacyAccept = () => {
+    setPrivacyAccepted(true);
+    setShowTermsModal(null);
+  };
+  
   const handleNext = async () => {
-    if (step === 2) {
+    if (step === 1) {
       if (!livePhotoUrl) {
         alert('Please capture a live photo.');
         return;
@@ -464,42 +471,49 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         alert('Your bio contains blocked words. Please remove them before continuing.');
         return;
       }
+      if (!gatekeeperAccepted) {
+        alert('You must acknowledge the social fitness platform agreement.');
+        return;
+      }
+      if (!termsAccepted || !privacyAccepted) {
+        alert('You must agree to the Terms of Service and Privacy Policy.');
+        return;
+      }
       setBioError('');
-      await supabase.from('profiles').update({ bio }).eq('id', user?.id);
-      setStep(3);
-    } else if (step === 3) {
+      await supabase.from('profiles').update({ bio, live_photo_url: livePhotoUrl }).eq('id', user?.id);
+      setStep(2);
+    } else if (step === 2) {
       if (!username) {
-        setStep3Error('Please enter a username.');
+        setStep2Error('Please enter a username.');
         return;
       }
       
-      // Re-validate username one more time
       const usernameValidation = validateUsername(username);
       if (!usernameValidation.isValid) {
-        setStep3Error(usernameValidation.error);
+        setStep2Error(usernameValidation.error);
         return;
       }
       
       if (!city) {
-        setStep3Error('Please enter your city.');
+        setStep2Error('Please enter your city.');
         return;
       }
       if (selectedGoals.length === 0) {
-        setStep3Error('Please select at least one fitness goal.');
+        setStep2Error('Please select at least one fitness goal.');
         return;
       }
-      setStep3Error('');
+      setStep2Error('');
       await supabase.from('profiles').update({ 
         username, 
         city, 
         fitness_goals: selectedGoals
       }).eq('id', user?.id);
-      setStep(4);
+      setStep(3);
     }
   };
   
   const handleBack = () => {
-    if (step > 2) setStep(step - 1);
+    if (step > 1) setStep(step - 1);
   };
   
   const handleComplete = async () => {
@@ -509,8 +523,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/browse';
   };
   
-  const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
-  const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
+  const isStep1Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && gatekeeperAccepted && termsAccepted && privacyAccepted;
+  const isStep2Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
@@ -558,7 +572,7 @@ Data Retention:
 California Residents:
 - You have the right to opt out of data sharing under CPRA`;
   
-  const Step4Content = () => (
+  const Step3Content = () => (
     <div className="space-y-6">
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
         <h2 className="text-xl font-semibold mb-4">Select Your Activities</h2>
@@ -793,18 +807,19 @@ California Residents:
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step - 1} of 3</span>
-            <span>{Math.round((step - 1) / 3 * 100)}%</span>
+            <span>Step {step} of 3</span>
+            <span>{Math.round(step / 3 * 100)}%</span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all duration-300"
-              style={{ width: `${((step - 1) / 3) * 100}%` }}
+              style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
         </div>
         
-        {step === 2 && (
+        {/* Step 1: Photo & Bio */}
+        {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story</h2>
             
@@ -857,10 +872,61 @@ California Residents:
                 </div>
               )}
             </div>
+            
+            {/* Legal Agreements */}
+            <div className="mt-6 space-y-3">
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="gatekeeperAccept"
+                    checked={gatekeeperAccepted}
+                    onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                    className="mt-1 w-4 h-4"
+                  />
+                  <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
+                    I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
+                  </label>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="termsAccept"
+                    checked={termsAccepted}
+                    onChange={() => setShowTermsModal('terms')}
+                    className="mt-1 w-4 h-4"
+                  />
+                  <label htmlFor="termsAccept" className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
+                  </label>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="privacyAccept"
+                    checked={privacyAccepted}
+                    onChange={() => setShowTermsModal('privacy')}
+                    className="mt-1 w-4 h-4"
+                  />
+                  <label htmlFor="privacyAccept" className="text-sm text-gray-300">
+                    I have read and agree to the{' '}
+                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         
-        {step === 3 && (
+        {/* Step 2: Your Vibe */}
+        {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
             
@@ -871,11 +937,8 @@ California Residents:
                   type="text"
                   value={username}
                   onChange={(e) => {
-                    // Remove any spaces or special characters as they type
                     let newUsername = e.target.value.toLowerCase();
-                    // Strip anything that's not a letter or number
                     newUsername = newUsername.replace(/[^a-zA-Z0-9]/g, '');
-                    // Limit to 20 characters max
                     if (newUsername.length <= 20) {
                       setUsername(newUsername);
                       const validation = validateUsername(newUsername);
@@ -967,15 +1030,16 @@ California Residents:
                 </p>
               </div>
               
-              {step3Error && <p className="text-red-400 text-sm">{step3Error}</p>}
+              {step2Error && <p className="text-red-400 text-sm">{step2Error}</p>}
             </div>
           </div>
         )}
         
-        {step === 4 && <Step4Content />}
+        {/* Step 3: Find Partners */}
+        {step === 3 && <Step3Content />}
         
         <div className="flex justify-between gap-4 mt-8">
-          {step > 2 && (
+          {step > 1 && (
             <button
               onClick={handleBack}
               className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition"
@@ -983,10 +1047,10 @@ California Residents:
               Back
             </button>
           )}
-          {step < 4 ? (
+          {step < 3 ? (
             <button
               onClick={handleNext}
-              disabled={loading || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
+              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete)}
               className={`flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
             >
               {loading ? 'Saving...' : 'Next'}
