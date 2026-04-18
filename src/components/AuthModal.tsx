@@ -528,22 +528,32 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
           <div className="text-center mb-6">
             {!isLogin && (
               <>
-                <div className="text-4xl mb-2">{selectedRole === 'partner' ? '💰' : '🔥'}</div>
-                <h2 className="text-2xl font-bold text-white">
-                  {selectedRole === 'partner' ? 'I Make People Sweat' : 'I Want to Sweat'}
-                </h2>
-                <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                  {selectedRole === 'partner' ? '💵 You will earn money' : '💸 You will pay for sessions'}
-                </p>
-              </>
-            )}
-            {isLogin && (
-              <>
-                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-                <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
-              </>
-            )}
-          </div>
+                <div className="text-center mb-6">
+  {!isLogin && selectedRole === 'member' && (
+    <>
+      <div className="text-5xl mb-2">🔥</div>
+      <h2 className="text-2xl font-bold text-white">I Want to Sweat</h2>
+      <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+        💸 You will pay for sessions
+      </p>
+    </>
+  )}
+  {!isLogin && selectedRole === 'partner' && (
+    <>
+      <div className="text-5xl mb-2">💰</div>
+      <h2 className="text-2xl font-bold text-white">I Make People Sweat</h2>
+      <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
+        💵 You will earn money
+      </p>
+    </>
+  )}
+  {isLogin && (
+    <>
+      <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+      <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
+    </>
+  )}
+</div>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-6 text-red-300 text-sm">
