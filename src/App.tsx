@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import PublicHome from './components/PublicHome';
 import AdminDashboard from './components/AdminDashboard';
 import PartnerProfileSetup from './components/PartnerProfileSetup';
-import ClientProfileSetup from './components/ClientProfileSetup';
 import ClientOnboarding from './components/ClientOnboarding';
 import PartnerDashboard from './components/PartnerDashboard';
 import TrainerDashboard from './components/TrainerDashboard';
@@ -28,8 +27,7 @@ function App() {
 
   // Dashboard routes based on role
   if (currentRoute === '/dashboard') {
-    // You can add role-based logic here later
-    return <PublicHome />; // Temporary - will show role-specific dashboard
+    return <PublicHome />;
   }
 
   // Browse Partners (Client discovery page)
@@ -52,12 +50,12 @@ function App() {
     return <PartnerDashboard />;
   }
 
-  // Trainer routes (same as partner for now)
+  // Trainer routes
   if (currentRoute === '/trainer-dashboard') {
     return <TrainerDashboard />;
   }
 
-  // Client routes - UPDATED to use new ClientOnboarding
+  // Client routes
   if (currentRoute === '/client-setup') {
     return <ClientOnboarding onComplete={() => {
       window.location.href = '/client-dashboard';
@@ -65,12 +63,11 @@ function App() {
   }
 
   // Complete profile route
-  // Complete profile route - redirect to proper onboarding
-if (currentRoute === '/complete-profile') {
-  return <ClientOnboarding onComplete={() => {
-    window.location.href = '/client-dashboard';
-  }} />;
-}
+  if (currentRoute === '/complete-profile') {
+    return <ClientOnboarding onComplete={() => {
+      window.location.href = '/client-dashboard';
+    }} />;
+  }
 
   // Settings route
   if (currentRoute === '/settings') {
