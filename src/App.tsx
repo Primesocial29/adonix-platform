@@ -55,18 +55,23 @@ function App() {
     return <TrainerDashboard />;
   }
 
-  // Client routes
-  if (currentRoute === '/client-setup') {
+  // NEW: Client 4-step onboarding flow (starts at Photo & Bio)
+  if (currentRoute === '/client-onboarding') {
     return <ClientOnboarding onComplete={() => {
-      window.location.href = '/client-dashboard';
+      window.location.href = '/browse';
     }} />;
   }
 
-  // Complete profile route
+  // OLD: Redirect /client-setup to the new onboarding flow
+  if (currentRoute === '/client-setup') {
+    window.location.href = '/client-onboarding';
+    return null;
+  }
+
+  // Complete profile route - redirect to new onboarding
   if (currentRoute === '/complete-profile') {
-    return <ClientOnboarding onComplete={() => {
-      window.location.href = '/client-dashboard';
-    }} />;
+    window.location.href = '/client-onboarding';
+    return null;
   }
 
   // Settings route
