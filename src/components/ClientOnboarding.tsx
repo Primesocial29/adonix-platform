@@ -742,7 +742,7 @@ if (!facialAgeConsent) {
     else window.location.href = '/browse';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent;
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent;
   const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
   const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
