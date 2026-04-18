@@ -360,12 +360,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       onClose();
       
       setTimeout(() => {
-        if (selectedRole === 'partner') {
-          window.location.replace('/partner-setup');
-        } else {
-          window.location.replace('/client-setup');
-        }
-      }, 1000);
+        setTimeout(() => {
+  if (selectedRole === 'partner') {
+    window.location.replace('/partner-setup');
+  } else {
+    window.location.replace('/client-onboarding');
+  }
+}, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {
