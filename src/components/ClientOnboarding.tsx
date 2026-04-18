@@ -655,16 +655,20 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         return;
       }
       setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', autoUsername, birthDate);
-        setStep(2);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+setLoading(true);
+try {
+  const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+  await signUp(email, password, 'member', autoUsername, birthDate);
+  
+  // Wait a moment for the session to be established
+  setTimeout(() => {
+    setStep(2);
+    setLoading(false);
+  }, 500);
+} catch (err: any) {
+  setStep1Error(err.message || 'Failed to create account. Please try again.');
+  setLoading(false);
+}
     } else if (step === 2) {
       if (!livePhotoUrl) {
         alert('Please capture a live photo.');
