@@ -1,3 +1,14 @@
+// Add this at the top of PublicHome component
+useEffect(() => {
+  // Auto sign out on mount for testing
+  const clearAuth = async () => {
+    const { supabase } = await import('../lib/supabase');
+    await supabase.auth.signOut();
+    localStorage.clear();
+  };
+  clearAuth();
+}, []);
+
 import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
