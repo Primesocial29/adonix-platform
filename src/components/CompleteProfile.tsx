@@ -1,9 +1,10 @@
 import { useAuth } from '../hooks/useAuth';
 import PartnerProfileSetup from './PartnerProfileSetup';
+import ClientOnboarding from './ClientOnboarding';
 import { Loader2 } from 'lucide-react';
 
 export default function CompleteProfile() {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,8 +14,20 @@ export default function CompleteProfile() {
     );
   }
 
-  // DIRECT RENDER - No conditions
-  return <PartnerProfileSetup onComplete={() => {
-    window.location.href = '/partner-dashboard';
-  }} />;
+  // Route to correct onboarding based on user role
+  if (user?.role === 'partner') {
+    return <PartnerProfileSetup onComplete={() => {
+      window.location.href = '/partner-dashboard';
+    }} />;
+  }
+
+  if (user?.role === 'member') {
+    return <ClientOnboarding onComplete={() => {
+      window.location.href = '/client-dashboard';
+    }} />;
+  }
+
+  // Fallback - no user, go home
+  window.location.href = '/';
+  return null;
 }
