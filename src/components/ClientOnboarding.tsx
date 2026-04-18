@@ -126,39 +126,9 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 }
 
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
-  const { signUp, user, refreshProfile, profile } = useAuth();
-  
-  // If user already exists and profile is complete, redirect to browse, but not if we're already there.
-useEffect(() => {
-  if (user && profile?.profile_complete && window.location.pathname !== '/browse') {
-    window.location.replace('/browse');
-  }
-}, [user, profile]);
-  
-  const [step, setStep] = useState(1);
+  const { user, refreshProfile, profile } = useAuth();
+  const [step, setStep] = useState(2); // START AT STEP 2 (Photo & Bio) instead of 1
   const [loading, setLoading] = useState(false);
-  
-  // Step 1: Account Setup
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthDateError, setBirthDateError] = useState('');
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(ENABLE_TURNSTILE ? null : 'dev-token');
-  const [step1Error, setStep1Error] = useState('');
-  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
-  const [turnstileLoaded, setTurnstileLoaded] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
   
   // Step 2: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
@@ -198,14 +168,6 @@ useEffect(() => {
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
   
-  // Password strength checks
-  const passwordMinLength = password.length >= 8;
-  const passwordHasUpper = /[A-Z]/.test(password);
-  const passwordHasLower = /[a-z]/.test(password);
-  const passwordHasNumber = /[0-9]/.test(password);
-  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
-  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
-  
   // Validate username (letters + numbers only, no blocked words, length limits)
   const validateUsername = (username: string) => {
     // Check length FIRST
@@ -232,26 +194,6 @@ useEffect(() => {
     
     return { isValid: true, error: null };
   };
-
-  // Validate age (must be 18+)
-  const validateAge = (birthDate: string) => {
-    if (!birthDate) return { isValid: false, error: 'Please enter your birth date' };
-    
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    if (age < 18) {
-      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit' };
-    }
-    
-    return { isValid: true, error: null };
-  };
   
   // Calculate distance between two coordinates
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -264,46 +206,6 @@ useEffect(() => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   };
-  
-  // Load Turnstile script - COMPLETELY DISABLED
-  useEffect(() => {
-    if (ENABLE_TURNSTILE) {
-      const script = document.createElement('script');
-      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => setTurnstileLoaded(true);
-      document.head.appendChild(script);
-      
-      return () => {
-        if (script.parentNode) script.parentNode.removeChild(script);
-      };
-    } else {
-      setTurnstileLoaded(true);
-    }
-  }, []);
-  
-  // Render Turnstile widget - COMPLETELY DISABLED
-  useEffect(() => {
-    if (ENABLE_TURNSTILE && turnstileLoaded && turnstileRef.current && window.turnstile && step === 1) {
-      try {
-        window.turnstile.render(turnstileRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          callback: (token: string) => {
-            setTurnstileToken(token);
-          },
-          'expired-callback': () => {
-            setTurnstileToken(null);
-          },
-          'error-callback': (error: any) => {
-            console.error('Turnstile error:', error);
-          },
-        });
-      } catch (err) {
-        console.error('Failed to render Turnstile:', err);
-      }
-    }
-  }, [turnstileLoaded, step]);
   
   // Search city with OpenStreetMap
   const searchCity = async (query: string) => {
@@ -414,7 +316,7 @@ useEffect(() => {
   
   const handleCameraCapture = async (blobOrDataURL: Blob | string) => {
     if (!user) {
-      alert('Please complete step 1 first.');
+      alert('Please sign up first.');
       return;
     }
     
@@ -459,72 +361,6 @@ useEffect(() => {
     } else {
       setBioError('');
       setBioBlockedWords([]);
-    }
-  };
-  
-  const handleFirstNameChange = (val: string) => {
-    setFirstName(val);
-    if (containsBlockedWords(val)) {
-      setFirstNameError('First name contains blocked words.');
-    } else {
-      setFirstNameError('');
-    }
-  };
-  
-  const handleLastNameChange = (val: string) => {
-    setLastName(val);
-    if (containsBlockedWords(val)) {
-      setLastNameError('Last name contains blocked words.');
-    } else {
-      setLastNameError('');
-    }
-  };
-  
-  const handleEmailChange = (val: string) => {
-    setEmail(val);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(val)) {
-      setEmailError('Please enter a valid email address.');
-    } else {
-      setEmailError('');
-    }
-  };
-  
-  const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    let formatted = '';
-    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
-    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
-    setPhone(formatted);
-    
-    if (digits.length === 10 && digits[0] >= '2') {
-      setPhoneError('');
-    } else if (digits.length > 0 && digits.length !== 10) {
-      setPhoneError('Please enter a valid 10-digit phone number.');
-    } else if (digits.length === 10 && digits[0] < '2') {
-      setPhoneError('Please enter a valid US phone number.');
-    } else {
-      setPhoneError('');
-    }
-  };
-  
-  const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('');
-    } else if (!passwordMinLength) {
-      setPasswordError('Password must be at least 8 characters');
-    } else if (!passwordHasUpper) {
-      setPasswordError('Password must contain at least 1 uppercase letter');
-    } else if (!passwordHasLower) {
-      setPasswordError('Password must contain at least 1 lowercase letter');
-    } else if (!passwordHasNumber) {
-      setPasswordError('Password must contain at least 1 number');
-    } else if (!passwordHasSpecial) {
-      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-    } else {
-      setPasswordError('');
     }
   };
   
@@ -610,74 +446,8 @@ useEffect(() => {
     );
   };
   
-  const handleTermsAccept = () => {
-    setTermsAccepted(true);
-    setShowTermsModal(null);
-  };
-  
-  const handlePrivacyAccept = () => {
-    setPrivacyAccepted(true);
-    setShowTermsModal(null);
-  };
-  
   const handleNext = async () => {
-    if (step === 1) {
-      if (!firstName || firstNameError) {
-        setStep1Error('Please enter a valid first name.');
-        return;
-      }
-      if (!lastName || lastNameError) {
-        setStep1Error('Please enter a valid last name.');
-        return;
-      }
-      if (!email || emailError) {
-        setStep1Error('Please enter a valid email address.');
-        return;
-      }
-      if (!phone || phoneError) {
-        setStep1Error('Please enter a valid phone number.');
-        return;
-      }
-      if (!isPasswordValid) {
-        setStep1Error('Please enter a valid password.');
-        return;
-      }
-      if (!termsAccepted) {
-        setStep1Error('You must agree to the Terms of Service.');
-        return;
-      }
-      if (!privacyAccepted) {
-        setStep1Error('You must agree to the Privacy Policy.');
-        return;
-      }
-      if (!gatekeeperAccepted) {
-        setStep1Error('You must acknowledge the social fitness platform agreement.');
-        return;
-      }
-      if (!birthDate || birthDateError) {
-        setStep1Error('Please enter a valid birth date. You must be 18 or older.');
-        return;
-      }
-      if (ENABLE_TURNSTILE && !turnstileToken) {
-        setStep1Error('Please complete the human verification.');
-        return;
-      }
-      setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        await signUp(email, password, 'member', autoUsername, birthDate);
-        
-        // Wait a moment for the session to be established
-        setTimeout(() => {
-          setStep(2);
-          setLoading(false);
-        }, 500);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account. Please try again.');
-        setLoading(false);
-      }
-    } else if (step === 2) {
+    if (step === 2) {
       if (!livePhotoUrl) {
         alert('Please capture a live photo.');
         return;
@@ -729,7 +499,7 @@ useEffect(() => {
   };
   
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 2) setStep(step - 1);
   };
   
   const handleComplete = async () => {
@@ -739,7 +509,6 @@ useEffect(() => {
     else window.location.href = '/browse';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthDate && !birthDateError && (ENABLE_TURNSTILE ? turnstileToken : true);
   const isStep2Complete = livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio);
   const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
@@ -1024,193 +793,16 @@ California Residents:
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} of 4</span>
-            <span>{Math.round(step / 4 * 100)}%</span>
+            <span>Step {step - 1} of 3</span>
+            <span>{Math.round((step - 1) / 3 * 100)}%</span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all duration-300"
-              style={{ width: `${(step / 4) * 100}%` }}
+              style={{ width: `${((step - 1) / 3) * 100}%` }}
             />
           </div>
         </div>
-        
-        {step === 1 && (
-          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
-            <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">First Name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => handleFirstNameChange(e.target.value)}
-                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                      firstNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                    }`}
-                  />
-                  {firstNameError && <p className="text-red-400 text-xs mt-1">{firstNameError}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => handleLastNameChange(e.target.value)}
-                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                      lastNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                    }`}
-                  />
-                  {lastNameError && <p className="text-red-400 text-xs mt-1">{lastNameError}</p>}
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    emailError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                  }`}
-                />
-                {emailError && <p className="text-red-400 text-xs mt-1">{emailError}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Phone Number (for verification & password reset)</label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    phoneError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                  }`}
-                />
-                {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    passwordError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                  }`}
-                />
-                <div className="mt-2 space-y-1">
-                  <p className={`text-xs ${passwordMinLength ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordMinLength ? '✓' : '○'} At least 8 characters
-                  </p>
-                  <p className={`text-xs ${passwordHasUpper ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter
-                  </p>
-                  <p className={`text-xs ${passwordHasLower ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasLower ? '✓' : '○'} At least 1 lowercase letter
-                  </p>
-                  <p className={`text-xs ${passwordHasNumber ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasNumber ? '✓' : '○'} At least 1 number
-                  </p>
-                  <p className={`text-xs ${passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)
-                  </p>
-                </div>
-                {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
-              </div>
-              
-              {/* Birth Date Field */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Birth Date <span className="text-red-500">*</span></label>
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => {
-                    setBirthDate(e.target.value);
-                    const ageCheck = validateAge(e.target.value);
-                    setBirthDateError(ageCheck.error);
-                  }}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                />
-                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-              </div>
-            </div>
-            
-            <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-              <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
-              <ul className="space-y-1 text-xs text-yellow-200/80">
-                <li>• Adonix is a social fitness network, not a professional service.</li>
-                <li>• You are joining to meet fitness partners in public locations only.</li>
-                <li>• No professional fitness services are provided or implied.</li>
-                <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
-                <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
-                <li>• Your phone number will be used for account verification and password reset.</li>
-              </ul>
-            </div>
-            
-            <div className="mt-6 space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={() => setShowTermsModal('terms')}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I have read and agree to the{' '}
-                  <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
-                </span>
-              </label>
-              
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={() => setShowTermsModal('privacy')}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I have read and agree to the{' '}
-                  <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
-                </span>
-              </label>
-              
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={gatekeeperAccepted}
-                  onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-red-600"
-                />
-                <span className="text-sm text-gray-300">
-                  I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
-                </span>
-              </label>
-            </div>
-            
-            {ENABLE_TURNSTILE && (
-              <div className="mt-6">
-                <div ref={turnstileRef} className="cf-turnstile flex justify-center"></div>
-              </div>
-            )}
-            
-            {!ENABLE_TURNSTILE && (
-              <div className="mt-6 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg text-center">
-                <p className="text-xs text-blue-300">🔧 Development Mode: Turnstile verification is disabled</p>
-                <p className="text-xs text-gray-400 mt-1">Set ENABLE_TURNSTILE = true in code for production</p>
-              </div>
-            )}
-            
-            {step1Error && <p className="text-red-400 text-sm mt-4">{step1Error}</p>}
-          </div>
-        )}
         
         {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
@@ -1383,7 +975,7 @@ California Residents:
         {step === 4 && <Step4Content />}
         
         <div className="flex justify-between gap-4 mt-8">
-          {step > 1 && (
+          {step > 2 && (
             <button
               onClick={handleBack}
               className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition"
@@ -1394,10 +986,10 @@ California Residents:
           {step < 4 ? (
             <button
               onClick={handleNext}
-              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
+              disabled={loading || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
               className={`flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
             >
-              {loading ? 'Creating Account...' : 'Next'}
+              {loading ? 'Saving...' : 'Next'}
             </button>
           ) : (
             <button
