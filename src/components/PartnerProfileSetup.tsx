@@ -151,9 +151,16 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
 
   useEffect(() => {
-    const load = async () => {
-      if (!user) return;
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  const load = async () => {
+    if (!user) {
+      console.log('No user found, waiting...');
+      return;
+    }
+    console.log('Loading partner profile for user:', user.id);
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      console.log('Profile data:', data);
+      console.log('Error:', error);
       if (data) {
         setLivePhotoUrl(data.live_photo_url);
         setBio(data.bio || '');
@@ -178,10 +185,14 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         setMinAdvanceNotice(data.min_advance_notice || 72);
         setCancellationWindow(data.cancellation_window || 24);
       }
+    } catch (err) {
+      console.error('Load error:', err);
+    } finally {
       setLoadingProfile(false);
-    };
-    load();
-  }, [user]);
+    }
+  };
+  load();
+}, [user]);
 
   const isPhotoComplete = () => !!livePhotoUrl;
   const isBioComplete = () => {
