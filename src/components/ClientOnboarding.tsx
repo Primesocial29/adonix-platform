@@ -126,7 +126,7 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 }
 
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
-  const { signUp, user, refreshProfile } = useAuth();
+  const { signUp, user, refreshProfile, profile } = useAuth();
   
   // If user already exists and profile is complete, redirect to browse
   useEffect(() => {
@@ -134,6 +134,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       window.location.href = '/browse';
     }
   }, [user, profile]);
+  
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
@@ -662,20 +663,20 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         return;
       }
       setStep1Error('');
-setLoading(true);
-try {
-  const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-  await signUp(email, password, 'member', autoUsername, birthDate);
-  
-  // Wait a moment for the session to be established
-  setTimeout(() => {
-    setStep(2);
-    setLoading(false);
-  }, 500);
-} catch (err: any) {
-  setStep1Error(err.message || 'Failed to create account. Please try again.');
-  setLoading(false);
-}
+      setLoading(true);
+      try {
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        await signUp(email, password, 'member', autoUsername, birthDate);
+        
+        // Wait a moment for the session to be established
+        setTimeout(() => {
+          setStep(2);
+          setLoading(false);
+        }, 500);
+      } catch (err: any) {
+        setStep1Error(err.message || 'Failed to create account. Please try again.');
+        setLoading(false);
+      }
     } else if (step === 2) {
       if (!livePhotoUrl) {
         alert('Please capture a live photo.');
@@ -735,7 +736,7 @@ try {
     await supabase.from('profiles').update({ profile_complete: true }).eq('id', user?.id);
     await refreshProfile();
     if (onComplete) onComplete();
-    else window.location.href = '/client-dashboard';
+    else window.location.href = '/browse';
   };
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthDate && !birthDateError && (ENABLE_TURNSTILE ? turnstileToken : true);
