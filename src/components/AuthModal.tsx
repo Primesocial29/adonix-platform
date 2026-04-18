@@ -428,7 +428,7 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
-  // ========== WELCOME STEP - STACKED VERTICALLY (TOP TO BOTTOM) ==========
+  // ========== WELCOME STEP ==========
   if (step === 'welcome') {
     return (
       <>
@@ -446,7 +446,6 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
               <p className="text-xl text-gray-300">What brings that body here?</p>
             </div>
 
-            {/* VERTICAL STACK (Top to Bottom) - Changed from grid grid-cols-2 to flex flex-col */}
             <div className="flex flex-col gap-4">
               <button
                 onClick={() => handleRoleSelect('member')}
@@ -506,6 +505,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full p-8 relative">
+          {/* Close button - top right */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -513,11 +513,20 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
             <X className="w-6 h-6" />
           </button>
 
+          {/* Back button - top left (returns to role selection) */}
           <button
             onClick={handleBack}
             className="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
           >
             ← Back
+          </button>
+
+          {/* Cancel button - bottom right (closes modal completely) */}
+          <button
+            onClick={onClose}
+            className="absolute bottom-4 right-4 text-gray-500 hover:text-red-400 transition-colors text-xs"
+          >
+            Cancel
           </button>
 
           <div className="text-center mb-6">
