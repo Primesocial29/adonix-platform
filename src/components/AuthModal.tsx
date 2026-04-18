@@ -512,18 +512,20 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
 
               {/* I Make People Sweat button - REDIRECTS DIRECTLY TO /partner-setup */}
               <button
-                onClick={() => {
-                  onClose();
-                  window.location.href = '/partner-setup';
-                }}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-                <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💵 I will earn money
-                </div>
-              </button>
+  onClick={() => {
+    onClose();
+    setTimeout(() => {
+      window.location.href = '/partner-setup';
+    }, 500);
+  }}
+  className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
+>
+  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
+  <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
+  <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
+    💵 I will earn money
+  </div>
+</button>
             </div>
 
             <div className="text-center mt-8">
