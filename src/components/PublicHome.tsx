@@ -413,12 +413,12 @@ We are actively working to improve accessibility. If you experience any issues, 
                 </button>
               </>
             ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="text-gray-400 hover:text-white transition-colors text-large tracking-wide font-medium"
-              >
-                LOGIN/SETUP
-              </button>
+             <button
+  onClick={() => window.location.href = '/client-setup'}
+  className="text-gray-400 hover:text-white transition-colors"
+>
+  LOGIN/SETUP
+</button>
             )}
           </div>
         </div>
