@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X, Camera, RefreshCw, Check } from 'lucide-react';
+import { X, Camera, RefreshCw, Check, AlertCircle } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -166,6 +166,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   // Step 3: Your Vibe
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [city, setCity] = useState('');
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -223,6 +225,36 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     
     return { isValid: true, error: null };
   };
+
+  // Check username availability in database
+  useEffect(() => {
+    const checkUsernameAvailability = async () => {
+      if (!username || username.length < 3 || validateUsername(username).error) {
+        setUsernameAvailable(null);
+        return;
+      }
+
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username.toLowerCase())
+          .maybeSingle();
+
+        if (error) throw error;
+        setUsernameAvailable(!data);
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const timeout = setTimeout(checkUsernameAvailability, 500);
+    return () => clearTimeout(timeout);
+  }, [username]);
 
   const calculateAge = (month: string, day: string, year: string): number | null => {
     if (!month || !day || !year) return null;
@@ -701,6 +733,11 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         return;
       }
       
+      if (!usernameAvailable) {
+        setStep3Error('This username is already taken. Please choose another.');
+        return;
+      }
+      
       if (!city) {
         setStep3Error('Please enter your city.');
         return;
@@ -732,7 +769,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent;
   const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
-  const isStep3Complete = username && !usernameError && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
+  const isStep3Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
@@ -1419,27 +1456,61 @@ California Residents:
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
             
+            {step3Error && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                {step3Error}
+              </div>
+            )}
+            
             <div className="space-y-6">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Username <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => {
-                    let newUsername = e.target.value.toLowerCase();
-                    newUsername = newUsername.replace(/[^a-zA-Z0-9]/g, '');
-                    if (newUsername.length <= 20) {
-                      setUsername(newUsername);
-                      const validation = validateUsername(newUsername);
-                      setUsernameError(validation.error);
-                    }
-                  }}
-                  placeholder="username (letters and numbers only, 3-20 chars)"
-                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:border-red-500 focus:outline-none ${
-                    usernameError ? 'border-red-500' : 'border-white/20'
-                  }`}
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      let newUsername = e.target.value.toLowerCase();
+                      newUsername = newUsername.replace(/[^a-zA-Z0-9]/g, '');
+                      if (newUsername.length <= 20) {
+                        setUsername(newUsername);
+                        const validation = validateUsername(newUsername);
+                        setUsernameError(validation.error);
+                      }
+                    }}
+                    placeholder="username (letters and numbers only, 3-20 chars)"
+                    className={`w-full pl-7 pr-10 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
+                      usernameError || usernameAvailable === false
+                        ? 'border-red-500' 
+                        : usernameAvailable === true
+                        ? 'border-green-500'
+                        : 'border-white/20 focus:border-red-500'
+                    }`}
+                  />
+                  {checkingUsername && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                    </div>
+                  )}
+                  {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                  )}
+                  {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                    </div>
+                  )}
+                </div>
                 {usernameError && <p className="text-red-400 text-xs mt-1">{usernameError}</p>}
+                {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
+                  <p className="text-red-400 text-xs mt-1">This username is already taken.</p>
+                )}
+                {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
+                  <p className="text-green-400 text-xs mt-1">Username is available!</p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">Letters and numbers only. 3-20 characters. No blocked words.</p>
               </div>
               
@@ -1513,8 +1584,6 @@ California Residents:
                   ℹ️ Profile information is self-reported and not verified by Adonix.
                 </p>
               </div>
-              
-              {step3Error && <p className="text-red-400 text-sm">{step3Error}</p>}
             </div>
           </div>
         )}
