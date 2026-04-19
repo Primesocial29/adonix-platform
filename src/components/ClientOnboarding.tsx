@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X, Camera, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { X, Camera, RefreshCw, Check, AlertCircle, Search } from 'lucide-react';
 
 interface Partner {
   id: string;
