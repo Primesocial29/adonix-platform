@@ -537,228 +537,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     }
   };
   
-  const getCurrentLocation = () => {
-    setLocationLoading(true);
-    setLocationError('');
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-        setLocationLoading(false);
-      },
-      (error) => {
-        let errorMsg = 'Unable to get your location. ';
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMsg += 'Please enable location access.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMsg += 'Location unavailable.';
-            break;
-          case error.TIMEOUT:
-            errorMsg += 'Request timed out.';
-            break;
-        }
-        setLocationError(errorMsg);
-        setLocationLoading(false);
-      }
-    );
-  };
-  
-  const toggleGoal = (goal: string) => {
-    setSelectedGoals(prev =>
-      prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
-    );
-  };
-  
-  const addCustomGoal = () => {
-    const trimmed = customGoal.trim();
-    if (!trimmed) return;
-    if (containsBlockedWords(trimmed)) {
-      setCustomGoalError('This goal contains blocked words.');
-      return;
-    }
-    if (selectedGoals.includes(trimmed) || FITNESS_GOALS.includes(trimmed)) {
-      setCustomGoalError('This goal is already in the list.');
-      return;
-    }
-    setSelectedGoals([...selectedGoals, trimmed]);
-    setCustomGoal('');
-    setShowCustomGoalInput(false);
-    setCustomGoalError('');
-  };
-  
-  const toggleService = (service: string) => {
-    setSelectedServices(prev =>
-      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
-    );
-  };
-  
-  const addCustomService = () => {
-    const trimmed = customService.trim();
-    if (!trimmed) return;
-    if (containsBlockedWords(trimmed)) {
-      setCustomServiceError('This activity contains blocked words.');
-      return;
-    }
-    if (selectedServices.includes(trimmed) || SERVICE_TYPES.includes(trimmed)) {
-      setCustomServiceError('This activity is already in the list.');
-      return;
-    }
-    setSelectedServices([...selectedServices, trimmed]);
-    setCustomService('');
-    setShowCustomServiceInput(false);
-    setCustomServiceError('');
-  };
-  
-  const toggleDay = (day: string) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
-  };
-  
-  const handleTermsAccept = () => {
-    setTermsAccepted(true);
-    setShowTermsModal(null);
-  };
-  
-  const handlePrivacyAccept = () => {
-    setPrivacyAccepted(true);
-    setShowTermsModal(null);
-  };
-  
-  const handleNext = async () => {
-    if (step === 1) {
-      if (!firstName || firstNameError) {
-        setStep1Error('Please enter a valid first name.');
-        return;
-      }
-      if (!lastName || lastNameError) {
-        setStep1Error('Please enter a valid last name.');
-        return;
-      }
-      if (!email || emailError) {
-        setStep1Error('Please enter a valid email address.');
-        return;
-      }
-      if (!phone || phoneError) {
-        setStep1Error('Please enter a valid phone number.');
-        return;
-      }
-      if (!isPasswordValid) {
-        setStep1Error('Please enter a valid password.');
-        return;
-      }
-      if (!termsAccepted) {
-        setStep1Error('You must agree to the Terms of Service.');
-        return;
-      }
-      if (!privacyAccepted) {
-        setStep1Error('You must agree to the Privacy Policy.');
-        return;
-      }
-      if (!gatekeeperAccepted) {
-        setStep1Error('You must acknowledge the social fitness platform agreement.');
-        return;
-      }
-      
-      const ageValidation = validateAgeFromDropdowns();
-      if (!ageValidation.isValid) {
-        setStep1Error(ageValidation.error);
-        return;
-      }
-      if (!ageVerifyConsent) {
-        setStep1Error('You must consent to age verification using your birth date.');
-        return;
-      }
-      if (!facialAgeConsent) {
-        setStep1Error('You must consent to facial age estimation.');
-        return;
-      }
-      
-      setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-        await signUp(email, password, 'member', autoUsername, formattedBirthDate);
-        setTimeout(() => {
-          setStep(2);
-          setLoading(false);
-        }, 500);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account. Please try again.');
-        setLoading(false);
-      }
-    } else if (step === 2) {
-      if (!photoAccepted || !livePhotoUrl) {
-        alert('Please take and accept a live photo.');
-        return;
-      }
-      if (bio.length < 20) {
-        setBioError('Bio must be at least 20 characters.');
-        return;
-      }
-      if (bio.length > 500) {
-        setBioError('Bio cannot exceed 500 characters.');
-        return;
-      }
-      if (containsBlockedWords(bio)) {
-        alert('Your bio contains blocked words. Please remove them before continuing.');
-        return;
-      }
-      if (!photoConfirmed) {
-        alert('You must confirm that your photo follows community guidelines.');
-        return;
-      }
-      if (!gatekeeperAccepted) {
-        alert('You must acknowledge the social fitness platform agreement.');
-        return;
-      }
-      setBioError('');
-      await supabase.from('profiles').update({ bio, live_photo_url: livePhotoUrl }).eq('id', user?.id);
-      setStep(3);
-    } else if (step === 3) {
-      if (!username) {
-        setStep3Error('Please enter a username.');
-        return;
-      }
-      
-      const usernameValidation = validateUsername(username);
-      if (!usernameValidation.isValid) {
-        setStep3Error(usernameValidation.error);
-        return;
-      }
-      
-      if (!usernameAvailable) {
-        setStep3Error('This username is already taken. Please choose another.');
-        return;
-      }
-      
-      if (!city) {
-        setStep3Error('Please enter your city.');
-        return;
-      }
-      if (selectedGoals.length === 0) {
-        setStep3Error('Please select at least one fitness goal.');
-        return;
-      }
-      setStep3Error('');
-      await supabase.from('profiles').update({ 
-        username, 
-        city, 
-        fitness_goals: selectedGoals
-      }).eq('id', user?.id);
-      setStep(4);
-    }
-  };
-  
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
-  
   const handleFindPartners = () => {
     // Validate selections before searching
     if (selectedServices.length === 0) {
@@ -863,7 +641,7 @@ California Residents:
   const Step4Content = () => (
     <div className="space-y-6">
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">SELECT YOUR SOCIAL ACTIVITIES <span className="text-red-500 text-sm">*</span></h2>
+        <p className="text-lg font-semibold mb-4 text-white">No activity, no sweat. Choose at least one — we'll handle the rest. <span className="text-red-500 text-sm">*</span></p>
         <div className="flex flex-wrap gap-2 mb-2">
           {SERVICE_TYPES.map(service => (
             <button
@@ -901,12 +679,10 @@ California Residents:
           </div>
         )}
         {customServiceError && <p className="text-red-400 text-sm mt-2">{customServiceError}</p>}
-        
-        <p className="text-xs text-gray-400 mt-3 italic">No activity, no sweat. Choose at least one — we'll handle the rest.</p>
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">WHAT DAYS WORK FOR YOU? <span className="text-red-500 text-sm">*</span></h2>
+        <p className="text-lg font-semibold mb-4 text-white">Select days you want to sweat and see who is ready to make you sweat. <span className="text-red-500 text-sm">*</span></p>
         <div className="flex flex-wrap gap-2 mb-2">
           {DAYS_OF_WEEK.map(day => (
             <button
@@ -922,7 +698,6 @@ California Residents:
             </button>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-3 italic">Select days you want to sweat and see who is ready to make you sweat.</p>
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
@@ -1120,7 +895,7 @@ California Residents:
         {/* Step 1: Create Your Account */}
         {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account</h1>
+            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account <span className="text-red-500">*</span></h1>
             <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
             
             {step1Error && (
@@ -1132,7 +907,7 @@ California Residents:
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">First Name</label>
+                  <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={firstName}
@@ -1144,7 +919,7 @@ California Residents:
                   {firstNameError && <p className="text-red-400 text-xs mt-1">{firstNameError}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Last Name</label>
+                  <label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={lastName}
@@ -1158,7 +933,7 @@ California Residents:
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                <label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
                 <input
                   type="email"
                   value={email}
@@ -1171,7 +946,7 @@ California Residents:
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   value={phone}
@@ -1185,7 +960,7 @@ California Residents:
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Password</label>
+                <label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
                 <input
                   type="password"
                   value={password}
@@ -1265,7 +1040,7 @@ California Residents:
                     className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
                   />
                   <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained.
+                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained. <span className="text-red-500">*</span>
                   </label>
                 </div>
 
@@ -1278,7 +1053,7 @@ California Residents:
                     className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
                   />
                   <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately.
+                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span>
                   </label>
                 </div>
               </div>
@@ -1304,7 +1079,7 @@ California Residents:
                   />
                   <span className="text-sm text-gray-300">
                     I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>.
+                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span>
                   </span>
                 </label>
                 
@@ -1317,7 +1092,7 @@ California Residents:
                   />
                   <span className="text-sm text-gray-300">
                     I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>.
+                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span>
                   </span>
                 </label>
                 
@@ -1329,7 +1104,7 @@ California Residents:
                     className="mt-1 w-5 h-5 accent-red-600"
                   />
                   <span className="text-sm text-gray-300">
-                    I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
+                    I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
                   </span>
                 </label>
               </div>
@@ -1340,7 +1115,7 @@ California Residents:
         {/* Step 2: Photo & Bio */}
         {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story <span className="text-red-500">*</span></h2>
             
             <div className="text-center mb-8">
               {!tempPhotoUrl && !livePhotoUrl && (
@@ -1400,7 +1175,7 @@ California Residents:
             </div>
             
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Bio</label>
+              <label className="block text-sm text-gray-400 mb-2">Bio <span className="text-red-500">*</span> (20-500 characters)</label>
               <textarea
                 value={bio}
                 onChange={(e) => handleBioChange(e.target.value)}
@@ -1447,7 +1222,7 @@ California Residents:
                       className="mt-1 w-5 h-5 accent-purple-600"
                     />
                     <span className="text-sm text-gray-300">
-                      I confirm this is a live photo of me, taken right now, and follows community guidelines.
+                      I confirm this is a live photo of me, taken right now, and follows community guidelines. <span className="text-red-500">*</span>
                     </span>
                   </label>
                 </div>
@@ -1464,7 +1239,7 @@ California Residents:
                   className="mt-1 w-5 h-5 accent-blue-600"
                 />
                 <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
-                  I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied.
+                  I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied. <span className="text-red-500">*</span>
                 </label>
               </div>
             </div>
@@ -1474,7 +1249,7 @@ California Residents:
         {/* Step 3: Your Vibe */}
         {step === 3 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe?</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe? <span className="text-red-500">*</span></h2>
             
             {step3Error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
@@ -1535,7 +1310,7 @@ California Residents:
               </div>
               
               <div className="relative">
-                <label className="block text-sm text-gray-400 mb-2">Your City</label>
+                <label className="block text-sm text-gray-400 mb-2">Your City <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={city}
@@ -1559,7 +1334,7 @@ California Residents:
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-3">Why are you here? (Select all that apply)</label>
+                <label className="block text-sm text-gray-400 mb-3">Why are you here? <span className="text-red-500">*</span> (Select all that apply)</label>
                 <div className="flex flex-wrap gap-2">
                   {FITNESS_GOALS.map(goal => (
                     <button
