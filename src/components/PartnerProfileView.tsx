@@ -68,9 +68,14 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const customServiceTypes = (partner as any).custom_service_types || [];
   const allServices = [...serviceTypes, ...customServiceTypes];
   const serviceRates = (partner as any).service_rates || {};
-  const halfHourEnabled = (partner as any).half_hour_enabled || false;
   const availability = (partner as any).availability || [];
   const serviceAreas = (partner as any).service_areas || [];
+
+  // Helper function to check if a specific service offers half-hour sessions
+  const isHalfHourEnabledForService = useCallback((service: string): boolean => {
+    const rate = serviceRates[service];
+    return !!(rate?.halfHour && rate.halfHour > 0);
+  }, [serviceRates]);
 
   // Helper functions
   const timeToMinutes = (time: string): number => {
@@ -84,12 +89,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   };
 
-  const hasExactDurationBlocks = useCallback((targetMinutes: number): boolean => {
+  const hasExactDurationBlocks = useCallback((targetMinutes: number, halfHourEnabledForService: boolean): boolean => {
     for (const daySchedule of availability) {
       if (!daySchedule.times || daySchedule.times.length === 0) continue;
       
       const sortedTimes = [...daySchedule.times].sort();
-      const slotDuration = halfHourEnabled ? 30 : 60;
+      const slotDuration = halfHourEnabledForService ? 30 : 60;
       const blocksNeeded = targetMinutes / slotDuration;
       
       for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
@@ -116,33 +121,34 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       }
     }
     return false;
-  }, [availability, halfHourEnabled]);
+  }, [availability]);
 
-  const getAvailableDurationOptions = useCallback((): DurationOption[] => {
+  const getAvailableDurationOptions = useCallback((service: string): DurationOption[] => {
     const options: DurationOption[] = [];
+    const halfHourEnabledForService = isHalfHourEnabledForService(service);
     
-    if (halfHourEnabled) {
+    if (halfHourEnabledForService) {
       options.push(30);
     }
     
     options.push(60);
     
-    if (hasExactDurationBlocks(90)) {
+    if (hasExactDurationBlocks(90, halfHourEnabledForService)) {
       options.push(90);
     }
     
-    if (hasExactDurationBlocks(120)) {
+    if (hasExactDurationBlocks(120, halfHourEnabledForService)) {
       options.push(120);
     }
     
     return options;
-  }, [halfHourEnabled, hasExactDurationBlocks]);
+  }, [isHalfHourEnabledForService, hasExactDurationBlocks]);
 
-  const hasExactDurationOnDay = useCallback((times: string[], targetMinutes: number): boolean => {
+  const hasExactDurationOnDay = useCallback((times: string[], targetMinutes: number, halfHourEnabledForService: boolean): boolean => {
     if (!times || times.length === 0) return false;
     
     const sortedTimes = [...times].sort();
-    const slotDuration = halfHourEnabled ? 30 : 60;
+    const slotDuration = halfHourEnabledForService ? 30 : 60;
     const blocksNeeded = targetMinutes / slotDuration;
     
     for (let i = 0; i <= sortedTimes.length - blocksNeeded; i++) {
@@ -169,11 +175,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       }
     }
     return false;
-  }, [halfHourEnabled]);
+  }, []);
 
   const getAvailableDates = useCallback(() => {
-    if (!selectedDuration) return [];
+    if (!selectedDuration || !selectedActivity) return [];
     
+    const halfHourEnabledForService = isHalfHourEnabledForService(selectedActivity);
     const dates: { date: string; dayName: string; dayNum: string; month: string }[] = [];
     const today = new Date();
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -186,7 +193,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       const daySchedule = (availability || []).find(a => a.day === dayName);
       
       if (daySchedule && daySchedule.times && daySchedule.times.length > 0) {
-        if (hasExactDurationOnDay(daySchedule.times, selectedDuration)) {
+        if (hasExactDurationOnDay(daySchedule.times, selectedDuration, halfHourEnabledForService)) {
           dates.push({
             date: date.toISOString().split('T')[0],
             dayName: dayName.slice(0, 3),
@@ -197,11 +204,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       }
     }
     return dates;
-  }, [selectedDuration, availability, hasExactDurationOnDay]);
+  }, [selectedDuration, selectedActivity, availability, isHalfHourEnabledForService, hasExactDurationOnDay]);
 
   const getAvailableTimeSlots = useCallback((): TimeSlot[] => {
-    if (!selectedDate || !selectedDuration) return [];
+    if (!selectedDate || !selectedDuration || !selectedActivity) return [];
     
+    const halfHourEnabledForService = isHalfHourEnabledForService(selectedActivity);
     const date = new Date(selectedDate);
     const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
     const daySchedule = (availability || []).find(a => a.day === dayName);
@@ -209,7 +217,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     if (!daySchedule || !daySchedule.times || daySchedule.times.length === 0) return [];
     
     const sortedTimes = [...daySchedule.times].sort();
-    const slotDuration = halfHourEnabled ? 30 : 60;
+    const slotDuration = halfHourEnabledForService ? 30 : 60;
     const blocksNeeded = selectedDuration / slotDuration;
     const slots: TimeSlot[] = [];
     
@@ -249,10 +257,10 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     }
     
     return slots;
-  }, [selectedDate, selectedDuration, availability, halfHourEnabled]);
+  }, [selectedDate, selectedDuration, selectedActivity, availability, isHalfHourEnabledForService]);
 
   const getCurrentRate = useCallback(() => {
-    const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: 0 };
+    const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: null };
     return rates.hourly;
   }, [serviceRates, selectedActivity]);
 
@@ -355,7 +363,13 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
 
   const handleActivitySelect = (activity: string) => {
     setSelectedActivity(activity);
+    setSelectedDuration(null);
+    setSelectedDate('');
+    setSelectedTimeSlot(null);
     setStep1Error('');
+    setStep2Error('');
+    setStep3Error('');
+    setStep4Error('');
   };
 
   const handleDurationSelect = (duration: DurationOption) => {
@@ -407,7 +421,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     setScreen('form');
   };
 
-  const availableDurationOptions = getAvailableDurationOptions();
+  const availableDurationOptions = selectedActivity ? getAvailableDurationOptions(selectedActivity) : [];
   const availableDates = getAvailableDates();
   const availableTimeSlots = getAvailableTimeSlots();
   const avgRating = 4.8;
@@ -501,7 +515,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               </div>
             </div>
 
-            {/* STEP 2: Duration - Single select */}
+            {/* STEP 2: Duration - Single select (based on selected service's half-hour setting) */}
             {selectedActivity && (
               <div className="bg-white/5 rounded-2xl p-5 border border-white/10 mb-5">
                 <h2 className="text-lg font-semibold mb-2 text-red-400">STEP 2 · HOW LONG CAN YOU LAST?</h2>
@@ -523,6 +537,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                     </button>
                   ))}
                 </div>
+                {availableDurationOptions.length === 1 && availableDurationOptions[0] === 60 && (
+                  <p className="text-xs text-gray-400 mt-2">ℹ️ This activity is only available for 1-hour sessions.</p>
+                )}
+                {availableDurationOptions.includes(30) && (
+                  <p className="text-xs text-green-400 mt-2">✓ 30-minute sessions are available for this activity.</p>
+                )}
               </div>
             )}
 
