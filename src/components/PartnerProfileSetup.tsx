@@ -145,7 +145,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [minAdvanceNotice, setMinAdvanceNotice] = useState(72);
   const [cancellationWindow, setCancellationWindow] = useState(24);
 
-  // UPDATED: Split terms into two separate states
+  // Split terms into two separate states
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
@@ -213,7 +213,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
   const isServiceAreasComplete = () => serviceAreas.length > 0 && serviceAreas.every(a => a.lat && a.lng);
   const isAvailabilityComplete = () => availability.some(a => a.times.length > 0);
-  // UPDATED: Both terms must be accepted
+  // Both terms must be accepted
   const isTermsComplete = () => termsAccepted && privacyAccepted;
 
   const completedSections = [
@@ -1163,7 +1163,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* SECTION 8: TERMS - UPDATED with separate checkboxes */}
+        {/* SECTION 8: TERMS - READ-ONLY CHECKBOXES (only checkable via modal) */}
         <div className={`p-6 rounded-2xl border ${isTermsComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isTermsComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -1181,13 +1181,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </ul>
           </div>
           
-          {/* TERMS OF SERVICE CHECKBOX - Separate */}
+          {/* TERMS OF SERVICE - READ ONLY (only checked via modal) */}
           <label className="flex items-start gap-3 cursor-pointer mb-4">
             <input
               type="checkbox"
               checked={termsAccepted}
-              onChange={(e) => setTermsAccepted(e.target.checked)}
-              className="mt-0.5 w-5 h-5 accent-red-600 cursor-pointer shrink-0"
+              readOnly
+              className="mt-0.5 w-5 h-5 accent-red-600 cursor-default shrink-0"
             />
             <span className="text-sm text-gray-300">
               I have read and agree to the{' '}
@@ -1202,13 +1202,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </span>
           </label>
           
-          {/* PRIVACY POLICY CHECKBOX - Separate */}
+          {/* PRIVACY POLICY - READ ONLY (only checked via modal) */}
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={privacyAccepted}
-              onChange={(e) => setPrivacyAccepted(e.target.checked)}
-              className="mt-0.5 w-5 h-5 accent-red-600 cursor-pointer shrink-0"
+              readOnly
+              className="mt-0.5 w-5 h-5 accent-red-600 cursor-default shrink-0"
             />
             <span className="text-sm text-gray-300">
               I have read and agree to the{' '}
@@ -1224,7 +1224,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </label>
           
           <p className="text-xs text-yellow-400 mt-3">
-            ⚠️ You must agree to BOTH the Terms of Service AND Privacy Policy to finalize your profile.
+            ⚠️ You must open and agree to BOTH the Terms of Service AND Privacy Policy to finalize your profile.
           </p>
         </div>
 
@@ -1266,7 +1266,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         locationName={pendingLocation?.display_name || ''}
       />
 
-      {/* UPDATED: LegalModal with onAccept callback */}
+      {/* LegalModal with onAccept callback */}
       {legalModal && (
         <LegalModal
           type={legalModal}
