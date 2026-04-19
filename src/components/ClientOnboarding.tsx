@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 import { X, Camera, RefreshCw, Check, AlertCircle, Search } from 'lucide-react';
+import PartnerProfileView from './PartnerProfileView';
 
 interface Partner {
   id: string;
@@ -186,6 +187,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null); // ADDED FOR POPUP
   
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -974,7 +976,10 @@ California Residents:
                       {daysDisplay && (
                         <p className="text-xs text-gray-400 text-center mt-1">Available: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
                       )}
-                      <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
+                      <button 
+                        onClick={() => setSelectedPartner(partner)}
+                        className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition"
+                      >
                         View Profile
                       </button>
                     </div>
@@ -1644,6 +1649,17 @@ California Residents:
         title="Privacy Policy"
         content={privacyContent}
       />
+
+      {/* Partner Profile Popup */}
+      {selectedPartner && (
+        <PartnerProfileView
+          partner={selectedPartner as any}
+          onClose={() => setSelectedPartner(null)}
+          onBook={(partner) => {
+            console.log('Book partner:', partner);
+          }}
+        />
+      )}
     </div>
   );
 }
