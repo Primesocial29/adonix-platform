@@ -18,7 +18,7 @@ interface SearchResult {
 
 interface ServiceRate {
   hourly: number;
-  halfHour: number;
+  halfHour: number | null;  // null means half-hour not offered for this service
 }
 
 const SERVICE_TYPES = [
@@ -123,7 +123,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [customServiceInput, setCustomServiceInput] = useState('');
   const [customServiceError, setCustomServiceError] = useState('');
   const [serviceRates, setServiceRates] = useState<Record<string, ServiceRate>>({});
-  const [halfHourEnabled, setHalfHourEnabled] = useState(false);
+  // Per-service half-hour toggle (true = half-hour offered, false = not offered)
+  const [serviceHalfHourEnabled, setServiceHalfHourEnabled] = useState<Record<string, boolean>>({});
 
   const [serviceAreas, setServiceAreas] = useState<{ name: string; lat: number | null; lng: number | null }[]>([]);
   const [serviceAreasCenterLat, setServiceAreasCenterLat] = useState<number | null>(null);
@@ -170,9 +171,15 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           setServiceTypes(data.service_types || []);
           setCustomServiceTypes(data.custom_service_types || []);
           if (data.service_rates) {
-            setServiceRates(data.service_rates as Record<string, ServiceRate>);
+            const rates = data.service_rates as Record<string, ServiceRate>;
+            setServiceRates(rates);
+            // Initialize per-service half-hour toggle based on whether halfHour exists and > 0
+            const halfHourSettings: Record<string, boolean> = {};
+            Object.keys(rates).forEach(service => {
+              halfHourSettings[service] = !!(rates[service]?.halfHour && rates[service].halfHour > 0);
+            });
+            setServiceHalfHourEnabled(halfHourSettings);
           }
-          setHalfHourEnabled(data.half_hour_enabled || false);
           setServiceAreas(data.service_areas || []);
           setServiceAreasCenterLat(data.service_areas_center_lat);
           setServiceAreasCenterLng(data.service_areas_center_lng);
@@ -204,10 +211,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
   const isServicesComplete = () => {
     if (allSelectedServices.length === 0) return false;
-    return allSelectedServices.every(s => {
-      const r = serviceRates[s];
+    return allSelectedServices.every(service => {
+      const r = serviceRates[service];
       if (!r || !r.hourly || r.hourly < 50 || r.hourly > 500) return false;
-      if (halfHourEnabled && (!r.halfHour || r.halfHour < 30 || r.halfHour > r.hourly)) return false;
+      // If half-hour is enabled for this service, validate halfHour rate
+      if (serviceHalfHourEnabled[service]) {
+        if (!r.halfHour || r.halfHour < 30 || r.halfHour > r.hourly) return false;
+      }
       return true;
     });
   };
@@ -313,8 +323,11 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     setServiceTypes(prev => {
       if (prev.includes(s)) {
         const updated = { ...serviceRates };
+        const halfHourUpdated = { ...serviceHalfHourEnabled };
         delete updated[s];
+        delete halfHourUpdated[s];
         setServiceRates(updated);
+        setServiceHalfHourEnabled(halfHourUpdated);
         return prev.filter(x => x !== s);
       }
       return [...prev, s];
@@ -340,16 +353,35 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const removeCustomService = (s: string) => {
     setCustomServiceTypes(prev => prev.filter(x => x !== s));
     const updated = { ...serviceRates };
+    const halfHourUpdated = { ...serviceHalfHourEnabled };
     delete updated[s];
+    delete halfHourUpdated[s];
     setServiceRates(updated);
+    setServiceHalfHourEnabled(halfHourUpdated);
   };
 
   const updateServiceRate = (service: string, field: 'hourly' | 'halfHour', val: string) => {
     const num = parseInt(val) || 0;
     setServiceRates(prev => ({
       ...prev,
-      [service]: { ...(prev[service] || { hourly: 0, halfHour: 0 }), [field]: num }
+      [service]: { 
+        ...(prev[service] || { hourly: 0, halfHour: null }), 
+        [field]: field === 'halfHour' ? num : num,
+        halfHour: field === 'halfHour' ? num : (prev[service]?.halfHour || null)
+      }
     }));
+  };
+
+  const toggleServiceHalfHour = (service: string) => {
+    const newValue = !serviceHalfHourEnabled[service];
+    setServiceHalfHourEnabled(prev => ({ ...prev, [service]: newValue }));
+    // If turning OFF, clear the halfHour rate
+    if (!newValue) {
+      setServiceRates(prev => ({
+        ...prev,
+        [service]: { ...(prev[service] || { hourly: 0 }), halfHour: null }
+      }));
+    }
   };
 
   // OpenStreetMap search - NO Google API
@@ -542,7 +574,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         service_types: serviceTypes,
         custom_service_types: customServiceTypes,
         service_rates: serviceRates,
-        half_hour_enabled: halfHourEnabled,
+        half_hour_enabled: false, // No longer using global toggle
         service_areas: serviceAreas,
         service_areas_center_lat: serviceAreasCenterLat,
         service_areas_center_lng: serviceAreasCenterLng,
@@ -580,8 +612,12 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     }
   };
 
+  // Calculate example earnings based on first service that has half-hour enabled
   const sampleService = allSelectedServices[0];
   const sampleRate = sampleService ? (serviceRates[sampleService]?.hourly || 100) : 100;
+  const sampleHalfHourEnabled = sampleService ? serviceHalfHourEnabled[sampleService] : false;
+  const sampleHalfRate = sampleService && sampleHalfHourEnabled ? (serviceRates[sampleService]?.halfHour || 60) : 60;
+  
   const platformFee = sampleRate * 0.15;
   const stripeFixed = 0.30;
   const stripePercent = sampleRate * 0.029;
@@ -760,7 +796,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           )}
         </div>
 
-        {/* SECTION 4: SERVICES & RATES */}
+        {/* SECTION 4: SERVICES & RATES - Per-service toggle inside each card */}
         <div className={`p-6 rounded-2xl border ${isServicesComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-2">
             {isServicesComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -814,103 +850,87 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </div>
           )}
 
+          {/* Service Cards with Per-Service Toggle */}
           {allSelectedServices.length > 0 && (
             <div className="mt-6 space-y-4">
               <p className="text-sm font-medium text-white">Set suggested contributions per activity:</p>
-              {allSelectedServices.map(service => (
-                <div key={service} className="p-4 bg-black rounded-xl border border-white/10">
-                  <p className="font-semibold text-white mb-3">{service}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">
-                        Hourly Suggested Contribution <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-red-500 font-bold">$</span>
-                        <input
-                          type="number"
-                          value={serviceRates[service]?.hourly || ''}
-                          onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
-                          placeholder="100"
-                          min="50"
-                          max="500"
-                          step="1"
-                          className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
-                        />
-                        <span className="text-gray-400 text-sm">/ hr</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>
+              {allSelectedServices.map(service => {
+                const isHalfHourOn = serviceHalfHourEnabled[service] || false;
+                return (
+                  <div key={service} className="p-4 bg-black rounded-xl border border-white/10">
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="font-semibold text-white">{service}</p>
+                      {customServiceTypes.includes(service) && (
+                        <button onClick={() => removeCustomService(service)} className="text-gray-400 hover:text-red-400">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    {halfHourEnabled && (
+                    
+                    <div className="space-y-3">
+                      {/* Hourly Rate */}
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">
-                          Half-Hour Suggested Contribution <span className="text-red-500">*</span>
+                          Hourly Suggested Contribution <span className="text-red-500">*</span>
                         </label>
                         <div className="flex items-center gap-2">
                           <span className="text-red-500 font-bold">$</span>
                           <input
                             type="number"
-                            value={serviceRates[service]?.halfHour || ''}
-                            onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
-                            placeholder="60"
-                            min="30"
-                            max={serviceRates[service]?.hourly || 500}
+                            value={serviceRates[service]?.hourly || ''}
+                            onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
+                            placeholder="100"
+                            min="50"
+                            max="500"
                             step="1"
                             className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
                           />
-                          <span className="text-gray-400 text-sm">/ 30m</span>
+                          <span className="text-gray-400 text-sm">/ hr</span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly suggested contribution</p>
+                        <p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>
                       </div>
-                    )}
+
+                      {/* Half-Hour Rate - Only shows if toggle is ON */}
+                      {isHalfHourOn && (
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">
+                            Half-Hour Suggested Contribution <span className="text-red-500">*</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              value={serviceRates[service]?.halfHour || ''}
+                              onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
+                              placeholder="60"
+                              min="30"
+                              max={serviceRates[service]?.hourly || 500}
+                              step="1"
+                              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white"
+                            />
+                            <span className="text-gray-400 text-sm">/ 30m</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p>
+                        </div>
+                      )}
+
+                      {/* Half-Hour Toggle - At the BOTTOM of the card */}
+                      <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 mt-2">
+                        <div>
+                          <p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p>
+                        </div>
+                        <button
+                          onClick={() => toggleServiceHalfHour(service)}
+                          className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 flex items-center justify-between p-4 bg-black rounded-xl border border-white/10">
-            <div>
-              <p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {halfHourEnabled
-                  ? 'Members can invite to meet for 30 or 60-minute sessions.'
-                  : 'Members can only invite to meet for 60-minute sessions. Toggle ON to offer half-hour options.'}
-              </p>
-            </div>
-            <button
-              onClick={() => setHalfHourEnabled(!halfHourEnabled)}
-              className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${halfHourEnabled ? 'bg-red-600' : 'bg-gray-600'}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${halfHourEnabled ? 'translate-x-6' : ''}`} />
-            </button>
-          </div>
-
-          {allSelectedServices.length > 0 && sampleService && serviceRates[sampleService]?.hourly > 0 && (
-            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-              <p className="text-sm font-semibold text-blue-300 mb-3">
-                Example Earnings (${sampleRate} suggested contribution)
-              </p>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Your suggested contribution:</span>
-                  <span>${sampleRate}.00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Platform Support (15%):</span>
-                  <span className="text-red-400">-${platformFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Processing fee (2.9% + $0.30):</span>
-                  <span className="text-red-400">-${(stripeFixed + stripePercent).toFixed(2)}</span>
-                </div>
-                <div className="border-t border-white/10 my-1" />
-                <div className="flex justify-between font-bold">
-                  <span className="text-white">You earn:</span>
-                  <span className="text-green-400">${partnerEarnings.toFixed(2)}</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Fees per meetup. You keep 100% of voluntary tips.</p>
+                );
+              })}
             </div>
           )}
 
@@ -1097,7 +1117,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
                   {isExpanded && (
                     <div className="px-4 py-3 bg-black">
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                        {generateTimeSlots(halfHourEnabled).map(time => {
+                        {generateTimeSlots(true).map(time => {
                           const active = dayAvail.times.includes(time);
                           return (
                             <button
