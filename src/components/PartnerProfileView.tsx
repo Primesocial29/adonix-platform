@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   X, MapPin, Calendar, Clock, DollarSign, Star, 
-  Award, Dumbbell, ChevronLeft, Heart, Share2, Flag, CheckCircle
+  Award, Dumbbell, ChevronLeft, Heart, Flag, CheckCircle
 } from 'lucide-react';
 
 interface PartnerProfileViewProps {
@@ -71,7 +71,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const halfHourEnabled = (partner as any).half_hour_enabled || false;
   const availability = (partner as any).availability || [];
   const serviceAreas = (partner as any).service_areas || [];
-  const certifications = (partner as any).certifications || [];
 
   // Helper functions
   const timeToMinutes = (time: string): number => {
@@ -85,28 +84,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   };
 
-  // Determine which duration options are available
-  const getAvailableDurationOptions = (): DurationOption[] => {
-    const options: DurationOption[] = [];
-    
-    if (halfHourEnabled) {
-      options.push(30);
-    }
-    
-    options.push(60);
-    
-    if (hasExactDurationBlocks(90)) {
-      options.push(90);
-    }
-    
-    if (hasExactDurationBlocks(120)) {
-      options.push(120);
-    }
-    
-    return options;
-  };
-  
-  const hasExactDurationBlocks = (targetMinutes: number): boolean => {
+  const hasExactDurationBlocks = useCallback((targetMinutes: number): boolean => {
     for (const daySchedule of availability) {
       if (!daySchedule.times || daySchedule.times.length === 0) continue;
       
@@ -138,37 +116,29 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       }
     }
     return false;
-  };
+  }, [availability, halfHourEnabled]);
 
-  const getAvailableDates = () => {
-    if (!selectedDuration) return [];
+  const getAvailableDurationOptions = useCallback((): DurationOption[] => {
+    const options: DurationOption[] = [];
     
-    const dates: { date: string; dayName: string; dayNum: string; month: string }[] = [];
-    const today = new Date();
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    for (let i = 1; i <= 14; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      const dayName = dayNames[date.getDay()];
-      const daySchedule = (availability || []).find(a => a.day === dayName);
-      
-      if (daySchedule && daySchedule.times && daySchedule.times.length > 0) {
-        if (hasExactDurationOnDay(daySchedule.times, selectedDuration)) {
-          dates.push({
-            date: date.toISOString().split('T')[0],
-            dayName: dayName.slice(0, 3),
-            dayNum: date.getDate().toString(),
-            month: monthNames[date.getMonth()]
-          });
-        }
-      }
+    if (halfHourEnabled) {
+      options.push(30);
     }
-    return dates;
-  };
-  
-  const hasExactDurationOnDay = (times: string[], targetMinutes: number): boolean => {
+    
+    options.push(60);
+    
+    if (hasExactDurationBlocks(90)) {
+      options.push(90);
+    }
+    
+    if (hasExactDurationBlocks(120)) {
+      options.push(120);
+    }
+    
+    return options;
+  }, [halfHourEnabled, hasExactDurationBlocks]);
+
+  const hasExactDurationOnDay = useCallback((times: string[], targetMinutes: number): boolean => {
     if (!times || times.length === 0) return false;
     
     const sortedTimes = [...times].sort();
@@ -199,9 +169,37 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
       }
     }
     return false;
-  };
-  
-  const getAvailableTimeSlots = (): TimeSlot[] => {
+  }, [halfHourEnabled]);
+
+  const getAvailableDates = useCallback(() => {
+    if (!selectedDuration) return [];
+    
+    const dates: { date: string; dayName: string; dayNum: string; month: string }[] = [];
+    const today = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    for (let i = 1; i <= 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dayName = dayNames[date.getDay()];
+      const daySchedule = (availability || []).find(a => a.day === dayName);
+      
+      if (daySchedule && daySchedule.times && daySchedule.times.length > 0) {
+        if (hasExactDurationOnDay(daySchedule.times, selectedDuration)) {
+          dates.push({
+            date: date.toISOString().split('T')[0],
+            dayName: dayName.slice(0, 3),
+            dayNum: date.getDate().toString(),
+            month: monthNames[date.getMonth()]
+          });
+        }
+      }
+    }
+    return dates;
+  }, [selectedDuration, availability, hasExactDurationOnDay]);
+
+  const getAvailableTimeSlots = useCallback((): TimeSlot[] => {
     if (!selectedDate || !selectedDuration) return [];
     
     const date = new Date(selectedDate);
@@ -251,154 +249,108 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     }
     
     return slots;
-  };
+  }, [selectedDate, selectedDuration, availability, halfHourEnabled]);
 
-  const getCurrentRate = () => {
+  const getCurrentRate = useCallback(() => {
     const rates = serviceRates[selectedActivity] || { hourly: 75, halfHour: 0 };
     return rates.hourly;
-  };
+  }, [serviceRates, selectedActivity]);
 
-  const currentRate = getCurrentRate();
-  const totalContribution = selectedTimeSlot ? currentRate * selectedTimeSlot.durationHours : 0;
-
-  const getLocationDistance = (locationName: string): number => {
+  const getLocationDistance = useCallback((locationName: string): number => {
     const distances: Record<string, number> = {
       'Gold\'s Gym Downtown': 2,
       'Central Park Track': 3,
       'Barry\'s Bootcamp': 4,
     };
     return distances[locationName] || 3;
-  };
+  }, []);
 
-  const formatTimeDisplay = (time: string): string => {
+  const formatTimeDisplay = useCallback((time: string): string => {
     const [hour, minute] = time.split(':');
     const h = parseInt(hour);
     const period = h >= 12 ? 'PM' : 'AM';
     const displayHour = h > 12 ? h - 12 : h === 0 ? 12 : h;
     return `${displayHour}:${minute} ${period}`;
-  };
+  }, []);
 
-  const formatDateDisplay = (dateStr: string): string => {
+  const formatDateDisplay = useCallback((dateStr: string): string => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  };
+  }, []);
 
-  const formatDuration = (minutes: number): string => {
+  const formatDuration = useCallback((minutes: number): string => {
     if (minutes === 30) return '30 min';
     if (minutes === 60) return '1 hour';
     if (minutes === 90) return '1.5 hours';
     return '2 hours';
-  };
+  }, []);
 
-  // Validation functions
-  const validateContactInfo = () => {
+  const currentRate = getCurrentRate();
+  const totalContribution = selectedTimeSlot ? currentRate * selectedTimeSlot.durationHours : 0;
+
+  // Validation functions - NO STATE UPDATES HERE
+  const isContactInfoValid = useMemo(() => {
     let isValid = true;
     
-    if (!firstName.trim()) {
+    if (!firstName.trim()) isValid = false;
+    if (!lastName.trim()) isValid = false;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!contactEmail.trim() || !emailRegex.test(contactEmail)) isValid = false;
+    
+    const phoneDigits = contactPhone.replace(/\D/g, '');
+    if (!contactPhone.trim() || phoneDigits.length !== 10) isValid = false;
+    
+    return isValid;
+  }, [firstName, lastName, contactEmail, contactPhone]);
+
+  const isSelectionsValid = useMemo(() => {
+    return !!selectedActivity && !!selectedDuration && !!selectedDate && !!selectedTimeSlot && !!selectedLocation;
+  }, [selectedActivity, selectedDuration, selectedDate, selectedTimeSlot, selectedLocation]);
+
+  const isCheckboxesValid = useMemo(() => {
+    return ageConfirmed && socialConfirmed && locationConfirmed && gpsConfirmed && paymentConfirmed && respectConfirmed;
+  }, [ageConfirmed, socialConfirmed, locationConfirmed, gpsConfirmed, paymentConfirmed, respectConfirmed]);
+
+  const isFormComplete = isContactInfoValid && isSelectionsValid && isCheckboxesValid;
+
+  // Handle input changes with validation
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    if (!value.trim()) {
       setFirstNameError('First name is required');
-      isValid = false;
     } else {
       setFirstNameError('');
     }
-    
-    if (!lastName.trim()) {
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    if (!value.trim()) {
       setLastNameError('Last name is required');
-      isValid = false;
     } else {
       setLastNameError('');
     }
-    
+  };
+
+  const handleEmailChange = (value: string) => {
+    setContactEmail(value);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!contactEmail.trim() || !emailRegex.test(contactEmail)) {
+    if (!value.trim() || !emailRegex.test(value)) {
       setEmailError('Please enter a valid email address');
-      isValid = false;
     } else {
       setEmailError('');
     }
-    
-    const phoneDigits = contactPhone.replace(/\D/g, '');
-    if (!contactPhone.trim() || phoneDigits.length !== 10) {
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setContactPhone(value);
+    const phoneDigits = value.replace(/\D/g, '');
+    if (!value.trim() || phoneDigits.length !== 10) {
       setPhoneError('Please enter a valid 10-digit phone number');
-      isValid = false;
     } else {
       setPhoneError('');
     }
-    
-    return isValid;
-  };
-
-  const validateSelections = () => {
-    let isValid = true;
-    
-    if (!selectedActivity) {
-      setStep1Error('Please select an activity');
-      isValid = false;
-    } else {
-      setStep1Error('');
-    }
-    
-    if (!selectedDuration) {
-      setStep2Error('Please select a duration');
-      isValid = false;
-    } else {
-      setStep2Error('');
-    }
-    
-    if (!selectedDate) {
-      setStep3Error('Please select a date');
-      isValid = false;
-    } else {
-      setStep3Error('');
-    }
-    
-    if (!selectedTimeSlot) {
-      setStep4Error('Please select a time');
-      isValid = false;
-    } else {
-      setStep4Error('');
-    }
-    
-    if (!selectedLocation) {
-      setStep5Error('Please select a location');
-      isValid = false;
-    } else {
-      setStep5Error('');
-    }
-    
-    return isValid;
-  };
-
-  const validateCheckboxes = () => {
-    return ageConfirmed && socialConfirmed && locationConfirmed && gpsConfirmed && paymentConfirmed && respectConfirmed;
-  };
-
-  const isFormComplete = () => {
-    return validateContactInfo() && 
-           validateSelections() && 
-           validateCheckboxes();
-  };
-
-  const handleSecureSession = () => {
-    if (isFormComplete()) {
-      setScreen('review');
-    }
-  };
-
-  const handleConfirmAndAuthorize = async () => {
-    setScreen('processing');
-    
-    // Simulate payment authorization (replace with actual Stripe integration)
-    setTimeout(() => {
-      setScreen('success');
-    }, 2000);
-  };
-
-  const handleBackToForm = () => {
-    setScreen('form');
-  };
-
-  const handleCancel = () => {
-    onClose();
   };
 
   const handleActivitySelect = (activity: string) => {
@@ -427,6 +379,32 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const handleLocationSelect = (location: string) => {
     setSelectedLocation(location);
     setStep5Error('');
+  };
+
+  const handleSecureSession = () => {
+    // Final validation before proceeding
+    if (!selectedActivity) setStep1Error('Please select an activity');
+    if (!selectedDuration) setStep2Error('Please select a duration');
+    if (!selectedDate) setStep3Error('Please select a date');
+    if (!selectedTimeSlot) setStep4Error('Please select a time');
+    if (!selectedLocation) setStep5Error('Please select a location');
+    
+    if (isFormComplete) {
+      setScreen('review');
+    }
+  };
+
+  const handleConfirmAndAuthorize = async () => {
+    setScreen('processing');
+    
+    // Simulate payment authorization (replace with actual Stripe integration)
+    setTimeout(() => {
+      setScreen('success');
+    }, 2000);
+  };
+
+  const handleBackToForm = () => {
+    setScreen('form');
   };
 
   const availableDurationOptions = getAvailableDurationOptions();
@@ -673,7 +651,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                   <input
                     type="text"
                     value={firstName}
-                    onChange={(e) => { setFirstName(e.target.value); setFirstNameError(''); }}
+                    onChange={(e) => handleFirstNameChange(e.target.value)}
                     placeholder="First Name *"
                     className={`w-full px-4 py-2 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none ${
                       firstNameError ? 'border-red-500' : 'border-white/20'
@@ -685,7 +663,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                   <input
                     type="text"
                     value={lastName}
-                    onChange={(e) => { setLastName(e.target.value); setLastNameError(''); }}
+                    onChange={(e) => handleLastNameChange(e.target.value)}
                     placeholder="Last Name *"
                     className={`w-full px-4 py-2 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none ${
                       lastNameError ? 'border-red-500' : 'border-white/20'
@@ -697,7 +675,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                   <input
                     type="email"
                     value={contactEmail}
-                    onChange={(e) => { setContactEmail(e.target.value); setEmailError(''); }}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="Email Address *"
                     className={`w-full px-4 py-2 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none ${
                       emailError ? 'border-red-500' : 'border-white/20'
@@ -709,7 +687,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
                   <input
                     type="tel"
                     value={contactPhone}
-                    onChange={(e) => { setContactPhone(e.target.value); setPhoneError(''); }}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="Phone Number *"
                     className={`w-full px-4 py-2 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none ${
                       phoneError ? 'border-red-500' : 'border-white/20'
@@ -767,9 +745,9 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
               </button>
               <button
                 onClick={handleSecureSession}
-                disabled={!isFormComplete()}
+                disabled={!isFormComplete}
                 className={`flex-1 py-3 rounded-xl font-semibold text-white transition-all transform hover:scale-105 ${
-                  isFormComplete()
+                  isFormComplete
                     ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
                     : 'bg-gray-600 cursor-not-allowed opacity-50'
                 }`}
@@ -944,7 +922,6 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             <button
               onClick={() => {
                 onClose();
-                // Navigate to requests page
                 window.location.href = '/requests';
               }}
               className="flex-1 py-3 rounded-xl font-semibold text-white transition-all bg-white/10 hover:bg-white/20 border border-white/20"
