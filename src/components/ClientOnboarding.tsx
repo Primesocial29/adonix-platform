@@ -537,6 +537,198 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     }
   };
   
+  const toggleGoal = (goal: string) => {
+    setSelectedGoals(prev =>
+      prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
+    );
+  };
+  
+  const addCustomGoal = () => {
+    const trimmed = customGoal.trim();
+    if (!trimmed) return;
+    if (containsBlockedWords(trimmed)) {
+      setCustomGoalError('This goal contains blocked words.');
+      return;
+    }
+    if (selectedGoals.includes(trimmed) || FITNESS_GOALS.includes(trimmed)) {
+      setCustomGoalError('This goal is already in the list.');
+      return;
+    }
+    setSelectedGoals([...selectedGoals, trimmed]);
+    setCustomGoal('');
+    setShowCustomGoalInput(false);
+    setCustomGoalError('');
+  };
+  
+  const toggleService = (service: string) => {
+    setSelectedServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    );
+  };
+  
+  const addCustomService = () => {
+    const trimmed = customService.trim();
+    if (!trimmed) return;
+    if (containsBlockedWords(trimmed)) {
+      setCustomServiceError('This activity contains blocked words.');
+      return;
+    }
+    if (selectedServices.includes(trimmed) || SERVICE_TYPES.includes(trimmed)) {
+      setCustomServiceError('This activity is already in the list.');
+      return;
+    }
+    setSelectedServices([...selectedServices, trimmed]);
+    setCustomService('');
+    setShowCustomServiceInput(false);
+    setCustomServiceError('');
+  };
+  
+  const toggleDay = (day: string) => {
+    setSelectedDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  };
+  
+  const handleTermsAccept = () => {
+    setTermsAccepted(true);
+    setShowTermsModal(null);
+  };
+  
+  const handlePrivacyAccept = () => {
+    setPrivacyAccepted(true);
+    setShowTermsModal(null);
+  };
+  
+  const handleNext = async () => {
+    if (step === 1) {
+      if (!firstName || firstNameError) {
+        setStep1Error('Please enter a valid first name.');
+        return;
+      }
+      if (!lastName || lastNameError) {
+        setStep1Error('Please enter a valid last name.');
+        return;
+      }
+      if (!email || emailError) {
+        setStep1Error('Please enter a valid email address.');
+        return;
+      }
+      if (!phone || phoneError) {
+        setStep1Error('Please enter a valid phone number.');
+        return;
+      }
+      if (!isPasswordValid) {
+        setStep1Error('Please enter a valid password.');
+        return;
+      }
+      if (!termsAccepted) {
+        setStep1Error('You must agree to the Terms of Service.');
+        return;
+      }
+      if (!privacyAccepted) {
+        setStep1Error('You must agree to the Privacy Policy.');
+        return;
+      }
+      if (!gatekeeperAccepted) {
+        setStep1Error('You must acknowledge the social fitness platform agreement.');
+        return;
+      }
+      
+      const ageValidation = validateAgeFromDropdowns();
+      if (!ageValidation.isValid) {
+        setStep1Error(ageValidation.error);
+        return;
+      }
+      if (!ageVerifyConsent) {
+        setStep1Error('You must consent to age verification using your birth date.');
+        return;
+      }
+      if (!facialAgeConsent) {
+        setStep1Error('You must consent to facial age estimation.');
+        return;
+      }
+      
+      setStep1Error('');
+      setLoading(true);
+      try {
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+        await signUp(email, password, 'member', autoUsername, formattedBirthDate);
+        setTimeout(() => {
+          setStep(2);
+          setLoading(false);
+        }, 500);
+      } catch (err: any) {
+        setStep1Error(err.message || 'Failed to create account. Please try again.');
+        setLoading(false);
+      }
+    } else if (step === 2) {
+      if (!photoAccepted || !livePhotoUrl) {
+        alert('Please take and accept a live photo.');
+        return;
+      }
+      if (bio.length < 20) {
+        setBioError('Bio must be at least 20 characters.');
+        return;
+      }
+      if (bio.length > 500) {
+        setBioError('Bio cannot exceed 500 characters.');
+        return;
+      }
+      if (containsBlockedWords(bio)) {
+        alert('Your bio contains blocked words. Please remove them before continuing.');
+        return;
+      }
+      if (!photoConfirmed) {
+        alert('You must confirm that your photo follows community guidelines.');
+        return;
+      }
+      if (!gatekeeperAccepted) {
+        alert('You must acknowledge the social fitness platform agreement.');
+        return;
+      }
+      setBioError('');
+      await supabase.from('profiles').update({ bio, live_photo_url: livePhotoUrl }).eq('id', user?.id);
+      setStep(3);
+    } else if (step === 3) {
+      if (!username) {
+        setStep3Error('Please enter a username.');
+        return;
+      }
+      
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.isValid) {
+        setStep3Error(usernameValidation.error);
+        return;
+      }
+      
+      if (!usernameAvailable) {
+        setStep3Error('This username is already taken. Please choose another.');
+        return;
+      }
+      
+      if (!city) {
+        setStep3Error('Please enter your city.');
+        return;
+      }
+      if (selectedGoals.length === 0) {
+        setStep3Error('Please select at least one fitness goal.');
+        return;
+      }
+      setStep3Error('');
+      await supabase.from('profiles').update({ 
+        username, 
+        city, 
+        fitness_goals: selectedGoals
+      }).eq('id', user?.id);
+      setStep(4);
+    }
+  };
+  
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+  
   const handleFindPartners = () => {
     // Validate selections before searching
     if (selectedServices.length === 0) {
@@ -701,22 +893,7 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <button
-          onClick={handleFindPartners}
-          disabled={locationLoading}
-          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-        >
-          {locationLoading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          ) : (
-            <Search className="w-5 h-5" />
-          )}
-          {locationLoading ? 'Finding partners...' : 'FIND A SWEAT BUDDY NEARBY'}
-        </button>
-        
-        <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
-        
-        <div className="mt-4">
+        <div className="mb-4">
           <div className="flex justify-between mb-2">
             <label className="text-sm text-gray-400">How far are you willing to travel?</label>
             <span className="text-red-400 font-medium">{searchRadius} miles</span>
@@ -734,6 +911,21 @@ California Residents:
             <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
           </div>
         </div>
+        
+        <button
+          onClick={handleFindPartners}
+          disabled={locationLoading}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          {locationLoading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          ) : (
+            <Search className="w-5 h-5" />
+          )}
+          {locationLoading ? 'Finding partners...' : 'FIND A SWEAT BUDDY NEARBY'}
+        </button>
+        
+        <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
       </div>
       
       {/* Partners Results Section - Only shows after search */}
