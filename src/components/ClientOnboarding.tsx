@@ -185,7 +185,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [currentPage, setCurrentPage] = useState(1);
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
-  const [hasSearched, setHasSearched] = useState(false); // NEW: track if search has been performed
+  const [hasSearched, setHasSearched] = useState(false);
   
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -321,7 +321,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     setShowCitySuggestions(false);
   };
   
-  // Function to search for partners - called manually when user clicks "Find Partners" or when selections change
   const performPartnerSearch = () => {
     if (userLocation && selectedServices.length > 0 && selectedDays.length > 0) {
       setHasSearched(true);
@@ -329,7 +328,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     }
   };
   
-  // Trigger search when selections change (after initial search)
   useEffect(() => {
     if (hasSearched && userLocation && selectedServices.length > 0 && selectedDays.length > 0) {
       fetchAndFilterPartners();
@@ -549,11 +547,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
           lng: position.coords.longitude
         });
         setLocationLoading(false);
-        // After getting location, if selections exist, trigger search
-        if (selectedServices.length > 0 && selectedDays.length > 0) {
-          setHasSearched(true);
-          setTimeout(() => fetchAndFilterPartners(), 500);
-        }
       },
       (error) => {
         let errorMsg = 'Unable to get your location. ';
@@ -769,22 +762,45 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const handleFindPartners = () => {
     // Validate selections before searching
     if (selectedServices.length === 0) {
-      alert('Please select at least one social activity before searching.');
+      alert('No activity, no sweat. Choose at least one — we\'ll handle the rest.');
       return;
     }
     
     if (selectedDays.length === 0) {
-      alert('Please select at least one day that works for you before searching.');
+      alert('Select days you want to sweat and see who is ready to make you sweat.');
       return;
     }
     
-    if (!userLocation) {
-      alert('Please use your current location to find partners near you.');
-      return;
-    }
-    
-    setHasSearched(true);
-    performPartnerSearch();
+    // Get location and search
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setLocationLoading(false);
+        setHasSearched(true);
+        setTimeout(() => fetchAndFilterPartners(), 500);
+      },
+      (error) => {
+        let errorMsg = 'Unable to get your location. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg += 'Please enable location access to find partners near you.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg += 'Location unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMsg += 'Request timed out.';
+            break;
+        }
+        setLocationError(errorMsg);
+        setLocationLoading(false);
+        alert(errorMsg);
+      }
+    );
   };
   
   const handleComplete = async () => {
@@ -847,8 +863,8 @@ California Residents:
   const Step4Content = () => (
     <div className="space-y-6">
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">SELECT YOUR SOCIAL ACTIVITIES</h2>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <h2 className="text-xl font-semibold mb-4">SELECT YOUR SOCIAL ACTIVITIES <span className="text-red-500 text-sm">*</span></h2>
+        <div className="flex flex-wrap gap-2 mb-2">
           {SERVICE_TYPES.map(service => (
             <button
               key={service}
@@ -885,11 +901,13 @@ California Residents:
           </div>
         )}
         {customServiceError && <p className="text-red-400 text-sm mt-2">{customServiceError}</p>}
+        
+        <p className="text-xs text-gray-400 mt-3 italic">No activity, no sweat. Choose at least one — we'll handle the rest.</p>
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">WHAT DAYS WORK FOR YOU?</h2>
-        <div className="flex flex-wrap gap-2">
+        <h2 className="text-xl font-semibold mb-4">WHAT DAYS WORK FOR YOU? <span className="text-red-500 text-sm">*</span></h2>
+        <div className="flex flex-wrap gap-2 mb-2">
           {DAYS_OF_WEEK.map(day => (
             <button
               key={day}
@@ -904,53 +922,43 @@ California Residents:
             </button>
           ))}
         </div>
+        <p className="text-xs text-gray-400 mt-3 italic">Select days you want to sweat and see who is ready to make you sweat.</p>
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">SEARCH AREA</h2>
+        <div className="mb-4">
+          <div className="flex justify-between mb-2">
+            <label className="text-sm text-gray-400">How far are you willing to travel?</label>
+            <span className="text-red-400 font-medium">{searchRadius} miles</span>
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="25"
+            step="1"
+            value={searchRadius}
+            onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
+          </div>
+        </div>
         
-        <button
-          onClick={getCurrentLocation}
-          disabled={locationLoading}
-          className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition disabled:opacity-50"
-        >
-          {locationLoading ? 'Getting Location...' : '📍 USE MY CURRENT LOCATION'}
-        </button>
-        
-        {locationError && <p className="text-red-400 text-sm mb-4">{locationError}</p>}
-        
-        {userLocation && (
-          <>
-            <div className="mb-4">
-              <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-400">How far are you willing to travel?</label>
-                <span className="text-red-400 font-medium">{searchRadius} miles</span>
-              </div>
-              <input
-                type="range"
-                min="1"
-                max="25"
-                step="1"
-                value={searchRadius}
-                onChange={(e) => setSearchRadius(parseInt(e.target.value))}
-                className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
-              </div>
-            </div>
-          </>
-        )}
-        
-        {/* Search Button */}
         <button
           onClick={handleFindPartners}
-          disabled={!userLocation || selectedServices.length === 0 || selectedDays.length === 0}
-          className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+          disabled={locationLoading}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
         >
-          <Search className="w-5 h-5" />
-          FIND A SWEAT BUDDY NEARBY
+          {locationLoading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          ) : (
+            <Search className="w-5 h-5" />
+          )}
+          {locationLoading ? 'Finding partners...' : 'FIND A SWEAT BUDDY NEARBY'}
         </button>
+        
+        <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
       </div>
       
       {/* Partners Results Section - Only shows after search */}
