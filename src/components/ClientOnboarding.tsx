@@ -1035,25 +1035,15 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-4">SEARCH AREA</h2>
+        <h2 className="text-xl font-semibold mb-4">📏 HOW FAR WILL YOU GO FOR A GOOD SWEAT?</h2>
         
-        <button
-          onClick={getCurrentLocation}
-          disabled={locationLoading}
-          className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition disabled:opacity-50"
-        >
-          {locationLoading ? 'Getting Location...' : '📍 USE MY CURRENT LOCATION'}
-        </button>
+        <p className="text-xs text-gray-400 mb-4 italic">
+          *Set your radius (1-25 miles). Partners outside this range won't be shown. Stay local. Stay safe. Stay sweaty.*
+        </p>
         
-        {locationError && <p className="text-red-400 text-sm mb-4">{locationError}</p>}
-        
-        {userLocation && (
+        {userLocation ? (
           <>
             <div className="mb-4">
-              <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-400">How far are you willing to travel?</label>
-                <span className="text-red-400 font-medium">{searchRadius} miles</span>
-              </div>
               <input
                 type="range"
                 min="1"
@@ -1064,11 +1054,32 @@ California Residents:
                 className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1 mi</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25 mi</span>
+                <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
+              </div>
+              <div className="text-center mt-2">
+                <span className="text-red-400 font-medium">{searchRadius} miles</span>
               </div>
             </div>
           </>
+        ) : (
+          <button
+            onClick={getCurrentLocation}
+            disabled={locationLoading}
+            className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition disabled:opacity-50"
+          >
+            {locationLoading ? 'Getting Location...' : '📍 USE MY CURRENT LOCATION'}
+          </button>
         )}
+        
+        {locationError && <p className="text-red-400 text-sm mb-4">{locationError}</p>}
+        
+        <button
+          onClick={getCurrentLocation}
+          className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          <Search className="w-5 h-5" />
+          FIND A SWEAT BUDDY NEARBY
+        </button>
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
