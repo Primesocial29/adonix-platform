@@ -43,7 +43,7 @@ export default function Dashboard() {
       <nav className="fixed top-0 w-full border-b border-white/10 bg-black/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/.bolt/adonixlogo.png" alt="Adonix" className="h-11 w-auto object-contain" />
+            <img src="/adonixlogo.png" alt="Adonix" className="h-11 w-auto object-contain" />
           </div>
           <button
             onClick={handleSignOut}
