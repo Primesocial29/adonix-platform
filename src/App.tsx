@@ -55,22 +55,17 @@ function App() {
     return <TrainerDashboard />;
   }
 
-  // NEW: Client 4-step onboarding flow (starts at Photo & Bio)
-  if (currentRoute === '/client-onboarding') {
+  // CLIENT 4-STEP ONBOARDING (with Create Your Account as Step 1)
+  // This is the main client setup flow
+  if (currentRoute === '/client-setup') {
     return <ClientOnboarding onComplete={() => {
       window.location.href = '/browse';
     }} />;
   }
 
-  // OLD: Redirect /client-setup to the new onboarding flow
-  if (currentRoute === '/client-setup') {
-    window.location.href = '/client-onboarding';
-    return null;
-  }
-
-  // Complete profile route - redirect to new onboarding
+  // Complete profile route - redirect to client-setup
   if (currentRoute === '/complete-profile') {
-    window.location.href = '/client-onboarding';
+    window.location.href = '/client-setup';
     return null;
   }
 
