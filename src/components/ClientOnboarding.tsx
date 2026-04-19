@@ -185,6 +185,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [currentPage, setCurrentPage] = useState(1);
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
+  const [hasSearched, setHasSearched] = useState(false); // NEW: track if search has been performed
   
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -320,11 +321,20 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     setShowCitySuggestions(false);
   };
   
-  useEffect(() => {
-    if (step === 4 && userLocation) {
+  // Function to search for partners - called manually when user clicks "Find Partners" or when selections change
+  const performPartnerSearch = () => {
+    if (userLocation && selectedServices.length > 0 && selectedDays.length > 0) {
+      setHasSearched(true);
       fetchAndFilterPartners();
     }
-  }, [step, userLocation, selectedServices, searchRadius, selectedDays]);
+  };
+  
+  // Trigger search when selections change (after initial search)
+  useEffect(() => {
+    if (hasSearched && userLocation && selectedServices.length > 0 && selectedDays.length > 0) {
+      fetchAndFilterPartners();
+    }
+  }, [selectedServices, selectedDays, searchRadius, userLocation]);
   
   const fetchAndFilterPartners = async () => {
     if (!userLocation) return;
@@ -539,6 +549,11 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
           lng: position.coords.longitude
         });
         setLocationLoading(false);
+        // After getting location, if selections exist, trigger search
+        if (selectedServices.length > 0 && selectedDays.length > 0) {
+          setHasSearched(true);
+          setTimeout(() => fetchAndFilterPartners(), 500);
+        }
       },
       (error) => {
         let errorMsg = 'Unable to get your location. ';
@@ -751,19 +766,28 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     if (step > 1) setStep(step - 1);
   };
   
-  const handleComplete = async () => {
-    // Validate that at least one social activity is selected
+  const handleFindPartners = () => {
+    // Validate selections before searching
     if (selectedServices.length === 0) {
-      alert('Please select at least one social activity before continuing.');
+      alert('Please select at least one social activity before searching.');
       return;
     }
     
-    // Validate that at least one day is selected
     if (selectedDays.length === 0) {
-      alert('Please select at least one day that works for you before continuing.');
+      alert('Please select at least one day that works for you before searching.');
       return;
     }
     
+    if (!userLocation) {
+      alert('Please use your current location to find partners near you.');
+      return;
+    }
+    
+    setHasSearched(true);
+    performPartnerSearch();
+  };
+  
+  const handleComplete = async () => {
     await supabase.from('profiles').update({ profile_complete: true }).eq('id', user?.id);
     await refreshProfile();
     if (onComplete) onComplete();
@@ -917,92 +941,95 @@ California Residents:
             </div>
           </>
         )}
+        
+        {/* Search Button */}
+        <button
+          onClick={handleFindPartners}
+          disabled={!userLocation || selectedServices.length === 0 || selectedDays.length === 0}
+          className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          <Search className="w-5 h-5" />
+          FIND A SWEAT BUDDY NEARBY
+        </button>
       </div>
       
-      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h2 className="text-xl font-semibold mb-2">PARTNERS READY TO MOVE</h2>
-        <p className="text-sm text-gray-400 mb-6">
-          Based on your social activities, free days, and location — here's who's ready to sweat with you. No awkward intros. Just good energy.
-        </p>
-        
-        {!userLocation ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400">Use your current location to see partners near you.</p>
-          </div>
-        ) : searching ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-          </div>
-        ) : currentPartners.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400">No partners found. Try adjusting your social activities, free days, or expanding your radius.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentPartners.map((partner, idx) => {
-                const partnerDays = (partner.availability || []).filter(a => a.times.length > 0).map(a => a.day.substring(0, 3));
-                const daysDisplay = partnerDays.slice(0, 3).join(', ');
-                const primaryService = [...(partner.service_types || []), ...(partner.custom_service_types || [])][0] || 'Fitness';
-                const rate = partner.service_rates?.[primaryService]?.hourly || 75;
-                
-                return (
-                  <div key={partner.id} className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-red-500/50 transition group">
-                    <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-red-500/20 mb-3">
-                      {partner.live_photo_url ? (
-                        <img src={partner.live_photo_url} alt={partner.first_name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-center">🔥 {partner.first_name}</h3>
-                    <div className="flex justify-center items-center gap-1 mt-1">
-                      <span className="text-yellow-500">★</span>
-                      <span className="text-sm">{partner.avg_rating || 'New'}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      {partner._distance ? `${Math.round(partner._distance)} miles away` : 'Distance unknown'}
-                    </p>
-                    <p className="text-xs text-green-400 text-center mt-1">💰 Suggested ${rate}</p>
-                    {daysDisplay && (
-                      <p className="text-xs text-gray-400 text-center mt-1">Available: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
-                    )}
-                    <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
-                      View Profile
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  ← Previous
-                </button>
-                <span className="text-sm text-gray-400">Page {currentPage} of {totalPages}</span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
-          </>
-        )}
-        
-        {userLocation && !searching && currentPartners.length === 0 && (
-          <p className="text-center text-gray-400 mt-4">
-            Not seeing your match? Try adjusting your social activities, free days, or expanding your search radius. The right partner is out there.
+      {/* Partners Results Section - Only shows after search */}
+      {hasSearched && (
+        <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+          <h2 className="text-xl font-semibold mb-2">PARTNERS READY TO MOVE</h2>
+          <p className="text-sm text-gray-400 mb-6">
+            Based on your social activities, free days, and location — here's who's ready to sweat with you. No awkward intros. Just good energy.
           </p>
-        )}
-      </div>
+          
+          {searching ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+            </div>
+          ) : currentPartners.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No partners found. Try adjusting your social activities, free days, or expanding your radius.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentPartners.map((partner, idx) => {
+                  const partnerDays = (partner.availability || []).filter(a => a.times.length > 0).map(a => a.day.substring(0, 3));
+                  const daysDisplay = partnerDays.slice(0, 3).join(', ');
+                  const primaryService = [...(partner.service_types || []), ...(partner.custom_service_types || [])][0] || 'Fitness';
+                  const rate = partner.service_rates?.[primaryService]?.hourly || 75;
+                  
+                  return (
+                    <div key={partner.id} className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-red-500/50 transition group">
+                      <div className="w-20 h-20 rounded-full mx-auto overflow-hidden bg-red-500/20 mb-3">
+                        {partner.live_photo_url ? (
+                          <img src={partner.live_photo_url} alt={partner.first_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold text-center">🔥 {partner.first_name}</h3>
+                      <div className="flex justify-center items-center gap-1 mt-1">
+                        <span className="text-yellow-500">★</span>
+                        <span className="text-sm">{partner.avg_rating || 'New'}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center mt-2">
+                        {partner._distance ? `${Math.round(partner._distance)} miles away` : 'Distance unknown'}
+                      </p>
+                      <p className="text-xs text-green-400 text-center mt-1">💰 Suggested ${rate}</p>
+                      {daysDisplay && (
+                        <p className="text-xs text-gray-400 text-center mt-1">Available: {daysDisplay}{partnerDays.length > 3 ? '...' : ''}</p>
+                      )}
+                      <button className="w-full mt-3 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg text-sm font-medium hover:scale-105 transition">
+                        View Profile
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    ← Previous
+                  </button>
+                  <span className="text-sm text-gray-400">Page {currentPage} of {totalPages}</span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
       
       <div className="space-y-4">
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
@@ -1596,7 +1623,7 @@ California Residents:
           ) : (
             <button
               onClick={handleComplete}
-              disabled={!userLocation || selectedServices.length === 0 || selectedDays.length === 0}
+              disabled={!hasSearched || filteredPartners.length === 0}
               className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
               Find Partners
