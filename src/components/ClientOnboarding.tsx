@@ -752,6 +752,18 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   };
   
   const handleComplete = async () => {
+    // Validate that at least one social activity is selected
+    if (selectedServices.length === 0) {
+      alert('Please select at least one social activity before continuing.');
+      return;
+    }
+    
+    // Validate that at least one day is selected
+    if (selectedDays.length === 0) {
+      alert('Please select at least one day that works for you before continuing.');
+      return;
+    }
+    
     await supabase.from('profiles').update({ profile_complete: true }).eq('id', user?.id);
     await refreshProfile();
     if (onComplete) onComplete();
@@ -1584,7 +1596,7 @@ California Residents:
           ) : (
             <button
               onClick={handleComplete}
-              disabled={!userLocation}
+              disabled={!userLocation || selectedServices.length === 0 || selectedDays.length === 0}
               className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
               Find Partners
