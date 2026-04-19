@@ -53,7 +53,7 @@ export default function LandingPage({ onGetStarted, onSignIn }: LandingPageProps
           {/* Centered Logo Icon */}
           <div className="flex justify-center pt-10 pb-2">
             <img
-              src="/.bolt/adonixlogo.png"
+              src="/adonixlogo.png"
               alt="Adonix"
               className="w-auto object-contain drop-shadow-lg"
               style={{ height: '100px' }}
