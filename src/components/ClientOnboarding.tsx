@@ -701,7 +701,22 @@ California Residents:
       </div>
       
       <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <div className="mb-4">
+        <button
+          onClick={handleFindPartners}
+          disabled={locationLoading}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+        >
+          {locationLoading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          ) : (
+            <Search className="w-5 h-5" />
+          )}
+          {locationLoading ? 'Finding partners...' : 'FIND A SWEAT BUDDY NEARBY'}
+        </button>
+        
+        <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
+        
+        <div className="mt-4">
           <div className="flex justify-between mb-2">
             <label className="text-sm text-gray-400">How far are you willing to travel?</label>
             <span className="text-red-400 font-medium">{searchRadius} miles</span>
@@ -719,21 +734,6 @@ California Residents:
             <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
           </div>
         </div>
-        
-        <button
-          onClick={handleFindPartners}
-          disabled={locationLoading}
-          className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-        >
-          {locationLoading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          ) : (
-            <Search className="w-5 h-5" />
-          )}
-          {locationLoading ? 'Finding partners...' : 'FIND A SWEAT BUDDY NEARBY'}
-        </button>
-        
-        <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
       </div>
       
       {/* Partners Results Section - Only shows after search */}
