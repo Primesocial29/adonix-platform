@@ -145,54 +145,56 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [minAdvanceNotice, setMinAdvanceNotice] = useState(72);
   const [cancellationWindow, setCancellationWindow] = useState(24);
 
+  // UPDATED: Split terms into two separate states
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
 
   useEffect(() => {
-  const load = async () => {
-    if (!user) {
-      console.log('No user found, waiting...');
-      return;
-    }
-    console.log('Loading partner profile for user:', user.id);
-    try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-      console.log('Profile data:', data);
-      console.log('Error:', error);
-      if (data) {
-        setLivePhotoUrl(data.live_photo_url);
-        setBio(data.bio || '');
-        setCertifications((data as any).certifications || []);
-        setServiceTypes(data.service_types || []);
-        setCustomServiceTypes(data.custom_service_types || []);
-        if (data.service_rates) {
-          setServiceRates(data.service_rates as Record<string, ServiceRate>);
-        }
-        setHalfHourEnabled(data.half_hour_enabled || false);
-        setServiceAreas(data.service_areas || []);
-        setServiceAreasCenterLat(data.service_areas_center_lat);
-        setServiceAreasCenterLng(data.service_areas_center_lng);
-        setTravelRadius((data as any).travel_radius || 5);
-        if (data.availability && (data.availability as any[]).length > 0) {
-          const merged = DAYS_OF_WEEK.map(day => {
-            const existing = (data.availability as { day: string; times: string[] }[]).find(a => a.day === day);
-            return existing || { day, times: [] };
-          });
-          setAvailability(merged);
-        }
-        setMinAdvanceNotice(data.min_advance_notice || 72);
-        setCancellationWindow(data.cancellation_window || 24);
+    const load = async () => {
+      if (!user) {
+        console.log('No user found, waiting...');
+        return;
       }
-    } catch (err) {
-      console.error('Load error:', err);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
-  load();
-}, [user]);
+      console.log('Loading partner profile for user:', user.id);
+      try {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        console.log('Profile data:', data);
+        console.log('Error:', error);
+        if (data) {
+          setLivePhotoUrl(data.live_photo_url);
+          setBio(data.bio || '');
+          setCertifications((data as any).certifications || []);
+          setServiceTypes(data.service_types || []);
+          setCustomServiceTypes(data.custom_service_types || []);
+          if (data.service_rates) {
+            setServiceRates(data.service_rates as Record<string, ServiceRate>);
+          }
+          setHalfHourEnabled(data.half_hour_enabled || false);
+          setServiceAreas(data.service_areas || []);
+          setServiceAreasCenterLat(data.service_areas_center_lat);
+          setServiceAreasCenterLng(data.service_areas_center_lng);
+          setTravelRadius((data as any).travel_radius || 5);
+          if (data.availability && (data.availability as any[]).length > 0) {
+            const merged = DAYS_OF_WEEK.map(day => {
+              const existing = (data.availability as { day: string; times: string[] }[]).find(a => a.day === day);
+              return existing || { day, times: [] };
+            });
+            setAvailability(merged);
+          }
+          setMinAdvanceNotice(data.min_advance_notice || 72);
+          setCancellationWindow(data.cancellation_window || 24);
+        }
+      } catch (err) {
+        console.error('Load error:', err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    load();
+  }, [user]);
 
   const isPhotoComplete = () => !!livePhotoUrl;
   const isBioComplete = () => {
@@ -211,7 +213,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
   const isServiceAreasComplete = () => serviceAreas.length > 0 && serviceAreas.every(a => a.lat && a.lng);
   const isAvailabilityComplete = () => availability.some(a => a.times.length > 0);
-  const isTermsComplete = () => termsAccepted;
+  // UPDATED: Both terms must be accepted
+  const isTermsComplete = () => termsAccepted && privacyAccepted;
 
   const completedSections = [
     isPhotoComplete(),
@@ -502,80 +505,80 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
 
   const handleSave = async () => {
-  if (!user) {
-    console.error('No user found');
-    alert('You must be logged in to save.');
-    return;
-  }
-  
-  console.log('=== SAVING PROFILE ===');
-  console.log('canSave:', canSave);
-  console.log('bio length:', bio.length);
-  console.log('contains blocked words:', containsBlockedWords(bio));
-  console.log('serviceAreas:', serviceAreas);
-  console.log('serviceAreasCenterLat:', serviceAreasCenterLat);
-  console.log('serviceAreasCenterLng:', serviceAreasCenterLng);
-  
-  if (!canSave) { 
-    alert('Please complete all sections before saving.'); 
-    return; 
-  }
-  
-  if (containsBlockedWords(bio)) {
-    alert('Your bio contains blocked words. Please remove them before saving.');
-    return;
-  }
-  
-  if (serviceAreas.some(a => !a.lat || !a.lng)) {
-    alert('All meetup locations must be selected from the map search. Manual entries without GPS coordinates are not allowed.');
-    return;
-  }
-  
-  setSaving(true);
-  try {
-    const updateData = {
-      bio,
-      certifications,
-      service_types: serviceTypes,
-      custom_service_types: customServiceTypes,
-      service_rates: serviceRates,
-      half_hour_enabled: halfHourEnabled,
-      service_areas: serviceAreas,
-      service_areas_center_lat: serviceAreasCenterLat,
-      service_areas_center_lng: serviceAreasCenterLng,
-      travel_radius: travelRadius,
-      availability,
-      min_advance_notice: minAdvanceNotice,
-      cancellation_window: cancellationWindow,
-      is_partner: true,
-      profile_complete: true,
-      updated_at: new Date().toISOString(),
-    };
-    
-    console.log('Updating profile with:', updateData);
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updateData)
-      .eq('id', user.id)
-      .select();
-    
-    if (error) {
-      console.error('Supabase error details:', error);
-      throw error;
+    if (!user) {
+      console.error('No user found');
+      alert('You must be logged in to save.');
+      return;
     }
     
-    console.log('Update successful:', data);
-    await refreshProfile();
-    if (onComplete) onComplete();
-    else window.location.href = '/dashboard';
-  } catch (err) {
-    console.error('Save error details:', err);
-    alert(`Failed to save profile: ${err.message || 'Please try again.'}`);
-  } finally {
-    setSaving(false);
-  }
-};
+    console.log('=== SAVING PROFILE ===');
+    console.log('canSave:', canSave);
+    console.log('bio length:', bio.length);
+    console.log('contains blocked words:', containsBlockedWords(bio));
+    console.log('serviceAreas:', serviceAreas);
+    console.log('serviceAreasCenterLat:', serviceAreasCenterLat);
+    console.log('serviceAreasCenterLng:', serviceAreasCenterLng);
+    
+    if (!canSave) { 
+      alert('Please complete all sections before saving.'); 
+      return; 
+    }
+    
+    if (containsBlockedWords(bio)) {
+      alert('Your bio contains blocked words. Please remove them before saving.');
+      return;
+    }
+    
+    if (serviceAreas.some(a => !a.lat || !a.lng)) {
+      alert('All meetup locations must be selected from the map search. Manual addresses without GPS coordinates are not allowed.');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const updateData = {
+        bio,
+        certifications,
+        service_types: serviceTypes,
+        custom_service_types: customServiceTypes,
+        service_rates: serviceRates,
+        half_hour_enabled: halfHourEnabled,
+        service_areas: serviceAreas,
+        service_areas_center_lat: serviceAreasCenterLat,
+        service_areas_center_lng: serviceAreasCenterLng,
+        travel_radius: travelRadius,
+        availability,
+        min_advance_notice: minAdvanceNotice,
+        cancellation_window: cancellationWindow,
+        is_partner: true,
+        profile_complete: true,
+        updated_at: new Date().toISOString(),
+      };
+      
+      console.log('Updating profile with:', updateData);
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id)
+        .select();
+      
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+      
+      console.log('Update successful:', data);
+      await refreshProfile();
+      if (onComplete) onComplete();
+      else window.location.href = '/dashboard';
+    } catch (err: any) {
+      console.error('Save error details:', err);
+      alert(`Failed to save profile: ${err.message || 'Please try again.'}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const sampleService = allSelectedServices[0];
   const sampleRate = sampleService ? (serviceRates[sampleService]?.hourly || 100) : 100;
@@ -1160,7 +1163,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           </div>
         </div>
 
-        {/* SECTION 8: TERMS */}
+        {/* SECTION 8: TERMS - UPDATED with separate checkboxes */}
         <div className={`p-6 rounded-2xl border ${isTermsComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'}`}>
           <div className="flex items-center gap-2 mb-4">
             {isTermsComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
@@ -1177,7 +1180,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               <li>You are solely responsible for your safety, conduct, and compliance with local laws.</li>
             </ul>
           </div>
-          <label className="flex items-start gap-3 cursor-pointer">
+          
+          {/* TERMS OF SERVICE CHECKBOX - Separate */}
+          <label className="flex items-start gap-3 cursor-pointer mb-4">
             <input
               type="checkbox"
               checked={termsAccepted}
@@ -1193,17 +1198,34 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               >
                 Terms of Service
               </button>
-              {' '}and{' '}
+              . <span className="text-red-500">*</span>
+            </span>
+          </label>
+          
+          {/* PRIVACY POLICY CHECKBOX - Separate */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              className="mt-0.5 w-5 h-5 accent-red-600 cursor-pointer shrink-0"
+            />
+            <span className="text-sm text-gray-300">
+              I have read and agree to the{' '}
               <button
                 type="button"
                 onClick={() => setLegalModal('privacy')}
                 className="text-red-400 underline hover:text-red-300 transition-colors"
               >
                 Privacy Policy
-              </button>.
-              I understand this is a private social network, not a professional services platform.
+              </button>
+              . <span className="text-red-500">*</span>
             </span>
           </label>
+          
+          <p className="text-xs text-yellow-400 mt-3">
+            ⚠️ You must agree to BOTH the Terms of Service AND Privacy Policy to finalize your profile.
+          </p>
         </div>
 
       </div>
@@ -1244,10 +1266,19 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         locationName={pendingLocation?.display_name || ''}
       />
 
+      {/* UPDATED: LegalModal with onAccept callback */}
       {legalModal && (
         <LegalModal
           type={legalModal}
           onClose={() => setLegalModal(null)}
+          onAccept={() => {
+            if (legalModal === 'terms') {
+              setTermsAccepted(true);
+            } else if (legalModal === 'privacy') {
+              setPrivacyAccepted(true);
+            }
+            setLegalModal(null);
+          }}
         />
       )}
     </div>
