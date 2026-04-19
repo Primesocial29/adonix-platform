@@ -414,7 +414,7 @@ export default function PartnerDashboard() {
         <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img
-              src="/.bolt/adonixlogo.png"
+              src="/adonixlogo.png"
               alt="Adonix"
               className="h-11 w-auto object-contain"
             />
