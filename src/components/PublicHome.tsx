@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, X } from 'lucide-react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import TrainerDashboard from "./TrainerDashboard";
-import BookingFlow, { BookingDetails } from './BookingFlow';
-import CheckoutScreen from './CheckoutScreen';
 import AuthModal from './AuthModal';
-import MyBookings from './MyBookings';
 
 // Simple View-Only Modal (no scroll requirement, just a close button)
 function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
@@ -124,23 +120,7 @@ export default function PublicHome() {
   const { user, profile, signOut, role, loading } = useAuth();
   
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | 'contact' | 'accessibility' | null>(null);
-
-  const handleBookTrainer = (partner: Profile) => {
-    setSelectedPartner(partner);
-  };
-
-  const handleProceedToCheckout = (details: BookingDetails) => {
-    setBookingDetails(details);
-    setSelectedPartner(null);
-  };
-
-  const handleBookingSuccess = () => {
-    setBookingDetails(null);
-    alert('Meetup invitation sent successfully!');
-  };
 
   const handleLogout = async () => {
     await signOut();
@@ -402,9 +382,7 @@ We are actively working to improve accessibility. If you experience any issues, 
         <div className="relative w-3/5 bg-black flex flex-col justify-center">
           <div className="relative z-10 px-8">
             
-            {/* ========================================================= */}
-            {/* PNG LOGO - MOVED HIGHER (more negative margin = higher) */}
-            {/* ========================================================= */}
+            {/* PNG LOGO */}
             <div style={{ 
               marginBottom: '120px',
               marginLeft: '-17px'
@@ -434,7 +412,6 @@ We are actively working to improve accessibility. If you experience any issues, 
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px', marginBottom: '8px' }}>Curated Meetups.</p>
               <p className="text-gray-200 tracking-wider font-bold" style={{ fontSize: '18px' }}>High-Standard Community</p>
             </div>
-            {/* ========================================================= */}
             
             {/* Right Side Text */}
             <div className="absolute left-0 z-20" style={{ 
@@ -517,22 +494,6 @@ We are actively working to improve accessibility. If you experience any issues, 
           </div>
         </div>
       </footer>
-
-      {selectedPartner && (
-        <BookingFlow
-          partner={selectedPartner}
-          onClose={() => setSelectedPartner(null)}
-          onProceedToCheckout={handleProceedToCheckout}
-        />
-      )}
-
-      {bookingDetails && (
-        <CheckoutScreen
-          bookingDetails={bookingDetails}
-          onClose={() => setBookingDetails(null)}
-          onSuccess={handleBookingSuccess}
-        />
-      )}
 
       {/* AuthModal is commented out since we're going directly to client-setup
       {showAuthModal && (
