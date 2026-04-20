@@ -14,6 +14,12 @@ import AccessibilityPage from './components/AccessibilityPage';
 import BrowsePartners from './components/BrowsePartners';
 import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
+import LoginPage from './components/LoginPage';
+
+// Add this route (around line 100-110):
+if (currentRoute === '/login') {
+  return <LoginPage />;
+}
 
 // Simple Role Selection Component - No new file needed
 function RoleSelection() {
