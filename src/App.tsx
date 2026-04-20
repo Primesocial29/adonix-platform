@@ -108,34 +108,38 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
   const { signUp, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [step1Error, setStep1Error] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Step 1: Account Setup
+  // Account fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Validation errors
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
-  const [step1Error, setStep1Error] = useState('');
-  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   
-  // Birth date dropdowns
+  // Birth date
   const [birthMonth, setBirthMonth] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [birthYear, setBirthYear] = useState('');
   const [birthDateError, setBirthDateError] = useState('');
   const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
   const [facialAgeConsent, setFacialAgeConsent] = useState(false);
+  
+  // Terms
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
 
-  // Password strength checks
+  // Password strength
   const passwordMinLength = password.length >= 8;
   const passwordHasUpper = /[A-Z]/.test(password);
   const passwordHasLower = /[a-z]/.test(password);
@@ -155,43 +159,67 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
     return age;
   };
 
-  const validateAgeFromDropdowns = () => {
+  const validateAge = () => {
     if (!birthMonth || !birthDay || !birthYear) {
-      return { isValid: false, error: 'Please enter your full birth date.' };
+      setBirthDateError('Please enter your full birth date.');
+      return false;
     }
     const age = calculateAge(birthMonth, birthDay, birthYear);
     if (age === null || age < 18) {
-      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit.' };
+      setBirthDateError('You must be at least 18 years old to use Adonix Fit.');
+      return false;
     }
-    return { isValid: true, error: null };
+    setBirthDateError('');
+    return true;
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    
+    if (!firstName.trim()) { setFirstNameError('First name is required'); isValid = false; }
+    else { setFirstNameError(''); }
+    
+    if (!lastName.trim()) { setLastNameError('Last name is required'); isValid = false; }
+    else { setLastNameError(''); }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email)) { setEmailError('Please enter a valid email address'); isValid = false; }
+    else { setEmailError(''); }
+    
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phone.trim() || phoneDigits.length !== 10) { setPhoneError('Please enter a valid 10-digit phone number'); isValid = false; }
+    else { setPhoneError(''); }
+    
+    if (!isPasswordValid) { isValid = false; }
+    
+    if (!validateAge()) { isValid = false; }
+    
+    if (!ageVerifyConsent) { isValid = false; }
+    if (!facialAgeConsent) { isValid = false; }
+    if (!termsAccepted) { isValid = false; }
+    if (!privacyAccepted) { isValid = false; }
+    if (!gatekeeperAccepted) { isValid = false; }
+    
+    return isValid;
   };
 
   const handleFirstNameChange = (val: string) => {
     setFirstName(val);
-    if (!val.trim()) {
-      setFirstNameError('First name is required');
-    } else {
-      setFirstNameError('');
-    }
+    if (!val.trim()) setFirstNameError('First name is required');
+    else setFirstNameError('');
   };
 
   const handleLastNameChange = (val: string) => {
     setLastName(val);
-    if (!val.trim()) {
-      setLastNameError('Last name is required');
-    } else {
-      setLastNameError('');
-    }
+    if (!val.trim()) setLastNameError('Last name is required');
+    else setLastNameError('');
   };
 
   const handleEmailChange = (val: string) => {
     setEmail(val);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!val.trim() || !emailRegex.test(val)) {
-      setEmailError('Please enter a valid email address');
-    } else {
-      setEmailError('');
-    }
+    if (!val.trim() || !emailRegex.test(val)) setEmailError('Please enter a valid email address');
+    else setEmailError('');
   };
 
   const handlePhoneChange = (val: string) => {
@@ -202,34 +230,21 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
     if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
     setPhone(formatted);
     
-    if (digits.length === 10 && digits[0] >= '2') {
-      setPhoneError('');
-    } else if (digits.length > 0 && digits.length !== 10) {
-      setPhoneError('Please enter a valid 10-digit phone number');
-    } else if (digits.length === 10 && digits[0] < '2') {
-      setPhoneError('Please enter a valid US phone number');
-    } else {
-      setPhoneError('');
-    }
+    if (digits.length === 10 && digits[0] >= '2') setPhoneError('');
+    else if (digits.length > 0 && digits.length !== 10) setPhoneError('Please enter a valid 10-digit phone number');
+    else if (digits.length === 10 && digits[0] < '2') setPhoneError('Please enter a valid US phone number');
+    else setPhoneError('');
   };
 
   const handlePasswordChange = (val: string) => {
     setPassword(val);
-    if (!val) {
-      setPasswordError('');
-    } else if (!passwordMinLength) {
-      setPasswordError('Password must be at least 8 characters');
-    } else if (!passwordHasUpper) {
-      setPasswordError('Password must contain at least 1 uppercase letter');
-    } else if (!passwordHasLower) {
-      setPasswordError('Password must contain at least 1 lowercase letter');
-    } else if (!passwordHasNumber) {
-      setPasswordError('Password must contain at least 1 number');
-    } else if (!passwordHasSpecial) {
-      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-    } else {
-      setPasswordError('');
-    }
+    if (!val) setPasswordError('');
+    else if (!passwordMinLength) setPasswordError('Password must be at least 8 characters');
+    else if (!passwordHasUpper) setPasswordError('Password must contain at least 1 uppercase letter');
+    else if (!passwordHasLower) setPasswordError('Password must contain at least 1 lowercase letter');
+    else if (!passwordHasNumber) setPasswordError('Password must contain at least 1 number');
+    else if (!passwordHasSpecial) setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
+    else setPasswordError('');
   };
 
   const handleTermsAccept = () => {
@@ -242,43 +257,17 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
     setShowTermsModal(null);
   };
 
-  const handleClose = () => {
-    setShowConfirmModal(true);
-  };
-
+  const handleClose = () => setShowConfirmModal(true);
   const confirmLeave = async () => {
     await signOut();
     window.location.href = '/';
-  };
-
-  const isFormComplete = () => {
-    let isValid = true;
-    
-    if (!firstName.trim()) { setFirstNameError('First name is required'); isValid = false; }
-    if (!lastName.trim()) { setLastNameError('Last name is required'); isValid = false; }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email)) { setEmailError('Please enter a valid email address'); isValid = false; }
-    const phoneDigits = phone.replace(/\D/g, '');
-    if (!phone.trim() || phoneDigits.length !== 10) { setPhoneError('Please enter a valid 10-digit phone number'); isValid = false; }
-    if (!isPasswordValid) { isValid = false; }
-    
-    const ageValidation = validateAgeFromDropdowns();
-    if (!ageValidation.isValid) { setBirthDateError(ageValidation.error); isValid = false; }
-    
-    if (!ageVerifyConsent) { isValid = false; }
-    if (!facialAgeConsent) { isValid = false; }
-    if (!termsAccepted) { isValid = false; }
-    if (!privacyAccepted) { isValid = false; }
-    if (!gatekeeperAccepted) { isValid = false; }
-    
-    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStep1Error('');
     
-    if (!isFormComplete()) {
+    if (!validateForm()) {
       setStep1Error('Please fill in all required fields and check all boxes.');
       return;
     }
@@ -296,14 +285,14 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
     }
   };
 
-  // Calculate progress
+  // Calculate progress - NO STATE UPDATES HERE
   const sections = [
     !!firstName && !firstNameError,
     !!lastName && !lastNameError,
     !!email && !emailError,
     !!phone && !phoneError,
     isPasswordValid,
-    birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent,
+    !!birthMonth && !!birthDay && !!birthYear && ageVerifyConsent && facialAgeConsent,
     termsAccepted && privacyAccepted && gatekeeperAccepted,
   ];
   const progress = Math.round((sections.filter(Boolean).length / sections.length) * 100);
@@ -363,7 +352,6 @@ California Residents:
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Close button - Top Right */}
           <div className="flex justify-end mb-4">
             <button onClick={handleClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
               <X className="w-6 h-6 text-gray-400 hover:text-white" />
@@ -376,7 +364,6 @@ California Residents:
             <p className="text-lg text-gray-300 mt-1">Join as a Partner</p>
           </div>
 
-          {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
               <span>Account Setup</span>
@@ -491,13 +478,12 @@ California Residents:
                 {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
               </div>
               
-              {/* Birth Date with Dropdowns */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-3 gap-2">
                   <select
                     value={birthMonth}
-                    onChange={(e) => setBirthMonth(e.target.value)}
+                    onChange={(e) => { setBirthMonth(e.target.value); setBirthDateError(''); }}
                     className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Month</option>
@@ -505,10 +491,9 @@ California Residents:
                       <option key={month} value={month}>{month}</option>
                     ))}
                   </select>
-
                   <select
                     value={birthDay}
-                    onChange={(e) => setBirthDay(e.target.value)}
+                    onChange={(e) => { setBirthDay(e.target.value); setBirthDateError(''); }}
                     className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Day</option>
@@ -516,10 +501,9 @@ California Residents:
                       <option key={day} value={day}>{day}</option>
                     ))}
                   </select>
-
                   <select
                     value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value)}
+                    onChange={(e) => { setBirthYear(e.target.value); setBirthDateError(''); }}
                     className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Year</option>
@@ -613,7 +597,6 @@ California Residents:
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-4 mt-8">
             <button
               onClick={handleClose}
@@ -623,8 +606,8 @@ California Residents:
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading || !isFormComplete()}
-              className={`flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
+              disabled={loading}
+              className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
               {loading ? 'Creating Account...' : 'CREATE ACCOUNT'}
             </button>
@@ -632,7 +615,6 @@ California Residents:
         </div>
       </div>
 
-      {/* Modals */}
       {showTermsModal === 'terms' && (
         <TermsModal
           isOpen={true}
@@ -856,7 +838,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm mt-8">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -882,7 +863,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </footer>
       </div>
 
-      {/* Modals */}
       <SimpleModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
@@ -918,76 +898,62 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // LOGIN PAGE ROUTE
   if (currentRoute === '/login') {
     return <LoginPage />;
   }
 
-  // ROLE SELECTION
   if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
     return <RoleSelection />;
   }
 
-  // Partner Setup Flow (with signup first if needed)
   if (currentRoute === '/partner-setup') {
     return <PartnerFlow />;
   }
 
-  // Client Dashboard
   if (currentRoute === '/client-dashboard') {
     return <ClientDashboard />;
   }
 
-  // Browse Partners
   if (currentRoute === '/browse') {
     return <BrowsePartners />;
   }
 
-  // My Requests
   if (currentRoute === '/my-requests') {
     window.location.href = '/client-dashboard';
     return null;
   }
 
-  // Dashboard
   if (currentRoute === '/dashboard') {
     return <PublicHome />;
   }
 
-  // Admin routes
   if (currentRoute === '/admin-view') {
     return <AdminDashboard />;
   }
 
-  // Partner Dashboard
   if (currentRoute === '/partner-dashboard') {
     return <PartnerDashboard />;
   }
 
-  // Trainer routes
   if (currentRoute === '/trainer-dashboard') {
     return <TrainerDashboard />;
   }
 
-  // CLIENT 4-STEP ONBOARDING
   if (currentRoute === '/client-setup') {
     return <ClientOnboarding onComplete={() => {
       window.location.href = '/client-dashboard';
     }} />;
   }
 
-  // Complete profile route
   if (currentRoute === '/complete-profile') {
     window.location.href = '/setup';
     return null;
   }
 
-  // Settings route
   if (currentRoute === '/settings') {
     return <Settings />;
   }
 
-  // Legal pages
   if (currentRoute === '/terms') {
     return <TermsPage />;
   }
@@ -998,17 +964,14 @@ function App() {
     return <ContactPage />;
   }
 
-  // Accessibility page
   if (currentRoute === '/accessibility') {
     return <AccessibilityPage />;
   }
 
-  // Safety page
   if (currentRoute === '/safety') {
     return <SafetyPage />;
   }
 
-  // Default
   return <RoleSelection />;
 }
 
