@@ -489,11 +489,11 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         <div className="max-w-7xl mx-auto px-6 py-8 flex-1">
-          {/* Back Button - Orange */}
+          {/* Back Button - Orange (standard size) */}
           <div className="mb-6">
             <button
               onClick={() => window.location.href = '/client-dashboard'}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+              className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105 inline-flex items-center gap-2"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
@@ -783,7 +783,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
         </div>
 
-        {/* Bottom Buttons - Back and Logout (properly sized) */}
+        {/* Bottom Buttons - Standard size matching app (py-4, text-lg) */}
         <div className="max-w-7xl mx-auto px-6 pb-8">
           <div className="flex gap-4">
             <button
