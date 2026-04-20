@@ -57,7 +57,7 @@ function formatTimeLabel(time: string): string {
 }
 
 // Confirm Leave Modal Component
-function ConfirmLeaveModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) {
+function ConfirmLeaveModal({ isOpen, onClose, onConfirm, message }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; message: string }) {
   if (!isOpen) return null;
 
   return (
@@ -66,7 +66,7 @@ function ConfirmLeaveModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; on
         <div className="text-center mb-4">
           <div className="text-4xl mb-3">⚠️</div>
           <h2 className="text-xl font-bold text-white">Leave this page?</h2>
-          <p className="text-gray-400 mt-2">Any unsaved changes will be lost.</p>
+          <p className="text-gray-400 mt-2">{message}</p>
         </div>
         <div className="flex gap-3 mt-6">
           <button
@@ -136,10 +136,11 @@ function SafetyConfirmationModal({ isOpen, onClose, onConfirm, locationName }: {
 }
 
 export default function PartnerProfileSetup({ onComplete }: { onComplete?: () => void }) {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, signOut } = useAuth();
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('Any unsaved changes will be lost.');
 
   const [showCamera, setShowCamera] = useState(false);
   const [livePhotoUrl, setLivePhotoUrl] = useState<string | null>(null);
@@ -265,14 +266,17 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const canSave = completedSections.every(Boolean);
 
   const handleClose = () => {
+    setConfirmMessage('Any unsaved changes will be lost.');
     setShowConfirmModal(true);
   };
 
   const handleBack = () => {
+    setConfirmMessage('Any unsaved changes will be lost. You will be signed out.');
     setShowConfirmModal(true);
   };
 
-  const confirmLeave = () => {
+  const confirmLeave = async () => {
+    await signOut();
     window.location.href = '/';
   };
 
@@ -670,8 +674,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </button>
           </div>
 
-          {/* Progress Header */}
-          <div className="mb-8">
+          {/* Progress Header - Sticky */}
+          <div className="sticky top-[73px] z-10 bg-black pt-2 pb-4">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
               <span>Partner Profile Setup</span>
               <span className="text-red-400 font-mono font-bold">{progress}%</span>
@@ -701,7 +705,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             <div className="flex items-center gap-2 mb-4">
               {isPhotoComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
               <Camera className="w-5 h-5 text-red-500" />
-              <h2 className="text-base font-semibold">Profile Photo</h2>
+              <h2 className="text-base font-semibold">Profile Photo <span className="text-red-500">*</span></h2>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white/10 border-2 border-white/20 flex-shrink-0">
@@ -739,7 +743,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           <div className={`p-6 rounded-2xl border ${isBioComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'} mb-8`}>
             <div className="flex items-center gap-2 mb-4">
               {isBioComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
-              <h2 className="text-base font-semibold">Your Bio</h2>
+              <h2 className="text-base font-semibold">Your Bio <span className="text-red-500">*</span></h2>
             </div>
             <textarea
               value={bio}
@@ -827,7 +831,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             <div className="flex items-center gap-2 mb-2">
               {isServicesComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
               <DollarSign className="w-5 h-5 text-red-500" />
-              <h2 className="text-base font-semibold">Activities & Suggested Contributions</h2>
+              <h2 className="text-base font-semibold">Activities & Suggested Contributions <span className="text-red-500">*</span></h2>
             </div>
             <p className="text-xs text-gray-400 mb-4">
               Select your activities and set a suggested contribution per meetup. Min $50 · Max $500/hr.
@@ -963,7 +967,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               <div className="flex items-center gap-2">
                 {isServiceAreasComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
                 <MapPin className="w-5 h-5 text-red-500" />
-                <h2 className="text-base font-semibold">The "Don't Be Weird" Location Picker</h2>
+                <h2 className="text-base font-semibold">The "Don't Be Weird" Location Picker <span className="text-red-500">*</span></h2>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-mono px-2 py-0.5 rounded-full ${serviceAreas.length >= MAX_LOCATIONS ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-gray-400'}`}>
@@ -1082,7 +1086,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             <div className="flex items-center gap-2 mb-4">
               {isAvailabilityComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
               <Clock className="w-5 h-5 text-red-500" />
-              <h2 className="text-base font-semibold">Availability Schedule</h2>
+              <h2 className="text-base font-semibold">Availability Schedule <span className="text-red-500">*</span></h2>
             </div>
             <p className="text-xs text-gray-400 mb-4">
               Select days and 30-minute time slots when you're available for meetups (6 AM – 10 PM).
@@ -1187,7 +1191,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           <div className={`p-6 rounded-2xl border ${isTermsComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'} mb-8`}>
             <div className="flex items-center gap-2 mb-4">
               {isTermsComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
-              <h2 className="text-base font-semibold">Terms & Legal Acknowledgment</h2>
+              <h2 className="text-base font-semibold">Terms & Legal Acknowledgment <span className="text-red-500">*</span></h2>
             </div>
             <div className="p-4 bg-black rounded-xl border border-white/10 mb-4 text-sm text-gray-300 space-y-2">
               <p className="font-medium">By joining as a Partner you acknowledge:</p>
@@ -1304,6 +1308,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={confirmLeave}
+        message={confirmMessage}
       />
     </>
   );
