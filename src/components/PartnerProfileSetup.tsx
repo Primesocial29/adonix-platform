@@ -188,7 +188,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   useEffect(() => {
     const load = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoadingProfile(false);
+        return;
+      }
       try {
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
         if (data) {
@@ -670,7 +673,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
           {/* Progress Header */}
           <div className="mb-8">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>Profile Completion</span>
+              <span>Partner Profile Setup</span>
               <span className="text-red-400 font-mono font-bold">{progress}%</span>
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
