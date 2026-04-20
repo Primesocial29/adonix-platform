@@ -202,14 +202,14 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               <div className="text-xs text-gray-500">
                 © 2026 ADONIX. All rights reserved.
               </div>
-              <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-500">
-                <button onClick={() => setShowTermsModal(true)} className="hover:text-white transition-colors">
+              <div className="flex flex-wrap justify-center gap-6 text-xs">
+                <button onClick={() => setShowTermsModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
                   Terms of Service
                 </button>
-                <button onClick={() => setShowPrivacyModal(true)} className="hover:text-white transition-colors">
+                <button onClick={() => setShowPrivacyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
                   Privacy Policy
                 </button>
-                <button onClick={() => setShowSafetyModal(true)} className="hover:text-white transition-colors">
+                <button onClick={() => setShowSafetyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
                   Safety Guidelines
                 </button>
               </div>
