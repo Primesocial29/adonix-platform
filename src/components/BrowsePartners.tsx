@@ -493,7 +493,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           <div className="mb-6">
             <button
               onClick={() => window.location.href = '/client-dashboard'}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
@@ -783,18 +783,18 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
         </div>
 
-        {/* Bottom Buttons - Back and Logout */}
+        {/* Bottom Buttons - Back and Logout (properly sized) */}
         <div className="max-w-7xl mx-auto px-6 pb-8">
           <div className="flex gap-4">
             <button
               onClick={() => window.location.href = '/client-dashboard'}
-              className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all"
+              className="flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold text-lg transition-all transform hover:scale-105"
             >
               BACK
             </button>
             <button
               onClick={handleLogout}
-              className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+              className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold text-lg transition-all transform hover:scale-105"
             >
               LOGOUT
             </button>
