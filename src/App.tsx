@@ -16,11 +16,6 @@ import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
 
-// Add this route (around line 100-110):
-if (currentRoute === '/login') {
-  return <LoginPage />;
-}
-
 // Simple Role Selection Component - No new file needed
 function RoleSelection() {
   const [selectedRole, setSelectedRole] = useState<'client' | 'partner' | null>(null);
@@ -48,7 +43,7 @@ function RoleSelection() {
               className="h-10 w-auto"
             />
             <span className="text-xl font-bold text-white">ADONIX</span>
-            <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
+              <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
           </div>
         </div>
       </div>
@@ -110,8 +105,13 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // LOGIN PAGE ROUTE - Must come before role selection
+  if (currentRoute === '/login') {
+    return <LoginPage />;
+  }
+
   // ROLE SELECTION - This is the main entry point for setup
-  if (currentRoute === '/setup' || currentRoute === '/login' || currentRoute === '/') {
+  if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
     // Check if user already has a role saved
     const savedRole = localStorage.getItem('userRole');
     if (savedRole === 'client' && currentRoute !== '/') {
@@ -138,7 +138,6 @@ function App() {
 
   // My Requests page (placeholder - redirect to client dashboard for now)
   if (currentRoute === '/my-requests') {
-    // This will be a separate component later
     window.location.href = '/client-dashboard';
     return null;
   }
