@@ -205,63 +205,98 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
-  const handleCreateAccount = const handleCreateAccount = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setAccountError('');
-  
-  if (!firstName.trim()) {
-    setAccountError('First name is required');
-    return;
-  }
-  if (!lastName.trim()) {
-    setAccountError('Last name is required');
-    return;
-  }
-  if (!email.trim()) {
-    setAccountError('Email is required');
-    return;
-  }
-  const phoneDigits = phone.replace(/\D/g, '');
-  if (phoneDigits.length !== 10) {
-    setAccountError('Please enter a valid 10-digit phone number');
-    return;
-  }
-  if (!isPasswordValid) {
-    setAccountError('Please enter a valid password');
-    return;
-  }
-  
-  setCreatingAccount(true);
-  try {
-    const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-    await signUp(email, password, 'partner', autoUsername, null);
-    // Instead of reloading, just hide the account form
-    setShowAccountForm(false);
-    setCreatingAccount(false);
-  } catch (err: any) {
-    setAccountError(err.message || 'Failed to create account. Please try again.');
-    setCreatingAccount(false);
-  }
-};
-
- // Watch for user becoming available after signup
-useEffect(() => {
-  if (user && showAccountForm) {
-    setShowAccountForm(false);
-    setLoadingProfile(true);
-  }
-}, [user]);
-
-useEffect(() => {
-  const load = async () => {
-    if (!user) {
-      setLoadingProfile(false);
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAccountError('');
+    
+    if (!firstName.trim()) {
+      setAccountError('First name is required');
       return;
     }
-    // ... rest of existing load function stays the same ...
+    if (!lastName.trim()) {
+      setAccountError('Last name is required');
+      return;
+    }
+    if (!email.trim()) {
+      setAccountError('Email is required');
+      return;
+    }
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      setAccountError('Please enter a valid 10-digit phone number');
+      return;
+    }
+    if (!isPasswordValid) {
+      setAccountError('Please enter a valid password');
+      return;
+    }
+    
+    setCreatingAccount(true);
+    try {
+      const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+      await signUp(email, password, 'partner', autoUsername, null);
+      // Instead of reloading, just hide the account form
+      setShowAccountForm(false);
+    } catch (err: any) {
+      setAccountError(err.message || 'Failed to create account. Please try again.');
+    } finally {
+      setCreatingAccount(false);
+    }
   };
-  load();
-}, [user]);
+
+  // Watch for user becoming available after signup
+  useEffect(() => {
+    if (user && showAccountForm) {
+      setShowAccountForm(false);
+      setLoadingProfile(true);
+    }
+  }, [user, showAccountForm]);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) {
+        setLoadingProfile(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        if (data) {
+          setLivePhotoUrl(data.live_photo_url);
+          setBio(data.bio || '');
+          setCertifications((data as any).certifications || []);
+          setServiceTypes(data.service_types || []);
+          setCustomServiceTypes(data.custom_service_types || []);
+          if (data.service_rates) {
+            const rates = data.service_rates as Record<string, ServiceRate>;
+            setServiceRates(rates);
+            const halfHourSettings: Record<string, boolean> = {};
+            Object.keys(rates).forEach(service => {
+              halfHourSettings[service] = !!(rates[service]?.halfHour && rates[service].halfHour > 0);
+            });
+            setServiceHalfHourEnabled(halfHourSettings);
+          }
+          setServiceAreas(data.service_areas || []);
+          setServiceAreasCenterLat(data.service_areas_center_lat);
+          setServiceAreasCenterLng(data.service_areas_center_lng);
+          setTravelRadius((data as any).travel_radius || 5);
+          if (data.availability && (data.availability as any[]).length > 0) {
+            const merged = DAYS_OF_WEEK.map(day => {
+              const existing = (data.availability as { day: string; times: string[] }[]).find(a => a.day === day);
+              return existing || { day, times: [] };
+            });
+            setAvailability(merged);
+          }
+          setMinAdvanceNotice(data.min_advance_notice || 72);
+          setCancellationWindow(data.cancellation_window || 24);
+        }
+      } catch (err) {
+        console.error('Load error:', err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    load();
+  }, [user]);
 
   const isPhotoComplete = () => !!livePhotoUrl;
   const isBioComplete = () => {
@@ -663,7 +698,7 @@ useEffect(() => {
     }
   };
 
-  // If user is not logged in, show account creation form
+  // If showAccountForm is true, show account creation form
   if (showAccountForm) {
     return (
       <>
