@@ -205,44 +205,44 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAccountError('');
-    
-    if (!firstName.trim()) {
-      setAccountError('First name is required');
-      return;
-    }
-    if (!lastName.trim()) {
-      setAccountError('Last name is required');
-      return;
-    }
-    if (!email.trim()) {
-      setAccountError('Email is required');
-      return;
-    }
-    const phoneDigits = phone.replace(/\D/g, '');
-    if (phoneDigits.length !== 10) {
-      setAccountError('Please enter a valid 10-digit phone number');
-      return;
-    }
-    if (!isPasswordValid) {
-      setAccountError('Please enter a valid password (8+ chars, upper, lower, number, special)');
-      return;
-    }
-    
-    setCreatingAccount(true);
-    try {
-      const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-      await signUp(email, password, 'partner', autoUsername, null);
-      // After successful signup, reload to show profile setup
-      window.location.reload();
-    } catch (err: any) {
-      setAccountError(err.message || 'Failed to create account. Please try again.');
-    } finally {
-      setCreatingAccount(false);
-    }
-  };
+  const handleCreateAccount = const handleCreateAccount = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setAccountError('');
+  
+  if (!firstName.trim()) {
+    setAccountError('First name is required');
+    return;
+  }
+  if (!lastName.trim()) {
+    setAccountError('Last name is required');
+    return;
+  }
+  if (!email.trim()) {
+    setAccountError('Email is required');
+    return;
+  }
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length !== 10) {
+    setAccountError('Please enter a valid 10-digit phone number');
+    return;
+  }
+  if (!isPasswordValid) {
+    setAccountError('Please enter a valid password');
+    return;
+  }
+  
+  setCreatingAccount(true);
+  try {
+    const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+    await signUp(email, password, 'partner', autoUsername, null);
+    // Instead of reloading, just hide the account form
+    setShowAccountForm(false);
+    setCreatingAccount(false);
+  } catch (err: any) {
+    setAccountError(err.message || 'Failed to create account. Please try again.');
+    setCreatingAccount(false);
+  }
+};
 
   useEffect(() => {
     const load = async () => {
