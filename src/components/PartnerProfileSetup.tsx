@@ -56,8 +56,39 @@ function formatTimeLabel(time: string): string {
   return `${display}:${minute} ${period}`;
 }
 
+// Footer Modal Component - view only, no agreement needed
+function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
+          {content}
+        </div>
+        
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Confirm Leave Modal Component
-function ConfirmLeaveModal({ isOpen, onClose, onConfirm, message }: { isOpen: boolean; onClose: () => void; onConfirm: () => void; message: string }) {
+function ConfirmLeaveModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) {
   if (!isOpen) return null;
 
   return (
@@ -66,7 +97,7 @@ function ConfirmLeaveModal({ isOpen, onClose, onConfirm, message }: { isOpen: bo
         <div className="text-center mb-4">
           <div className="text-4xl mb-3">⚠️</div>
           <h2 className="text-xl font-bold text-white">Leave this page?</h2>
-          <p className="text-gray-400 mt-2">{message}</p>
+          <p className="text-gray-400 mt-2">Any unsaved changes will be lost.</p>
         </div>
         <div className="flex gap-3 mt-6">
           <button
@@ -140,7 +171,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmMessage, setConfirmMessage] = useState('Any unsaved changes will be lost.');
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   const [showCamera, setShowCamera] = useState(false);
   const [livePhotoUrl, setLivePhotoUrl] = useState<string | null>(null);
@@ -180,10 +213,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   const [minAdvanceNotice, setMinAdvanceNotice] = useState(72);
   const [cancellationWindow, setCancellationWindow] = useState(24);
-
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
 
@@ -252,7 +281,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   };
   const isServiceAreasComplete = () => serviceAreas.length > 0 && serviceAreas.every(a => a.lat && a.lng);
   const isAvailabilityComplete = () => availability.some(a => a.times.length > 0);
-  const isTermsComplete = () => termsAccepted && privacyAccepted;
+  const isTermsComplete = () => true; // Already agreed during signup
 
   const completedSections = [
     isPhotoComplete(),
@@ -260,18 +289,16 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     isServicesComplete(),
     isServiceAreasComplete(),
     isAvailabilityComplete(),
-    isTermsComplete(),
+    true, // Terms already agreed
   ];
   const progress = Math.round((completedSections.filter(Boolean).length / completedSections.length) * 100);
   const canSave = completedSections.every(Boolean);
 
   const handleClose = () => {
-    setConfirmMessage('Any unsaved changes will be lost.');
     setShowConfirmModal(true);
   };
 
   const handleBack = () => {
-    setConfirmMessage('Any unsaved changes will be lost. You will be signed out.');
     setShowConfirmModal(true);
   };
 
@@ -644,6 +671,74 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
     );
   }
 
+  const footerTermsContent = `ADONIX FIT - TERMS OF SERVICE
+Effective: April 17, 2026 | Prime Social LLC
+
+1. ACCEPTANCE
+Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dating or escort services. Solicitation results in a permanent ban.
+
+2. ELIGIBILITY & SAFETY WARRANTY
+You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender.
+
+3. BIPA COMPLIANCE
+Facial estimation data is deleted immediately after verification. Separate written consent required.
+
+4. ZERO-TOLERANCE
+Immediate permanent ban for: Harassment, Stalking, Non-Consensual Photos, Nudity, AI Impersonation, External Payments.
+
+5. PUBLIC ONLY
+Meetings in private residences, hotels, or any non-public location are a material breach.
+
+6. ASSUMPTION OF RISK
+YOU VOLUNTARILY ASSUME ALL RISKS OF PHYSICAL ACTIVITY.
+
+7. LIMITATION OF LIABILITY
+TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED $100.
+
+8. ARBITRATION & CLASS ACTION WAIVER
+Binding arbitration in Orange County, FL. CLASS ACTION WAIVER INCLUDED.
+
+9. CONTACT
+primesocial@primesocial.xyz | Prime Social LLC | Orange County, Florida`;
+
+  const footerPrivacyContent = `ADONIX FIT - PRIVACY POLICY
+Effective: April 17, 2026 | Prime Social LLC
+
+1. DATA COLLECTION
+Prime Social LLC collects identifiers (email, username, IP address, device ID) and fitness data. Age verification data is deleted immediately after 18+ confirmation.
+
+2. LOCATION DATA
+GPS is used only for session check-in verification and SOS feature. Location data is not retained after the session ends.
+
+3. BIOMETRICS
+Per BIPA, facial estimation data is processed and purged instantly. Separate written consent required.
+
+4. AI MODERATION
+AI scans user-generated content for safety violations. Human review available upon request.
+
+5. NO SALE OF DATA
+Prime Social LLC does not sell personal data to third parties.
+
+6. YOUR RIGHTS
+Per CCPA/CPRA, Florida SB 1722, you have the right to access, correct, delete, and port your data.
+
+7. CONTACT
+primesocial@primesocial.xyz`;
+
+  const footerSafetyContent = `ADONIX FIT - SAFETY GUIDELINES
+
+1. Public Locations Only - All meetups must occur at verified public gyms, parks, or recreation centers.
+
+2. Trust Your Instincts - If something feels off, don't go.
+
+3. GPS Check-In Required - You must verify your location within 0.75 miles of the agreed venue.
+
+4. Two-Person Only - No extra friends, family, or spectators permitted.
+
+5. Report Concerns Immediately - We review all reports within 24 hours.
+
+Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
@@ -687,7 +782,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
               />
             </div>
             <div className="flex gap-1 mt-2 flex-wrap">
-              {['Photo', 'Bio', 'Services', 'Locations', 'Schedule', 'Terms'].map((s, i) => (
+              {['Photo', 'Bio', 'Services', 'Locations', 'Schedule'].map((s, i) => (
                 <span
                   key={s}
                   className={`text-[10px] px-2 py-0.5 rounded-full ${
@@ -1187,69 +1282,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </div>
           </div>
 
-          {/* SECTION 8: TERMS */}
-          <div className={`p-6 rounded-2xl border ${isTermsComplete() ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/5'} mb-8`}>
-            <div className="flex items-center gap-2 mb-4">
-              {isTermsComplete() && <CheckCircle className="w-5 h-5 text-green-500" />}
-              <h2 className="text-base font-semibold">Terms & Legal Acknowledgment <span className="text-red-500">*</span></h2>
-            </div>
-            <div className="p-4 bg-black rounded-xl border border-white/10 mb-4 text-sm text-gray-300 space-y-2">
-              <p className="font-medium">By joining as a Partner you acknowledge:</p>
-              <ul className="list-disc list-inside space-y-1 text-xs text-gray-400">
-                <li>You are an independent social participant, not an employee or contractor.</li>
-                <li>Adonix Fit is a private social networking platform, not a professional services marketplace.</li>
-                <li>Suggested contributions are voluntary social gifts, not professional service fees.</li>
-                <li>All meetups must occur in verified public locations only.</li>
-                <li>Platform Support (15%) is deducted for network facilitation.</li>
-                <li>You are solely responsible for your safety, conduct, and compliance with local laws.</li>
-              </ul>
-            </div>
-            
-            <label className="flex items-start gap-3 cursor-pointer mb-4">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                readOnly
-                className="mt-0.5 w-5 h-5 accent-red-600 cursor-default shrink-0"
-              />
-              <span className="text-sm text-gray-300">
-                I have read and agree to the{' '}
-                <button
-                  type="button"
-                  onClick={() => setLegalModal('terms')}
-                  className="text-red-400 underline hover:text-red-300 transition-colors"
-                >
-                  Terms of Service
-                </button>
-                . <span className="text-red-500">*</span>
-              </span>
-            </label>
-            
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={privacyAccepted}
-                readOnly
-                className="mt-0.5 w-5 h-5 accent-red-600 cursor-default shrink-0"
-              />
-              <span className="text-sm text-gray-300">
-                I have read and agree to the{' '}
-                <button
-                  type="button"
-                  onClick={() => setLegalModal('privacy')}
-                  className="text-red-400 underline hover:text-red-300 transition-colors"
-                >
-                  Privacy Policy
-                </button>
-                . <span className="text-red-500">*</span>
-              </span>
-            </label>
-            
-            <p className="text-xs text-yellow-400 mt-3">
-              ⚠️ You must open and agree to BOTH the Terms of Service AND Privacy Policy to finalize your profile.
-            </p>
-          </div>
-
           {/* Buttons - Back and Finalize */}
           <div className="flex gap-4 mb-8">
             <button
@@ -1267,9 +1299,28 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
             </button>
           </div>
 
-          <div className="text-center text-xs text-gray-500">
-            <p>By finalizing, you agree to our Terms of Service and Privacy Policy.</p>
-          </div>
+          {/* Footer - Matching home page style */}
+          <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm mt-8 pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-xs text-gray-500">
+                © 2026 ADONIX. All rights reserved.
+              </div>
+              <div className="flex flex-wrap justify-center gap-6 text-xs">
+                <button onClick={() => setShowTermsModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
+                  Terms of Service
+                </button>
+                <button onClick={() => setShowPrivacyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
+                  Privacy Policy
+                </button>
+                <button onClick={() => setShowSafetyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
+                  Safety Guidelines
+                </button>
+              </div>
+            </div>
+            <div className="text-center text-xs text-gray-600 mt-4">
+              Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.
+            </div>
+          </footer>
         </div>
       </div>
 
@@ -1289,26 +1340,32 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         locationName={pendingLocation?.display_name || ''}
       />
 
-      {legalModal && (
-        <LegalModal
-          type={legalModal}
-          onClose={() => setLegalModal(null)}
-          onAccept={() => {
-            if (legalModal === 'terms') {
-              setTermsAccepted(true);
-            } else if (legalModal === 'privacy') {
-              setPrivacyAccepted(true);
-            }
-            setLegalModal(null);
-          }}
-        />
-      )}
-
       <ConfirmLeaveModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={confirmLeave}
-        message={confirmMessage}
+      />
+
+      {/* Footer Modals - view only */}
+      <FooterInfoModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        title="Terms of Service"
+        content={footerTermsContent}
+      />
+
+      <FooterInfoModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="Privacy Policy"
+        content={footerPrivacyContent}
+      />
+
+      <FooterInfoModal
+        isOpen={showSafetyModal}
+        onClose={() => setShowSafetyModal(false)}
+        title="Safety Guidelines"
+        content={footerSafetyContent}
       />
     </>
   );
