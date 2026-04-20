@@ -360,8 +360,7 @@ California Residents:
 
           <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h1>
-            <p className="text-lg text-gray-300 mt-1">Join as a Partner</p>
-          </div>
+                  </div>
 
           <div className="mb-8">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
