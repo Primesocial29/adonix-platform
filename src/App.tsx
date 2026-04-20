@@ -16,7 +16,6 @@ import BrowsePartners from './components/BrowsePartners';
 import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
-import { useAuth } from './hooks/useAuth';
 
 // Simple Modal Component for Terms/Privacy/Safety
 function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
@@ -51,20 +50,20 @@ function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onC
 
 // Simple Role Selection Component
 function RoleSelection() {
-  const [selectedRole, setSelectedRole] = useState<'client' | 'partner' | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   const handleRoleSelect = (role: 'client' | 'partner') => {
-    setSelectedRole(role);
-    // Clear any existing role first, then set new one
+    console.log('Role selected:', role);
+    // Clear any existing role
     localStorage.removeItem('userRole');
-    localStorage.setItem('userRole', role);
     
     if (role === 'client') {
+      console.log('Redirecting to /client-setup');
       window.location.href = '/client-setup';
     } else {
+      console.log('Redirecting to /partner-setup');
       window.location.href = '/partner-setup';
     }
   };
@@ -260,13 +259,14 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  console.log('Current route:', currentRoute);
+
   // LOGIN PAGE ROUTE
   if (currentRoute === '/login') {
     return <LoginPage />;
   }
 
-  // ROLE SELECTION - Always show role selection on root and /setup
-  // Don't auto-redirect based on saved role - let user choose
+  // ROLE SELECTION
   if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
     return <RoleSelection />;
   }
