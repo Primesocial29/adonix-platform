@@ -442,12 +442,27 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <>
       <div className="min-h-screen bg-black text-white flex flex-col">
+        {/* Header - Same as client setup */}
+        <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-6 py-3">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix Logo" 
+                className="h-10 w-auto"
+              />
+              <span className="text-xl font-bold text-white">ADONIX</span>
+              <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
+            </div>
+          </div>
+        </div>
+
         <div className="max-w-7xl mx-auto px-6 py-8 flex-1">
-          {/* Back Button */}
+          {/* Back Button - Orange */}
           <div className="mb-6">
             <button
               onClick={() => window.location.href = '/client-dashboard'}
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
