@@ -664,7 +664,7 @@ useEffect(() => {
   };
 
   // If user is not logged in, show account creation form
-  if (!user) {
+  if (showAccountForm) {
     return (
       <>
         <div className="min-h-screen bg-black text-white">
