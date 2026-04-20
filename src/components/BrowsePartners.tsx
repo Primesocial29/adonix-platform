@@ -552,8 +552,8 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
             </div>
           </div>
 
-          {/* Active Filters Tags */}
-          if (activeFilterCount > 0 && (
+                    {/* Active Filters Tags */}
+          {activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {searchTerm && (
                 <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
