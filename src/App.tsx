@@ -91,7 +91,7 @@ function RoleSelection() {
           <p className="text-gray-400 mb-3">Already have an account?</p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all border border-white/20"
+            className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
           >
             SIGN IN
           </button>
