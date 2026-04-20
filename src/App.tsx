@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import PublicHome from './components/PublicHome';
 import AdminDashboard from './components/AdminDashboard';
 import PartnerProfileSetup from './components/PartnerProfileSetup';
@@ -16,7 +17,38 @@ import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
 
-// Simple Role Selection Component - No new file needed
+// Simple Modal Component for Terms/Privacy/Safety
+function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
+          {content}
+        </div>
+        
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Simple Role Selection Component
 function RoleSelection() {
   const [selectedRole, setSelectedRole] = useState<'client' | 'partner' | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -25,7 +57,6 @@ function RoleSelection() {
 
   const handleRoleSelect = (role: 'client' | 'partner') => {
     setSelectedRole(role);
-    // Save to localStorage so we remember
     localStorage.setItem('userRole', role);
     
     if (role === 'client') {
@@ -33,31 +64,6 @@ function RoleSelection() {
     } else {
       window.location.href = '/partner-setup';
     }
-  };
-
-  // Simple Modal Component
-  const SimpleModal = ({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) => {
-    if (!isOpen) return null;
-    return (
-      <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
-          <div className="flex justify-between items-center p-4 border-b border-white/10">
-            <h2 className="text-xl font-semibold text-white">{title}</h2>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-              <X className="w-5 h-5 text-gray-400 hover:text-white" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
-            {content}
-          </div>
-          <div className="p-4 border-t border-white/10">
-            <button onClick={onClose} className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all">
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const termsContent = `ADONIX FIT - TERMS OF SERVICE
@@ -153,7 +159,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {/* Client Option */}
             <button
               onClick={() => handleRoleSelect('client')}
               className="bg-white/5 rounded-2xl p-8 border border-white/10 hover:border-red-500/50 transition-all group hover:scale-105"
@@ -162,13 +167,10 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 <div className="text-4xl mb-4">💸</div>
                 <h2 className="text-2xl font-bold text-white mb-2">I WANT TO SWEAT</h2>
                 <p className="text-gray-400 mb-4">You will pay for sessions</p>
-                <div className="text-sm text-gray-500">
-                  Find fitness partners near you
-                </div>
+                <div className="text-sm text-gray-500">Find fitness partners near you</div>
               </div>
             </button>
 
-            {/* Partner Option */}
             <button
               onClick={() => handleRoleSelect('partner')}
               className="bg-white/5 rounded-2xl p-8 border border-white/10 hover:border-red-500/50 transition-all group hover:scale-105"
@@ -177,9 +179,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 <div className="text-4xl mb-4">💰</div>
                 <h2 className="text-2xl font-bold text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</h2>
                 <p className="text-gray-400 mb-4">You will get paid for sessions</p>
-                <div className="text-sm text-gray-500">
-                  Become a partner and earn
-                </div>
+                <div className="text-sm text-gray-500">Become a partner and earn</div>
               </div>
             </button>
           </div>
@@ -257,14 +257,13 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // LOGIN PAGE ROUTE - Must come before role selection
+  // LOGIN PAGE ROUTE
   if (currentRoute === '/login') {
     return <LoginPage />;
   }
 
-  // ROLE SELECTION - This is the main entry point for setup
+  // ROLE SELECTION
   if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
-    // Check if user already has a role saved
     const savedRole = localStorage.getItem('userRole');
     if (savedRole === 'client' && currentRoute !== '/') {
       window.location.href = '/client-setup';
@@ -274,7 +273,6 @@ function App() {
       window.location.href = '/partner-setup';
       return null;
     }
-    // Show role selection
     return <RoleSelection />;
   }
 
@@ -283,18 +281,18 @@ function App() {
     return <ClientDashboard />;
   }
 
-  // Browse Partners (Client discovery page)
+  // Browse Partners
   if (currentRoute === '/browse') {
     return <BrowsePartners />;
   }
 
-  // My Requests page (placeholder - redirect to client dashboard for now)
+  // My Requests
   if (currentRoute === '/my-requests') {
     window.location.href = '/client-dashboard';
     return null;
   }
 
-  // Dashboard routes based on role
+  // Dashboard
   if (currentRoute === '/dashboard') {
     return <PublicHome />;
   }
@@ -326,7 +324,7 @@ function App() {
     }} />;
   }
 
-  // Complete profile route - redirect to role selection
+  // Complete profile route
   if (currentRoute === '/complete-profile') {
     window.location.href = '/setup';
     return null;
@@ -358,7 +356,7 @@ function App() {
     return <SafetyPage />;
   }
 
-  // Default - show role selection
+  // Default
   return <RoleSelection />;
 }
 
