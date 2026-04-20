@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { supabase as supabaseClient, Profile } from '../lib/supabase';
-import { Search, MapPin, Dumbbell, Star, ChevronLeft, ChevronRight, X, Plus, Navigation, AlertCircle, Target, ArrowLeft, LogOut } from 'lucide-react';
+import { Search, MapPin, Dumbbell, Star, ChevronLeft, ChevronRight, X, Plus, Navigation, AlertCircle, Target, LogOut } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 import { useAuth } from '../hooks/useAuth';
 
@@ -488,8 +488,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        
-
+        <div className="max-w-7xl mx-auto px-6 py-8 flex-1">
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-4xl font-bold mb-2">Find Your Workout Buddy</h1>
