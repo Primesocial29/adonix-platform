@@ -1397,8 +1397,7 @@ California Residents:
             
             <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
               <div className="flex items-start gap-3">
-                <div className="text-2xl">💪</div>
-                <div>
+                    <div>
                   <p className="font-semibold text-white mb-1">You. Right Now. No Filters.</p>
                   <p className="text-sm text-gray-300 mb-3">
                     Adonix is about real people showing up as themselves. That means live photos only — taken inside the app, in this moment.
