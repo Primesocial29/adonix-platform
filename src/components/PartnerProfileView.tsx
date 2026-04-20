@@ -79,13 +79,15 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     return !!(rate?.halfHour && rate.halfHour > 0);
   }, [serviceRates]);
 
-  // Helper functions
+  // Helper functions with safety checks
   const timeToMinutes = (time: string): number => {
+    if (!time) return 0;
     const [hour, minute] = time.split(':').map(Number);
     return hour * 60 + minute;
   };
   
   const minutesToTime = (minutes: number): string => {
+    if (!minutes && minutes !== 0) return '00:00';
     const hour = Math.floor(minutes / 60);
     const minute = minutes % 60;
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
@@ -276,6 +278,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   }, []);
 
   const formatTimeDisplay = useCallback((time: string): string => {
+    if (!time) return '--:--';
     const [hour, minute] = time.split(':');
     const h = parseInt(hour);
     const period = h >= 12 ? 'PM' : 'AM';
@@ -284,6 +287,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   }, []);
 
   const formatDateDisplay = useCallback((dateStr: string): string => {
+    if (!dateStr) return 'Date not selected';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   }, []);
@@ -363,15 +367,18 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     }
   };
 
+  // FIXED: Reset ALL selection states when activity changes
   const handleActivitySelect = (activity: string) => {
     setSelectedActivity(activity);
     setSelectedDuration(null);
     setSelectedDate('');
     setSelectedTimeSlot(null);
+    setSelectedLocation('');
     setStep1Error('');
     setStep2Error('');
     setStep3Error('');
     setStep4Error('');
+    setStep5Error('');
   };
 
   const handleDurationSelect = (duration: DurationOption) => {
@@ -798,6 +805,12 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
 
   // SCREEN 2: REVIEW & CONFIRM
   if (screen === 'review') {
+    // Safety check - if selectedTimeSlot is undefined, go back to form
+    if (!selectedTimeSlot) {
+      setScreen('form');
+      return null;
+    }
+    
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -832,8 +845,8 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
             <h3 className="font-semibold text-white mb-3">SESSION DETAILS</h3>
             <div className="space-y-2">
               <p className="text-white">🧘 {selectedActivity} with @{partnerUsername}</p>
-              <p className="text-gray-300 text-sm">⏱️ {formatDuration(selectedTimeSlot!.durationMinutes)}</p>
-              <p className="text-gray-300 text-sm">📅 {formatDateDisplay(selectedDate)} · {formatTimeDisplay(selectedTimeSlot!.startTime)} - {formatTimeDisplay(selectedTimeSlot!.endTime)}</p>
+              <p className="text-gray-300 text-sm">⏱️ {formatDuration(selectedTimeSlot.durationMinutes)}</p>
+              <p className="text-gray-300 text-sm">📅 {formatDateDisplay(selectedDate)} · {formatTimeDisplay(selectedTimeSlot.startTime)} - {formatTimeDisplay(selectedTimeSlot.endTime)}</p>
               <p className="text-gray-300 text-sm">📍 {selectedLocation} ({getLocationDistance(selectedLocation)} miles)</p>
               <p className="text-gray-300 text-sm">💰 Total: ${totalContribution.toFixed(2)}</p>
               <p className="text-xs text-yellow-400 mt-2">💬 You'll be able to chat with @{partnerUsername} ONLY after they approve your request.</p>
