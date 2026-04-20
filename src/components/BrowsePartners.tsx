@@ -783,21 +783,23 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
         </div>
 
-                {/* Bottom Buttons - Matching app standard */}
-        <div className="max-w-7xl mx-auto px-6 pb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => window.location.href = '/client-dashboard'}
-              className="w-full sm:flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all transform hover:scale-105"
-            >
-              BACK
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full sm:flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
-            >
-              LOGOUT
-            </button>
+        {/* Bottom Buttons - STICKY at bottom, matching app standard size */}
+        <div className="sticky bottom-0 bg-black/95 backdrop-blur-sm border-t border-white/10 p-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex gap-4">
+              <button
+                onClick={() => window.location.href = '/client-dashboard'}
+                className="flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all transform hover:scale-105"
+              >
+                BACK
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+              >
+                LOGOUT
+              </button>
+            </div>
           </div>
         </div>
 
