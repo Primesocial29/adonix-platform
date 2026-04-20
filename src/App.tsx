@@ -49,7 +49,7 @@ function RoleSelection() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Welcome to Adonix Fit</h1>
+          <h1 className="text-3xl font-bold text-white">Welcome to Adonix</h1>
           <p className="text-lg text-gray-300 mt-1">Choose your path</p>
         </div>
 
