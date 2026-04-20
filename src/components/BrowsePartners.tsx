@@ -488,7 +488,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-       
+        
 
           {/* Header */}
           <div className="mb-6">
