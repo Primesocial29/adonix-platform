@@ -406,7 +406,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
 
   // If account not created yet, show account creation step
   if (!accountCreated) {
-    return <AccountCreationStep if (!accountCreated) {
   return <AccountCreationStep onSuccess={() => {
     window.location.href = '/partner-setup';
   }} />;
