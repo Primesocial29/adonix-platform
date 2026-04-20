@@ -4,6 +4,7 @@ import AdminDashboard from './components/AdminDashboard';
 import PartnerProfileSetup from './components/PartnerProfileSetup';
 import ClientOnboarding from './components/ClientOnboarding';
 import PartnerDashboard from './components/PartnerDashboard';
+import ClientDashboard from './components/ClientDashboard';
 import TrainerDashboard from './components/TrainerDashboard';
 import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
@@ -36,7 +37,7 @@ function RoleSelection() {
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
-              src="/Screenshot_2026-04-03_221406.png" 
+              src="/adonixlogo.png" 
               alt="Adonix Logo" 
               className="h-10 w-auto"
             />
@@ -120,14 +121,26 @@ function App() {
     return <RoleSelection />;
   }
 
-  // Dashboard routes based on role
-  if (currentRoute === '/dashboard') {
-    return <PublicHome />;
+  // Client Dashboard
+  if (currentRoute === '/client-dashboard') {
+    return <ClientDashboard />;
   }
 
   // Browse Partners (Client discovery page)
   if (currentRoute === '/browse') {
     return <BrowsePartners />;
+  }
+
+  // My Requests page (placeholder - redirect to client dashboard for now)
+  if (currentRoute === '/my-requests') {
+    // This will be a separate component later
+    window.location.href = '/client-dashboard';
+    return null;
+  }
+
+  // Dashboard routes based on role
+  if (currentRoute === '/dashboard') {
+    return <PublicHome />;
   }
 
   // Admin routes
@@ -150,15 +163,14 @@ function App() {
     return <TrainerDashboard />;
   }
 
-  // CLIENT 4-STEP ONBOARDING (with Create Your Account as Step 1)
-  // This is the main client setup flow
+  // CLIENT 4-STEP ONBOARDING
   if (currentRoute === '/client-setup') {
     return <ClientOnboarding onComplete={() => {
-      window.location.href = '/browse';
+      window.location.href = '/client-dashboard';
     }} />;
   }
 
-  // Complete profile route - redirect to setup
+  // Complete profile route - redirect to role selection
   if (currentRoute === '/complete-profile') {
     window.location.href = '/setup';
     return null;
