@@ -1,4 +1,3 @@
-i have some concerns. i want back the the original partnewprofilesetup.tsx
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
