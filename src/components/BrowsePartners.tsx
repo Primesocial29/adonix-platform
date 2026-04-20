@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { supabase, Profile } from '../lib/supabase';
-import { Search, MapPin, Dumbbell, Star, ChevronLeft, ChevronRight, X, Plus, Navigation, AlertCircle, Target, ArrowLeft } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { supabase as supabaseClient, Profile } from '../lib/supabase';
+import { Search, MapPin, Dumbbell, Star, ChevronLeft, ChevronRight, X, Plus, Navigation, AlertCircle, Target, ArrowLeft, LogOut } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
+import { useAuth } from '../hooks/useAuth';
 
 interface BrowsePartnersProps {
   onSelectPartner?: (partner: Profile) => void;
@@ -52,6 +54,7 @@ function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean;
 }
 
 export default function BrowsePartners({ onSelectPartner, presetCity = '' }: BrowsePartnersProps) {
+  const { signOut } = useAuth();
   const [partners, setPartners] = useState<Profile[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +66,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const [distance, setDistance] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   
   // Footer modal states
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -81,6 +85,11 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
 
   const allServiceOptions = [...BASE_SERVICE_OPTIONS, ...customServices];
   const MAX_CUSTOM_SERVICES = 2;
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -174,7 +183,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const fetchPartners = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('is_partner', true)
@@ -442,9 +451,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <>
       <div className="min-h-screen bg-black text-white flex flex-col">
-        {/* Header - Same as client setup */}
+        {/* Header - Same as client setup with logout link */}
         <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-3">
+          <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img 
                 src="/adonixlogo.png" 
@@ -453,6 +462,28 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               />
               <span className="text-xl font-bold text-white">ADONIX</span>
               <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
+            </div>
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+              >
+                <span>Menu</span>
+                <span>▼</span>
+              </button>
+              {showSettingsDropdown && (
+                <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
+                  <div className="py-2">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4 inline mr-2" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -752,8 +783,26 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
         </div>
 
+        {/* Bottom Buttons - Back and Logout */}
+        <div className="max-w-7xl mx-auto px-6 pb-8">
+          <div className="flex gap-4">
+            <button
+              onClick={() => window.location.href = '/client-dashboard'}
+              className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all"
+            >
+              BACK
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+            >
+              LOGOUT
+            </button>
+          </div>
+        </div>
+
         {/* Footer - Matching home page style */}
-        <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm mt-8">
+        <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-xs text-gray-500">
