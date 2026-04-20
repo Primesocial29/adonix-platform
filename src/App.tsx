@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import PublicHome from './components/PublicHome';
 import AdminDashboard from './components/AdminDashboard';
@@ -18,14 +18,14 @@ import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
 import { useAuth } from './hooks/useAuth';
 
-// Terms Modal Component with scroll-to-accept
-function TermsModal({ isOpen, onClose, onAccept, title, content }: { 
+// Terms Modal for CHECKBOXES - requires scroll-to-accept
+function CheckboxTermsModal({ isOpen, onClose, onAccept, title, content }: { 
   isOpen: boolean; onClose: () => void; onAccept: () => void; title: string; content: string 
 }) {
   const [canAccept, setCanAccept] = useState(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setCanAccept(false);
       setTimeout(() => {
@@ -71,11 +71,42 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
             disabled={!canAccept}
             className={`w-full px-4 py-2 rounded-lg font-semibold transition ${
               canAccept 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
+                ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white' 
                 : 'bg-gray-700 text-gray-400 cursor-not-allowed'
             }`}
           >
             I Agree
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Simple Modal for FOOTER - view only, no agreement needed
+function FooterModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
+          {content}
+        </div>
+        
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
+          >
+            Close
           </button>
         </div>
       </div>
@@ -285,7 +316,7 @@ function PartnerSignupScreen({ onSuccess }: { onSuccess: () => void }) {
     }
   };
 
-  // Calculate progress - NO STATE UPDATES HERE
+  // Calculate progress
   const sections = [
     !!firstName && !firstNameError,
     !!lastName && !lastNameError,
@@ -359,8 +390,10 @@ California Residents:
           </div>
 
           <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h1>
-                  </div>
+            <div className="text-5xl mb-3">💰</div>
+            <h1 className="text-3xl font-bold text-white">Create Your Account</h1>
+            <p className="text-lg text-gray-300 mt-1">Join as a Partner</p>
+          </div>
 
           <div className="mb-8">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
@@ -558,12 +591,17 @@ California Residents:
                   <input
                     type="checkbox"
                     checked={termsAccepted}
-                    onChange={() => setShowTermsModal('terms')}
-                    className="mt-1 w-5 h-5 accent-red-600"
+                    readOnly
+                    className="mt-1 w-5 h-5 accent-red-600 cursor-default shrink-0"
                   />
                   <span className="text-sm text-gray-300">
                     I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span>
+                    <button 
+                      onClick={() => setShowTermsModal('terms')} 
+                      className="text-red-400 underline hover:text-red-300 transition-colors"
+                    >
+                      Terms of Service
+                    </button>. <span className="text-red-500">*</span>
                   </span>
                 </label>
                 
@@ -571,12 +609,17 @@ California Residents:
                   <input
                     type="checkbox"
                     checked={privacyAccepted}
-                    onChange={() => setShowTermsModal('privacy')}
-                    className="mt-1 w-5 h-5 accent-red-600"
+                    readOnly
+                    className="mt-1 w-5 h-5 accent-red-600 cursor-default shrink-0"
                   />
                   <span className="text-sm text-gray-300">
                     I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span>
+                    <button 
+                      onClick={() => setShowTermsModal('privacy')} 
+                      className="text-red-400 underline hover:text-red-300 transition-colors"
+                    >
+                      Privacy Policy
+                    </button>. <span className="text-red-500">*</span>
                   </span>
                 </label>
                 
@@ -613,8 +656,9 @@ California Residents:
         </div>
       </div>
 
+      {/* Checkbox Modals - require scroll to accept */}
       {showTermsModal === 'terms' && (
-        <TermsModal
+        <CheckboxTermsModal
           isOpen={true}
           onClose={() => setShowTermsModal(null)}
           onAccept={handleTermsAccept}
@@ -624,7 +668,7 @@ California Residents:
       )}
       
       {showTermsModal === 'privacy' && (
-        <TermsModal
+        <CheckboxTermsModal
           isOpen={true}
           onClose={() => setShowTermsModal(null)}
           onAccept={handlePrivacyAccept}
@@ -662,8 +706,8 @@ function PartnerFlow() {
   return <PartnerProfileSetup onComplete={() => window.location.href = '/partner-dashboard'} />;
 }
 
-// Simple Modal Component for Terms/Privacy/Safety (footer modals)
-function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+// Footer Modal Component - view only, no agreement needed
+function FooterModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
   if (!isOpen) return null;
 
   return (
@@ -693,7 +737,7 @@ function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onC
   );
 }
 
-// Simple Role Selection Component
+// Role Selection Component with Footer
 function RoleSelection() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -836,6 +880,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
+        {/* Footer - matching home page style */}
         <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm mt-8">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -861,21 +906,22 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </footer>
       </div>
 
-      <SimpleModal
+      {/* Footer Modals - view only, no agreement needed */}
+      <FooterModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         title="Terms of Service"
         content={termsContent}
       />
 
-      <SimpleModal
+      <FooterModal
         isOpen={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         title="Privacy Policy"
         content={privacyContent}
       />
 
-      <SimpleModal
+      <FooterModal
         isOpen={showSafetyModal}
         onClose={() => setShowSafetyModal(false)}
         title="Safety Guidelines"
