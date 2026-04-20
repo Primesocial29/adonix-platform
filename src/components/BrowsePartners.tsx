@@ -783,18 +783,18 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
         </div>
 
-        {/*         {/* Bottom Buttons - Standard size matching app (py-4, full width) */}
+                {/* Bottom Buttons - Matching app standard */}
         <div className="max-w-7xl mx-auto px-6 pb-8">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => window.location.href = '/client-dashboard'}
-              className="flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all transform hover:scale-105"
+              className="w-full sm:flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all transform hover:scale-105"
             >
               BACK
             </button>
             <button
               onClick={handleLogout}
-              className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
+              className="w-full sm:flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
             >
               LOGOUT
             </button>
