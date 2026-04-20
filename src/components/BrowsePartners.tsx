@@ -212,10 +212,11 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(partner => 
-        partner.first_name?.toLowerCase().includes(searchLower) ||
-        partner.bio?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter(partner => {
+        const username = (partner as any).username || '';
+        return username.toLowerCase().includes(searchLower) ||
+               partner.bio?.toLowerCase().includes(searchLower);
+      });
     }
 
     // Filter by services
@@ -260,13 +261,23 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const endIndex = startIndex + itemsPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
 
+  // Partner Card Component
   const PartnerCard = ({ partner }: { partner: Profile }) => {
     const services = (partner as any).service_types || [];
     const customPartnerServices = (partner as any).custom_service_types || [];
     const allServices = [...services, ...customPartnerServices];
     const primaryService = allServices[0] || 'Fitness Training';
-    const rate = partner.hourly_rate || 0;
+    const secondaryService = allServices[1] || '';
+    
+    // Get hourly rate from service_rates
+    const serviceRates = (partner as any).service_rates || {};
+    const firstService = allServices[0];
+    const hourlyRate = firstService ? (serviceRates[firstService]?.hourly || 75) : 75;
+    
     const distance = (partner as any)._distance;
+    
+    // Get partner's username (never real name)
+    const partnerUsername = (partner as any).username || partner.first_name?.toLowerCase().replace(/\s/g, '_') || 'partner';
 
     return (
       <div 
@@ -277,7 +288,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
           {partner.live_photo_url ? (
             <img 
               src={partner.live_photo_url} 
-              alt={partner.first_name || 'Partner'} 
+              alt={partnerUsername} 
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
@@ -290,11 +301,10 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
         <div className="p-4">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h3 className="text-xl font-bold text-white">{partner.first_name || 'Partner'}</h3>
-              <p className="text-sm text-gray-400">@{partner.first_name?.toLowerCase().replace(/\s/g, '_') || 'partner'}</p>
+              <h3 className="text-xl font-bold text-white">🔥 @{partnerUsername}</h3>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-red-500">${rate}</p>
+              <p className="text-lg font-bold text-green-400">${hourlyRate}</p>
               <p className="text-xs text-gray-500">suggested / hr</p>
             </div>
           </div>
@@ -302,12 +312,15 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
           <div className="flex items-center gap-1 mt-1">
             <Dumbbell className="w-3 h-3 text-gray-500" />
             <span className="text-xs text-gray-400">{primaryService}</span>
+            {secondaryService && (
+              <span className="text-xs text-gray-500">• {secondaryService}</span>
+            )}
           </div>
 
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-              <span className="text-xs text-gray-400">New</span>
+              <span className="text-xs text-gray-400">{partner.avg_rating || 'New'}</span>
             </div>
             <div className="flex items-center gap-1">
               <MapPin className="w-3 h-3 text-gray-500" />
@@ -433,7 +446,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by name..."
+                  placeholder="Search by username..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
@@ -540,7 +553,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
           </div>
 
           {/* Active Filters Tags */}
-          {activeFilterCount > 0 && (
+          if (activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {searchTerm && (
                 <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
