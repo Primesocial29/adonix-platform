@@ -409,7 +409,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   return <AccountCreationStep onSuccess={() => {
     window.location.href = '/partner-setup';
   }} />;
-}
   }
 
   useEffect(() => {
