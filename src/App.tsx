@@ -32,7 +32,7 @@ function PartnerFlow() {
   }
   
   if (!user) {
-    return <PartnerSignup onSuccess={() => window.location.reload()} />;
+    return <PartnerSignup onSuccess={() => window.location.href = '/partner-setup'} />;
   }
   
   return <PartnerProfileSetup onComplete={() => window.location.href = '/partner-dashboard'} />;
