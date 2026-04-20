@@ -5,6 +5,7 @@ import {
   X, MapPin, Calendar, Clock, DollarSign, Star, 
   Award, Dumbbell, ChevronLeft, Heart, Flag, CheckCircle
 } from 'lucide-react';
+import CheckoutScreen from './CheckoutScreen';
 
 interface PartnerProfileViewProps {
   partner: Profile;
@@ -28,6 +29,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullBio, setShowFullBio] = useState(false);
   const [screen, setScreen] = useState<ScreenState>('form');
+  const [showCheckout, setShowCheckout] = useState(false);
   
   // Client Contact Info (ALL REQUIRED)
   const [firstName, setFirstName] = useState('');
@@ -408,13 +410,9 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     }
   };
 
-  const handleConfirmAndAuthorize = async () => {
-    setScreen('processing');
-    
-    // Simulate payment authorization (replace with actual Stripe integration)
-    setTimeout(() => {
-      setScreen('success');
-    }, 2000);
+  const handleConfirmAndAuthorize = () => {
+    // Close the review screen and open CheckoutScreen
+    setShowCheckout(true);
   };
 
   const handleBackToForm = () => {
@@ -962,5 +960,29 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     );
   }
 
-  return null;
+  return (
+    <>
+      {/* Checkout Screen */}
+      {showCheckout && (
+        <CheckoutScreen
+          partner={partner}
+          selectedActivity={selectedActivity}
+          selectedDuration={selectedDuration!}
+          selectedDate={selectedDate}
+          selectedTimeSlot={selectedTimeSlot!}
+          selectedLocation={selectedLocation}
+          locationLat={serviceAreas.find(a => a.name === selectedLocation)?.lat || undefined}
+          locationLng={serviceAreas.find(a => a.name === selectedLocation)?.lng || undefined}
+          contactEmail={contactEmail}
+          contactPhone={contactPhone}
+          totalContribution={totalContribution}
+          onClose={() => setShowCheckout(false)}
+          onSuccess={() => {
+            setShowCheckout(false);
+            setScreen('success');
+          }}
+        />
+      )}
+    </>
+  );
 }
