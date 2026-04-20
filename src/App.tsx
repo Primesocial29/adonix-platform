@@ -84,7 +84,7 @@ function CheckboxTermsModal({ isOpen, onClose, onAccept, title, content }: {
 }
 
 // Simple Modal for FOOTER - view only, no agreement needed
-function FooterModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
+function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
   if (!isOpen) return null;
 
   return (
@@ -706,37 +706,6 @@ function PartnerFlow() {
   return <PartnerProfileSetup onComplete={() => window.location.href = '/partner-dashboard'} />;
 }
 
-// Footer Modal Component - view only, no agreement needed
-function FooterModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
-        <div className="flex justify-between items-center p-4 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400 hover:text-white" />
-          </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
-          {content}
-        </div>
-        
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Role Selection Component with Footer
 function RoleSelection() {
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -880,7 +849,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* Footer - matching home page style */}
+        {/* Footer */}
         <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm mt-8">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -907,21 +876,21 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       </div>
 
       {/* Footer Modals - view only, no agreement needed */}
-      <FooterModal
+      <FooterInfoModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         title="Terms of Service"
         content={termsContent}
       />
 
-      <FooterModal
+      <FooterInfoModal
         isOpen={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         title="Privacy Policy"
         content={privacyContent}
       />
 
-      <FooterModal
+      <FooterInfoModal
         isOpen={showSafetyModal}
         onClose={() => setShowSafetyModal(false)}
         title="Safety Guidelines"
