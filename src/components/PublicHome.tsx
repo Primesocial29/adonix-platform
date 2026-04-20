@@ -326,12 +326,18 @@ We are actively working to improve accessibility. If you experience any issues, 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar - ADONIX top left in CAPS, LOGIN/SETUP top right */}
+      {/* Navbar - ADONIX top left in CAPS */}
       <nav className="fixed top-0 w-full z-40">
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-          <h1 className="text-4xl md:text-4xl font-bold tracking-wide text-white uppercase">
-            ADONIX
-          </h1>
+          <div className="flex items-center gap-3">
+            <img 
+              src="/adonixlogo.png" 
+              alt="Adonix Logo" 
+              className="h-10 w-auto"
+            />
+            <span className="text-xl font-bold text-white">ADONIX</span>
+            <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
+          </div>
           <div className="flex items-center gap-6">
             {user ? (
               <>
@@ -361,7 +367,7 @@ We are actively working to improve accessibility. If you experience any issues, 
               </>
             ) : (
               <button
-                onClick={() => window.location.href = '/client-setup'}
+                onClick={() => window.location.href = '/login'}
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 LOGIN/SETUP
@@ -433,7 +439,7 @@ We are actively working to improve accessibility. If you experience any issues, 
             
             {/* CTA Button */}
             <button
-              onClick={() => window.location.href = '/client-setup'}
+              onClick={() => window.location.href = '/login'}
               className="px-12 py-4 bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 hover:to-red-700 rounded-lg font-bold text-white text-xl transition-all duration-300 whitespace-nowrap"
             >
               EXPLORE CURATION
