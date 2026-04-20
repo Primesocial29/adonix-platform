@@ -20,6 +20,14 @@ export default function PartnerDashboard() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  // Menu modal states
+  const [showMyProfileModal, setShowMyProfileModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
   
   // Photo Gallery States
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
@@ -52,6 +60,21 @@ export default function PartnerDashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = '/';
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || deleteConfirmText !== 'DELETE') return;
+    setDeletingAccount(true);
+    try {
+      await supabase.from('bookings').delete().or(`client_id.eq.${user.id},partner_id.eq.${user.id}`);
+      await supabase.from('profiles').delete().eq('id', user.id);
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Delete account error:', err);
+      alert('Failed to delete account. Please contact support.');
+      setDeletingAccount(false);
+    }
   };
 
   useEffect(() => {
@@ -424,21 +447,23 @@ export default function PartnerDashboard() {
             </div>
           </div>
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-              className="settings-button flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+              className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
             >
-              <span>Settings</span>
+              <span>Menu</span>
               <span>▼</span>
             </button>
             {showSettingsDropdown && (
-              <div className="settings-dropdown absolute right-0 mt-2 w-48 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
+              <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
                 <div className="py-2">
-                  <button onClick={() => { setShowVenuesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Verified Venues</button>
-                  <button onClick={() => { setShowServicesModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Services & Rates</button>
-                  <button onClick={() => { setShowScheduleModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Schedule</button>
-                  <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">My Photos</button>
-                  <button onClick={() => { setShowContributionsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">Contribution History</button>
+                  <button onClick={() => { setShowMyProfileModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">👤 My Profile</button>
+                  <button onClick={() => { setShowPhotoGalleryModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📸 My Photos</button>
+                  <button onClick={() => { setShowSettingsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⚙️ Settings</button>
+                  <button onClick={() => { setShowHelpModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">❓ Help & Support</button>
+                  <button onClick={() => { setShowSafetyModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🛡️ Safety Guidelines</button>
+                  <button onClick={() => { setShowDeleteAccountModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🗑️ Delete Account</button>
+                  <button onClick={() => { handleLogout(); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🚪 Logout</button>
                 </div>
               </div>
             )}
@@ -1031,6 +1056,138 @@ export default function PartnerDashboard() {
             <div className="flex gap-3 mt-4">
               <button onClick={saveAvailability} className="flex-1 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-lg">Save Schedule</button>
               <button onClick={() => setShowScheduleModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* My Profile Modal */}
+      {showMyProfileModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowMyProfileModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowMyProfileModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">My Profile</h2>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-red-500/20 border-2 border-red-500/30">
+                {allPhotos[0] ? (
+                  <img src={allPhotos[0]} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-lg">@{(profile as any)?.username || profile?.first_name?.toLowerCase() || 'partner'}</p>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-gray-300">
+              <p><span className="text-gray-500">Bio:</span> {profile?.bio || 'No bio yet.'}</p>
+              <p><span className="text-gray-500">Total Contributions:</span> ${totalContributions}</p>
+              <p><span className="text-gray-500">Pending Invitations:</span> {pendingMeetups.length}</p>
+              <p><span className="text-gray-500">Services:</span> {serviceTypes.length + customServiceTypes.length}</p>
+            </div>
+            <button onClick={() => setShowMyProfileModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+            <div className="space-y-3 text-sm text-gray-300">
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Email Notifications</p>
+                <p className="text-xs text-gray-400">Receive updates about booking requests and messages.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Location Services</p>
+                <p className="text-xs text-gray-400">Used for GPS check-in verification during meetups.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Account Email</p>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+            </div>
+            <button onClick={() => setShowSettingsModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Help & Support Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowHelpModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowHelpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Help & Support</h2>
+            <div className="space-y-3 text-sm text-gray-300">
+              <p>Need help? We're here for you 24/7.</p>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Contact Support</p>
+                <p className="text-xs text-gray-400">primesocial@primesocial.xyz</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Report an Issue</p>
+                <p className="text-xs text-gray-400">We review all reports within 24 hours.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Safety Concerns</p>
+                <p className="text-xs text-gray-400">For urgent safety issues, contact local authorities first, then notify us.</p>
+              </div>
+            </div>
+            <button onClick={() => setShowHelpModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-red-500/40 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => !deletingAccount && setShowDeleteAccountModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white" disabled={deletingAccount}>
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-3 text-red-400">⚠️ PERMANENT ACTION - CANNOT BE UNDONE</h2>
+            <p className="text-sm text-gray-300 mb-3">Deleting your account will permanently remove:</p>
+            <ul className="text-sm text-gray-300 space-y-1 mb-4 list-disc list-inside">
+              <li>Your profile and bio</li>
+              <li>All uploaded photos</li>
+              <li>All bookings and session history</li>
+              <li>All messages and conversations</li>
+              <li>Your services, rates, and schedule</li>
+            </ul>
+            <p className="text-sm text-gray-300 mb-2">Type <span className="font-bold text-red-400">DELETE</span> to confirm:</p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deletingAccount}
+              className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4"
+              placeholder="Type DELETE"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }}
+                disabled={deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAccount ? 'Deleting...' : 'Permanent Delete'}
+              </button>
             </div>
           </div>
         </div>

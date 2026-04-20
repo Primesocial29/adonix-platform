@@ -54,7 +54,7 @@ function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean;
 }
 
 export default function BrowsePartners({ onSelectPartner, presetCity = '' }: BrowsePartnersProps) {
-  const { signOut } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const [partners, setPartners] = useState<Profile[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +72,39 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+  // Menu modal states
+  const [showMyProfileModal, setShowMyProfileModal] = useState(false);
+  const [showMyPhotosModal, setShowMyPhotosModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [myPhotos, setMyPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabaseClient.from('profiles').select('photos, live_photo_url').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (data?.photos && data.photos.length > 0) setMyPhotos(data.photos);
+      else if (data?.live_photo_url) setMyPhotos([data.live_photo_url]);
+    });
+  }, [user]);
+
+  const handleDeleteAccount = async () => {
+    if (!user || deleteConfirmText !== 'DELETE') return;
+    setDeletingAccount(true);
+    try {
+      await supabaseClient.from('bookings').delete().or(`client_id.eq.${user.id},partner_id.eq.${user.id}`);
+      await supabaseClient.from('profiles').delete().eq('id', user.id);
+      await supabaseClient.auth.signOut();
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Delete account error:', err);
+      alert('Failed to delete account. Please contact support.');
+      setDeletingAccount(false);
+    }
+  };
   
   // Location states
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -472,15 +505,15 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 <span>▼</span>
               </button>
               {showSettingsDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
+                <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
                   <div className="py-2">
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4 inline mr-2" />
-                      Logout
-                    </button>
+                    <button onClick={() => { setShowMyProfileModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">👤 My Profile</button>
+                    <button onClick={() => { setShowMyPhotosModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📸 My Photos</button>
+                    <button onClick={() => { setShowSettingsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⚙️ Settings</button>
+                    <button onClick={() => { setShowHelpModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">❓ Help & Support</button>
+                    <button onClick={() => { setShowSafetyModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🛡️ Safety Guidelines</button>
+                    <button onClick={() => { setShowDeleteAccountModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🗑️ Delete Account</button>
+                    <button onClick={() => { handleLogout(); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🚪 Logout</button>
                   </div>
                 </div>
               )}
@@ -847,6 +880,158 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         title="Safety Guidelines"
         content={footerSafetyContent}
       />
+
+      {/* My Profile Modal */}
+      {showMyProfileModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowMyProfileModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowMyProfileModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">My Profile</h2>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-red-500/20 border-2 border-red-500/30">
+                {myPhotos[0] || profile?.live_photo_url ? (
+                  <img src={myPhotos[0] || profile?.live_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-lg">@{(profile as any)?.username || profile?.first_name?.toLowerCase() || 'user'}</p>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm text-gray-300">
+              <p><span className="text-gray-500">Bio:</span> {profile?.bio || 'No bio yet.'}</p>
+            </div>
+            <button onClick={() => setShowMyProfileModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* My Photos Modal */}
+      {showMyPhotosModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowMyPhotosModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowMyPhotosModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">My Photos</h2>
+            {myPhotos.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No photos yet. Manage photos from your dashboard.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {myPhotos.map((photo, idx) => (
+                  <div key={idx} className={`aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500' : 'border-white/20'}`}>
+                    <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => setShowMyPhotosModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Settings</h2>
+            <div className="space-y-3 text-sm text-gray-300">
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Email Notifications</p>
+                <p className="text-xs text-gray-400">Receive updates about your bookings and messages.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Location Services</p>
+                <p className="text-xs text-gray-400">Used for GPS check-in verification during meetups.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Account Email</p>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+            </div>
+            <button onClick={() => setShowSettingsModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Help & Support Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowHelpModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowHelpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Help & Support</h2>
+            <div className="space-y-3 text-sm text-gray-300">
+              <p>Need help? We're here for you 24/7.</p>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Contact Support</p>
+                <p className="text-xs text-gray-400">primesocial@primesocial.xyz</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Report an Issue</p>
+                <p className="text-xs text-gray-400">We review all reports within 24 hours.</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white">Safety Concerns</p>
+                <p className="text-xs text-gray-400">For urgent safety issues, contact local authorities first, then notify us.</p>
+              </div>
+            </div>
+            <button onClick={() => setShowHelpModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-red-500/40 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => !deletingAccount && setShowDeleteAccountModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white" disabled={deletingAccount}>
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-3 text-red-400">⚠️ PERMANENT ACTION - CANNOT BE UNDONE</h2>
+            <p className="text-sm text-gray-300 mb-3">Deleting your account will permanently remove:</p>
+            <ul className="text-sm text-gray-300 space-y-1 mb-4 list-disc list-inside">
+              <li>Your profile and bio</li>
+              <li>All uploaded photos</li>
+              <li>All bookings and session history</li>
+              <li>All messages and conversations</li>
+            </ul>
+            <p className="text-sm text-gray-300 mb-2">Type <span className="font-bold text-red-400">DELETE</span> to confirm:</p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deletingAccount}
+              className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4"
+              placeholder="Type DELETE"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }}
+                disabled={deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAccount ? 'Deleting...' : 'Permanent Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
