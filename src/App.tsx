@@ -359,8 +359,7 @@ California Residents:
           </div>
 
           <div className="text-center mb-8">
-            <div className="text-5xl mb-3">💰</div>
-            <h1 className="text-3xl font-bold text-white">Create Your Account</h1>
+                <h1 className="text-3xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h1>
             <p className="text-lg text-gray-300 mt-1">Join as a Partner</p>
           </div>
 
