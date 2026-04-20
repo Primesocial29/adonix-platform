@@ -5,7 +5,7 @@ import PartnerProfileView from './PartnerProfileView';
 
 interface BrowsePartnersProps {
   onSelectPartner?: (partner: Profile) => void;
-  presetCity?: string;  // City from previous screen
+  presetCity?: string;
 }
 
 const BASE_SERVICE_OPTIONS = [
@@ -33,20 +33,17 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
   
-  // Location states
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationPermissionAsked, setLocationPermissionAsked] = useState(false);
   
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
   const allServiceOptions = [...BASE_SERVICE_OPTIONS, ...customServices];
   const MAX_CUSTOM_SERVICES = 2;
 
-  // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 3959;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -58,7 +55,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     return R * c;
   };
 
-  // Get current location
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser.');
@@ -120,17 +116,14 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     );
   };
 
-  // Ask for location when page loads
   useEffect(() => {
     getCurrentLocation();
   }, []);
 
-  // Fetch all partners
   useEffect(() => {
     fetchPartners();
   }, []);
 
-  // Apply filters
   useEffect(() => {
     applyFilters();
   }, [partners, searchTerm, selectedServices, distance, userLocation, customServices]);
@@ -209,7 +202,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const applyFilters = () => {
     let filtered = [...partners];
 
-    // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(partner => {
@@ -219,7 +211,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
       });
     }
 
-    // Filter by services
     if (selectedServices.length > 0) {
       filtered = filtered.filter(partner => {
         const services = (partner as any).service_types || [];
@@ -229,7 +220,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
       });
     }
 
-    // Filter by distance (only if we have user location)
     if (userLocation) {
       filtered = filtered.filter(partner => {
         if ((partner as any).service_areas_center_lat && (partner as any).service_areas_center_lng) {
@@ -261,7 +251,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
   const endIndex = startIndex + itemsPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
 
-  // Partner Card Component
   const PartnerCard = ({ partner }: { partner: Profile }) => {
     const services = (partner as any).service_types || [];
     const customPartnerServices = (partner as any).custom_service_types || [];
@@ -269,14 +258,11 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     const primaryService = allServices[0] || 'Fitness Training';
     const secondaryService = allServices[1] || '';
     
-    // Get hourly rate from service_rates
     const serviceRates = (partner as any).service_rates || {};
     const firstService = allServices[0];
     const hourlyRate = firstService ? (serviceRates[firstService]?.hourly || 75) : 75;
     
     const distance = (partner as any)._distance;
-    
-    // Get partner's username (never real name)
     const partnerUsername = (partner as any).username || partner.first_name?.toLowerCase().replace(/\s/g, '_') || 'partner';
 
     return (
@@ -396,7 +382,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
                   <span>Using your current location to find partners near you</span>
                 </div>
                 
-                {/* Distance Radius Slider */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm text-gray-400">Search radius:</label>
@@ -441,7 +426,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
           {/* Filters Bar */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -453,7 +437,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
                 />
               </div>
 
-              {/* Clear Filters */}
               <button
                 onClick={clearFilters}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
@@ -462,7 +445,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
               </button>
             </div>
 
-            {/* Service Selection - CLICKABLE BOXES GRID */}
             <div className="border-t border-white/10 pt-4">
               <label className="block text-sm text-gray-400 mb-3">
                 Select services you're looking for:
@@ -502,7 +484,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
                 ))}
               </div>
 
-              {/* Add Custom Service */}
               {!showCustomInput ? (
                 <button
                   onClick={() => setShowCustomInput(true)}
@@ -552,7 +533,7 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
             </div>
           </div>
 
-                    {/* Active Filters Tags */}
+          {/* Active Filters Tags - FIXED: removed the invalid 'if' statement */}
           {activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {searchTerm && (
@@ -607,7 +588,6 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-8">
                   <button
