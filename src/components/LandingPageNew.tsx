@@ -111,7 +111,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       {/* MAIN CONTENT - LIKE YOUR REFERENCE IMAGE */}
       <div className="flex-1 flex flex-col relative">
         
-        {/* LOGIN/SETUP - TOP RIGHT WITH WHITE LINE UNDER */}
+        {/* LOGIN/SETUP - TOP RIGHT WITH LINE MATCHING FOOTER */}
         <div className="absolute top-6 right-6 text-right z-20">
           <div 
             onClick={() => window.location.href = '/login'}
@@ -119,8 +119,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           >
             LOGIN/SETUP
           </div>
-          {/* White thin line under LOGIN/SETUP */}
-          <div className="w-full h-px bg-white/50 mt-1"></div>
+          {/* White line matching footer - same color and size as footer border */}
+          <div className="w-full h-px bg-white/10 mt-1"></div>
         </div>
 
         {/* GIRL IMAGE - POSITIONED ON RIGHT SIDE, LARGE, TRANSPARENT */}
@@ -155,21 +155,23 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               SOCIAL FITNESS · ELEVATED
             </p>
             
-            {/* DESCRIPTION LINE - 2px smaller (text-[11px] instead of text-xs) */}
+            {/* DESCRIPTION LINE - 2px smaller */}
             <p className="text-[11px] tracking-[0.15em] text-white font-bold uppercase mt-1 max-w-md">
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT - no spacing, brought closer together */}
-            <p className="text-white text-[17px] italic font-bold text-center mt-2 leading-tight max-w-2xl">
-              The new standard for social fitness.
-            </p>
-            <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
-              Designed for those who are as engaging in person as they are driven in the moment.
-            </p>
+            {/* QUOTE TEXT - moved lower with mt-8 */}
+            <div className="mt-8">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
+                The new standard for social fitness.
+              </p>
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
+                Designed for those who are as engaging in person as they are driven in the moment.
+              </p>
+            </div>
 
-            {/* EXPLORE CURATION BUTTON - moved down lower */}
-            <div className="mt-16 flex justify-center">
+            {/* EXPLORE CURATION BUTTON - moved lower with mt-10 */}
+            <div className="mt-10 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
