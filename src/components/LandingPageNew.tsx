@@ -119,16 +119,16 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (50%) */}
-        <div className="w-1/2 flex flex-col overflow-x-hidden bg-black">
+        {/* LEFT COLUMN (60%) - BLACK AREA INCREASED BY 10% */}
+        <div className="w-[60%] flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - 3X BIGGER */}
-            <div className="flex justify-center mb-12 mt-8">
+            {/* LOGO - MOVED DOWN 2 INCHES (pt-32 instead of mt-8) */}
+            <div className="flex justify-center mb-12 pt-32">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-96 md:w-112 h-auto scale-150"
+                className="w-80 md:w-[400px] h-auto"
               />
             </div>
 
@@ -158,8 +158,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </p>
               </div>
 
-              {/* EXPLORE CURATION BUTTON */}
-              <div className="pt-8">
+              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE */}
+              <div className="pt-8 pb-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
                   className="px-10 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
@@ -171,8 +171,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) - GIRL IMAGE FULL SIZE COVERS ENTIRE COLUMN */}
-        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
+        {/* RIGHT COLUMN (40%) - GIRL IMAGE */}
+        <div className="w-[40%] relative overflow-hidden bg-zinc-900">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
