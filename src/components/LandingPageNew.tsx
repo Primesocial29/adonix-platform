@@ -162,7 +162,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </p>
             
             {/* QUOTE TEXT WITH 15% OPACITY BLACK BOX */}
-            <div className="mt-8 bg-black/15 p-6 rounded-lg">
+            <div className="mt-20 bg-black/15 p-6 rounded-lg">
               <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
                 The new standard for social fitness.
               </p>
