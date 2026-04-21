@@ -119,12 +119,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (60%) - BLACK AREA INCREASED BY 10% */}
+        {/* LEFT COLUMN (60%) */}
         <div className="w-[60%] flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - MOVED DOWN 2 INCHES (pt-32 instead of mt-8) */}
-            <div className="flex justify-center mb-12 pt-32">
+            {/* LOGO */}
+            <div className="flex justify-center mb-8 pt-20">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
@@ -132,37 +132,33 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               />
             </div>
 
-            {/* TEXT */}
-            <div className="max-w-md mx-auto space-y-8">
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
-                  ADONIX
-                </h1>
-                <p className="text-sm tracking-[0.2em] text-gray-400 uppercase">
-                  SOCIAL FITNESS · ELEVATED
-                </p>
-              </div>
+            {/* TEXT - NO SPACING, COMPACT */}
+            <div className="max-w-md mx-auto">
+              {/* ADONIX - 6px bigger */}
+              <h1 className="text-[4rem] md:text-[5.5rem] font-bold tracking-tight text-white leading-tight">
+                ADONIX
+              </h1>
               
-              <div className="space-y-4">
-                <p className="text-gray-300 text-lg leading-relaxed">
-                  A PRIVATE, CURATED FITNESS ENVIRONMENT
-                </p>
-                <p className="text-gray-300 text-lg leading-relaxed">
-                  DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-                </p>
-              </div>
+              {/* SOCIAL FITNESS · ELEVATED - one line */}
+              <p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-2">
+                SOCIAL FITNESS · ELEVATED
+              </p>
               
-              <div className="pt-2">
-                <p className="text-gray-400 italic leading-relaxed">
-                  "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
-                </p>
-              </div>
+              {/* Subtitle line - smaller caps */}
+              <p className="text-[11px] tracking-[0.15em] text-gray-500 uppercase mt-3 leading-relaxed">
+                A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+              </p>
+              
+              {/* Quote - removed spacing */}
+              <p className="text-gray-400 italic text-base mt-6 leading-relaxed">
+                "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
+              </p>
 
-              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE */}
-              <div className="pt-8 pb-8">
+              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE, MOVED UP */}
+              <div className="mt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
-                  className="px-10 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
+                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap inline-block"
                 >
                   EXPLORE CURATION
                 </button>
@@ -171,12 +167,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (40%) - GIRL IMAGE */}
-        <div className="w-[40%] relative overflow-hidden bg-zinc-900">
+        {/* RIGHT COLUMN (40%) - GIRL IMAGE SCALED DOWN SLIGHTLY, WITH BLACK BACKGROUND */}
+        <div className="w-[40%] relative overflow-hidden bg-black flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
+            className="w-[85%] h-auto object-contain brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
