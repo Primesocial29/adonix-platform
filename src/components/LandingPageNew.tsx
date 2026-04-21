@@ -111,7 +111,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       {/* TWO-COLUMN CONTENT AREA */}
       <div className="flex flex-1 flex-row overflow-x-hidden relative">
         
-        {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
+        {/* LOGIN/SETUP - TOP RIGHT */}
         <div 
           onClick={() => window.location.href = '/login'}
           className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-20"
@@ -119,22 +119,21 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (55%) */}
-        <div className="w-[55%] flex flex-col overflow-x-hidden">
+        {/* LEFT COLUMN (50%) - BLACK BACKGROUND */}
+        <div className="w-1/2 flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - 3X BIGGER (using scale transform) */}
+            {/* LOGO - NORMAL SIZE */}
             <div className="flex justify-center mb-12 mt-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="h-auto scale-150 md:scale-175 lg:scale-200"
-                style={{ width: 'auto', maxWidth: 'none' }}
+                className="w-48 md:w-56 h-auto"
               />
             </div>
 
             {/* TEXT */}
-            <div className="max-w-lg mx-auto space-y-8">
+            <div className="max-w-md mx-auto space-y-8">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
                   ADONIX
@@ -172,12 +171,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (45%) - GIRL IMAGE (SHRUNK ONLY 15%) */}
-        <div className="w-[45%] relative overflow-hidden bg-zinc-900 flex items-center justify-center">
+        {/* RIGHT COLUMN (50%) - GIRL IMAGE SCALED DOWN 10% (head lower) */}
+        <div className="w-1/2 relative overflow-hidden bg-zinc-900 flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[85%] h-auto object-contain grayscale brightness-110 contrast-125"
+            className="w-[90%] h-auto object-contain grayscale brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
