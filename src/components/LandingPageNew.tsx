@@ -108,7 +108,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* TWO-COLUMN CONTENT AREA */}
+      {/* TWO-COLUMN CONTENT AREA - NO SEPARATION */}
       <div className="flex flex-1 flex-row overflow-x-hidden relative">
         
         {/* LOGIN/SETUP - TOP RIGHT */}
@@ -119,7 +119,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (60%) */}
+        {/* LEFT COLUMN (60%) - NO BORDER, NO SEPARATION */}
         <div className="w-[60%] flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
@@ -132,29 +132,25 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               />
             </div>
 
-            {/* TEXT - NO SPACING, COMPACT */}
+            {/* TEXT */}
             <div className="max-w-md mx-auto">
-              {/* ADONIX - 6px bigger */}
               <h1 className="text-[4rem] md:text-[5.5rem] font-bold tracking-tight text-white leading-tight">
                 ADONIX
               </h1>
               
-              {/* SOCIAL FITNESS · ELEVATED - one line */}
               <p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-2">
                 SOCIAL FITNESS · ELEVATED
               </p>
               
-              {/* Subtitle line - smaller caps */}
               <p className="text-[11px] tracking-[0.15em] text-gray-500 uppercase mt-3 leading-relaxed">
                 A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
               </p>
               
-              {/* Quote - removed spacing */}
               <p className="text-gray-400 italic text-base mt-6 leading-relaxed">
                 "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
               </p>
 
-              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE, MOVED UP */}
+              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE */}
               <div className="mt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
@@ -167,12 +163,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (40%) - GIRL IMAGE SCALED DOWN SLIGHTLY, WITH BLACK BACKGROUND */}
+        {/* RIGHT COLUMN (40%) - GIRL IMAGE LARGE, ONLY SLIGHTLY SCALED DOWN */}
         <div className="w-[40%] relative overflow-hidden bg-black flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[85%] h-auto object-contain brightness-110 contrast-125"
+            className="w-[95%] h-auto object-contain brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
