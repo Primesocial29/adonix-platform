@@ -108,8 +108,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* TWO-COLUMN CONTENT AREA - NO HORIZONTAL SCROLL */}
-      <div className="flex flex-1 flex-row overflow-x-hidden">
+      {/* TWO-COLUMN CONTENT AREA */}
+      <div className="flex flex-1 flex-row overflow-x-hidden relative">
         
         {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
         <div 
@@ -119,20 +119,21 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (55%) - BLACK BACKGROUND WITH CONTENT */}
+        {/* LEFT COLUMN (55%) */}
         <div className="w-[55%] flex flex-col overflow-x-hidden">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - 3X BIGGER */}
+            {/* LOGO - 3X BIGGER (using scale transform) */}
             <div className="flex justify-center mb-12 mt-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-full max-w-[400px] h-auto"
+                className="h-auto scale-150 md:scale-175 lg:scale-200"
+                style={{ width: 'auto', maxWidth: 'none' }}
               />
             </div>
 
-            {/* TEXT - SPREAD OUT TO COVER NEGATIVE SPACE */}
+            {/* TEXT */}
             <div className="max-w-lg mx-auto space-y-8">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
@@ -158,7 +159,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </p>
               </div>
 
-              {/* EXPLORE CURATION - SINGLE LINE BUTTON */}
+              {/* EXPLORE CURATION BUTTON */}
               <div className="pt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
@@ -171,12 +172,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (45%) - GIRL IMAGE (SMALLER) */}
+        {/* RIGHT COLUMN (45%) - GIRL IMAGE (SHRUNK ONLY 15%) */}
         <div className="w-[45%] relative overflow-hidden bg-zinc-900 flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[80%] h-auto object-contain grayscale brightness-110 contrast-125"
+            className="w-[85%] h-auto object-contain grayscale brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
