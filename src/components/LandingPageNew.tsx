@@ -31,7 +31,7 @@ function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean;
   );
 }
 
-const LandingPage = () => {
+const LandingPageNew = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
@@ -105,65 +105,96 @@ primesocial@primesocial.xyz`;
 Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
 
   return (
-    <div className="flex flex-row min-h-screen bg-black text-white font-sans">
+    <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       
-      {/* LEFT COLUMN (50%) - Content + Footer at bottom */}
-      <div className="w-1/2 flex flex-col relative">
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 py-8">
-          {/* Logo */}
-          <div className="mb-8">
-            <img 
-              src="/adonixlogo.png" 
-              alt="Adonix Logo" 
-              className="h-12 w-auto"
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="max-w-md space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              ADONIX
-            </h1>
+      {/* TWO-COLUMN CONTENT AREA (grows to fill space) */}
+      <div className="flex flex-1 flex-row">
+        
+        {/* LEFT COLUMN (50%) - Content */}
+        <div className="w-1/2 flex flex-col">
+          {/* Scrollable content area with logo higher up */}
+          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 pt-4 pb-8">
             
-            <p className="text-sm tracking-[0.2em] text-gray-400 uppercase">
-              SOCIAL FITNESS · ELEVATED
-            </p>
-            
-            <div className="space-y-2">
-              <p className="text-gray-300 text-lg leading-relaxed">
-                A PRIVATE, CURATED FITNESS ENVIRONMENT
-              </p>
-              <p className="text-gray-300 text-lg leading-relaxed">
-                DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-              </p>
-            </div>
-            
-            <div className="pt-4 space-y-2">
-              <p className="text-gray-400 italic leading-relaxed">
-                "The new standard for social fitness.
-              </p>
-              <p className="text-gray-400 italic leading-relaxed">
-                Designed for those who are as engaging in person as they are driven in the moment."
-              </p>
+            {/* LARGER LOGO - HIGHER UP */}
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix Logo" 
+                className="w-64 md:w-80 h-auto"
+              />
             </div>
 
-            {/* EXPLORE CURATION Button */}
-            <div className="pt-6">
-              <button 
-                onClick={() => window.location.href = '/choose-role'}
-                className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
-              >
-                EXPLORE CURATION
-              </button>
+            {/* Main Content - keeping your original text sizes and colors */}
+            <div className="max-w-md mx-auto space-y-6">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
+                ADONIX
+              </h1>
+              
+              <p className="text-sm tracking-[0.2em] text-gray-400 uppercase">
+                SOCIAL FITNESS · ELEVATED
+              </p>
+              
+              <div className="space-y-2">
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  A PRIVATE, CURATED FITNESS ENVIRONMENT
+                </p>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+                </p>
+              </div>
+              
+              <div className="pt-4 space-y-2">
+                <p className="text-gray-400 italic leading-relaxed">
+                  "The new standard for social fitness.
+                </p>
+                <p className="text-gray-400 italic leading-relaxed">
+                  Designed for those who are as engaging in person as they are driven in the moment."
+                </p>
+              </div>
+
+              {/* EXPLORE CURATION Button - keeping your original button style */}
+              <div className="pt-6">
+                <button 
+                  onClick={() => window.location.href = '/choose-role'}
+                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
+                >
+                  EXPLORE CURATION
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* FOOTER - at bottom of left column */}
-        <footer className="border-t border-white/10 bg-black/80 px-8 md:px-12 lg:px-16 py-4">
-          <div className="max-w-md">
-            <div className="flex flex-wrap justify-start gap-4 text-xs">
+        {/* RIGHT COLUMN (50%) - Girl Image + Login/Setup */}
+        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
+          {/* Girl Image */}
+          <img 
+            src="/girl_image_backgroundinterface.png" 
+            alt="Social Fitness Member" 
+            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
+          />
+          
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+          
+          {/* LOGIN/SETUP - Top Right */}
+          <div 
+            onClick={() => window.location.href = '/login'}
+            className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-10"
+          >
+            LOGIN / SETUP
+          </div>
+        </div>
+      </div>
+
+      {/* FULL-WIDTH FOOTER - across both columns */}
+      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-xs text-gray-500">
+              © 2026 ADONIX. All rights reserved.
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 text-xs">
               <button onClick={() => setShowTermsModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">
                 Terms of Service
               </button>
@@ -174,34 +205,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 Safety Guidelines
               </button>
             </div>
-            <div className="text-left text-xs text-gray-600 mt-2">
-              <p>© 2026 ADONIX. All rights reserved.</p>
-              <p className="mt-1">Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.</p>
-            </div>
           </div>
-        </footer>
-      </div>
-
-      {/* RIGHT COLUMN (50%) - Girl Image + Login/Setup */}
-      <div className="w-1/2 relative overflow-hidden bg-zinc-900">
-        {/* Girl Image */}
-        <img 
-          src="/girl_image_backgroundinterface.png" 
-          alt="Social Fitness Member" 
-          className="w-full h-full object-cover grayscale brightness-110 contrast-125"
-        />
-        
-        {/* Subtle overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-        
-        {/* LOGIN/SETUP - Top Right */}
-        <div 
-          onClick={() => window.location.href = '/login'}
-          className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-10"
-        >
-          LOGIN / SETUP
+          <div className="text-center text-xs text-gray-600 mt-4">
+            Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.
+          </div>
         </div>
-      </div>
+      </footer>
 
       {/* Modals */}
       <FooterInfoModal
@@ -226,4 +235,4 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   );
 };
 
-export default LandingPage;
+export default LandingPageNew;
