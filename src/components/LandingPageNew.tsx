@@ -135,7 +135,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
 
         {/* TEXT CONTENT */}
         <div className="relative z-10 flex flex-col justify-center min-h-screen">
-          <div className="max-w-2xl mx-auto px-8 md:px-12 lg:px-16 w-full">
+          <div className="max-w-4xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
             {/* LOGO */}
             <div className="mb-6">
@@ -161,15 +161,15 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT - CENTERED, LINES CLOSER TOGETHER, WIDER CONTAINER */}
+            {/* QUOTE TEXT - EXACTLY 3 LINES, CENTERED, WIDER CONTAINER */}
             <div className="mt-8 bg-black/15 p-8 rounded-lg w-full">
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap">
                 The new standard for social fitness.
               </p>
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap mt-1">
                 Designed for those who are as engaging in
               </p>
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap mt-1">
                 person as they are driven in the moment.
               </p>
             </div>
