@@ -163,12 +163,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT SIDE - GIRL IMAGE FULL SIZE, NO SHRINKING */}
+        {/* RIGHT SIDE - GIRL IMAGE WHOLE IMAGE, SCALED DOWN 10%, NOT CROPPED */}
         <div className="w-1/2 relative overflow-hidden bg-black flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-full h-full object-cover brightness-110 contrast-125"
+            className="w-[90%] h-auto object-contain brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
