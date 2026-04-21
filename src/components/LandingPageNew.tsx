@@ -119,16 +119,16 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (50%) - BLACK BACKGROUND */}
+        {/* LEFT COLUMN (50%) */}
         <div className="w-1/2 flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - NORMAL SIZE */}
+            {/* LOGO - 3X BIGGER */}
             <div className="flex justify-center mb-12 mt-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-48 md:w-56 h-auto"
+                className="w-96 md:w-112 h-auto scale-150"
               />
             </div>
 
@@ -171,12 +171,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) - GIRL IMAGE SCALED DOWN 10% (head lower) */}
-        <div className="w-1/2 relative overflow-hidden bg-zinc-900 flex items-center justify-center">
+        {/* RIGHT COLUMN (50%) - GIRL IMAGE FULL SIZE COVERS ENTIRE COLUMN */}
+        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[90%] h-auto object-contain grayscale brightness-110 contrast-125"
+            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
