@@ -108,10 +108,10 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* SINGLE BLACK BACKGROUND - NO SEPARATION */}
+      {/* SOLID BLACK BACKGROUND - NO SEPARATION BETWEEN COLUMNS */}
       <div className="flex flex-1 flex-row overflow-x-hidden relative bg-black">
         
-        {/* LOGIN/SETUP - TOP RIGHT */}
+        {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
         <div 
           onClick={() => window.location.href = '/login'}
           className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-20"
@@ -119,9 +119,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT CONTENT */}
-        <div className="w-1/2 flex flex-col overflow-x-hidden bg-black">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
+        {/* LEFT COLUMN - TEXT CONTENT (50%) */}
+        <div className="w-1/2 flex flex-col bg-black">
+          <div className="px-8 md:px-12 lg:px-16 py-12">
             
             {/* LOGO */}
             <div className="flex justify-center mb-8 pt-20">
@@ -132,7 +132,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               />
             </div>
 
-            {/* TEXT */}
+            {/* TEXT - FULLY VISIBLE, NOT BLOCKED */}
             <div className="max-w-md mx-auto">
               <h1 className="text-[4rem] md:text-[5.5rem] font-bold tracking-tight text-white leading-tight">
                 ADONIX
@@ -150,7 +150,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
               </p>
 
-              {/* EXPLORE CURATION BUTTON */}
+              {/* BUTTON */}
               <div className="mt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
@@ -163,19 +163,18 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT SIDE - GIRL IMAGE WHOLE IMAGE, SCALED DOWN 10%, NOT CROPPED */}
-        <div className="w-1/2 relative overflow-hidden bg-black flex items-center justify-center">
+        {/* RIGHT COLUMN - GIRL IMAGE (50%) - NO OVERLAP */}
+        <div className="w-1/2 bg-black flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
             className="w-[90%] h-auto object-contain brightness-110 contrast-125"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
       </div>
 
-      {/* FULL-WIDTH FOOTER */}
-      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6 overflow-x-hidden">
+      {/* FOOTER */}
+      <footer className="border-t border-white/10 bg-black w-full px-8 md:px-12 lg:px-16 py-6 overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
