@@ -122,7 +122,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         {/* GIRL IMAGE - POSITIONED ON RIGHT SIDE, LARGE, TRANSPARENT */}
         <div className="absolute right-0 top-0 h-full w-[80%] flex items-center justify-end z-0">
           <img 
-            src="/girl_image_backgroundinterface.png" 
+            src="/girl2.png" 
             alt="Social Fitness Member" 
             className="w-[95%] h-auto object-contain brightness-110 contrast-125"
           
