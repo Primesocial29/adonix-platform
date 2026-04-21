@@ -16,6 +16,7 @@ import BrowsePartners from './components/BrowsePartners';
 import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
+import LandingPageNew from './components/LandingPageNew';
 import { useAuth } from './hooks/useAuth';
 
 // Terms Modal for CHECKBOXES - requires scroll-to-accept
@@ -912,6 +913,11 @@ function App() {
 
   if (currentRoute === '/login') {
     return <LoginPage />;
+  }
+
+  // TEST ROUTE for new landing page - remove or comment out when done testing
+  if (currentRoute === '/test-landing') {
+    return <LandingPageNew />;
   }
 
   if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
