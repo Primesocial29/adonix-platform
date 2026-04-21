@@ -124,7 +124,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           <img 
             src="/GIRL2.png" 
             alt="Social Fitness Member" 
-            className="w-[95%] h-auto object-contain brightness-110 contrast-125"
+            className="w-[70%] h-auto object-contain brightness-110 contrast-125"
           
           />
         </div>
