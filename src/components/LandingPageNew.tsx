@@ -112,15 +112,15 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       <div className="flex-1 flex flex-col relative">
         
         {/* LOGIN/SETUP - TOP RIGHT WITH FULL WIDTH LINE */}
-        <div className="absolute top-6 right-6 text-right z-20">
+        <div className="absolute top-6 right-6 z-20">
           <div 
             onClick={() => window.location.href = '/login'}
-            className="text-xs tracking-widest text-white font-medium hover:text-orange-400 cursor-pointer transition-colors"
+            className="text-xs tracking-widest text-white font-medium hover:text-orange-400 cursor-pointer transition-colors text-right"
           >
             LOGIN/SETUP
           </div>
-          {/* Full width line - spans across the right side */}
-          <div className="absolute right-0 w-screen h-px bg-white/10 mt-1" style={{ right: 0, transform: 'translateX(100%)' }}></div>
+          {/* Full width line from left to right */}
+          <div className="absolute left-[-100vw] right-0 h-px bg-white/10 mt-1" style={{ width: '100vw', left: '-100vw' }}></div>
         </div>
 
         {/* GIRL IMAGE - POSITIONED ON RIGHT SIDE, LARGE, TRANSPARENT */}
@@ -160,24 +160,24 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT AND BUTTON - moved down 1 inch (mt-16 = 4rem ≈ 1 inch) */}
-            <div className="mt-16">
+            {/* QUOTE TEXT */}
+            <div className="mt-8">
               <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
                 The new standard for social fitness.
               </p>
               <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
                 Designed for those who are as engaging in person as they are driven in the moment.
               </p>
+            </div>
 
-              {/* EXPLORE CURATION BUTTON */}
-              <div className="mt-10 flex justify-center">
-                <button 
-                  onClick={() => window.location.href = '/choose-role'}
-                  className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
-                >
-                  EXPLORE CURATION
-                </button>
-              </div>
+            {/* EXPLORE CURATION BUTTON - moved 1 inch lower (mt-16 = 4rem) */}
+            <div className="mt-16 flex justify-center">
+              <button 
+                onClick={() => window.location.href = '/choose-role'}
+                className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
+              >
+                EXPLORE CURATION
+              </button>
             </div>
           </div>
         </div>
