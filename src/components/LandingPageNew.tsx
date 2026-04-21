@@ -108,10 +108,13 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       
-      {/* MAIN CONTENT - LIKE YOUR REFERENCE IMAGE */}
+      {/* FULL WIDTH LINE AT THE TOP */}
+      <div className="absolute top-[52px] left-0 right-0 h-px bg-white/10 z-20"></div>
+
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col relative">
         
-        {/* LOGIN/SETUP - TOP RIGHT WITH FULL WIDTH LINE */}
+        {/* LOGIN/SETUP - TOP RIGHT */}
         <div className="absolute top-6 right-6 z-20">
           <div 
             onClick={() => window.location.href = '/login'}
@@ -119,11 +122,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           >
             LOGIN/SETUP
           </div>
-          {/* Full width line from left to right */}
-          <div className="absolute left-[-100vw] right-0 h-px bg-white/10 mt-1" style={{ width: '100vw', left: '-100vw' }}></div>
         </div>
 
-        {/* GIRL IMAGE - POSITIONED ON RIGHT SIDE, LARGE, TRANSPARENT */}
+        {/* GIRL IMAGE */}
         <div className="absolute right-[-10px] top-0 h-full w-[80%] flex items-center justify-end z-0">
           <img 
             src="/GIRL2.png" 
@@ -132,11 +133,11 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           />
         </div>
 
-        {/* TEXT CONTENT - LEFT SIDE, OVER THE BLACK BACKGROUND */}
+        {/* TEXT CONTENT */}
         <div className="relative z-10 flex flex-col justify-center min-h-screen">
           <div className="max-w-2xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
-            {/* LARGE LOGO */}
+            {/* LOGO */}
             <div className="mb-6">
               <img 
                 src="/adonixlogo.png" 
@@ -145,23 +146,23 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               />
             </div>
 
-            {/* ADONIX - LARGE TEXT */}
+            {/* ADONIX TEXT */}
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight">
               ADONIX
             </h1>
             
-            {/* SOCIAL FITNESS · ELEVATED - white font */}
+            {/* SOCIAL FITNESS */}
             <p className="text-sm tracking-[0.2em] text-white font-bold uppercase mt-1">
               SOCIAL FITNESS · ELEVATED
             </p>
             
-            {/* DESCRIPTION LINE - 2px smaller */}
+            {/* DESCRIPTION */}
             <p className="text-[11px] tracking-[0.15em] text-white font-bold uppercase mt-1 max-w-md">
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT */}
-            <div className="mt-8">
+            {/* QUOTE TEXT WITH 15% OPACITY BLACK BOX */}
+            <div className="mt-8 bg-black/15 p-6 rounded-lg">
               <p className="text-white text-[17px] italic font-bold text-center leading-tight max-w-2xl">
                 The new standard for social fitness.
               </p>
@@ -170,8 +171,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               </p>
             </div>
 
-            {/* EXPLORE CURATION BUTTON - moved 1 inch lower (mt-16 = 4rem) */}
-            <div className="mt-16 flex justify-center">
+            {/* BUTTON - moved down half an inch (mt-6 added) */}
+            <div className="mt-20 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
