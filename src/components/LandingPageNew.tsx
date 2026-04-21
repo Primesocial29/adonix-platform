@@ -106,75 +106,76 @@ primesocial@primesocial.xyz`;
 Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       
-      {/* SOLID BLACK BACKGROUND - NO SEPARATION BETWEEN COLUMNS */}
-      <div className="flex flex-1 flex-row overflow-x-hidden relative bg-black">
+      {/* MAIN CONTENT - LIKE YOUR REFERENCE IMAGE */}
+      <div className="flex-1 flex flex-col relative">
         
-        {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
+        {/* LOGIN/SETUP - TOP RIGHT */}
         <div 
           onClick={() => window.location.href = '/login'}
-          className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-20"
+          className="absolute top-6 right-6 text-xs tracking-widest text-gray-400 font-medium hover:text-orange-400 cursor-pointer transition-colors z-20"
         >
-          LOGIN / SETUP
+          LOGIN/SETUP
         </div>
 
-        {/* LEFT COLUMN - TEXT CONTENT (50%) */}
-        <div className="w-1/2 flex flex-col bg-black">
-          <div className="px-8 md:px-12 lg:px-16 py-12">
-            
-            {/* LOGO */}
-            <div className="flex justify-center mb-8 pt-20">
-              <img 
-                src="/adonixlogo.png" 
-                alt="Adonix Logo" 
-                className="w-80 md:w-[400px] h-auto"
-              />
-            </div>
-
-            {/* TEXT - FULLY VISIBLE, NOT BLOCKED */}
-            <div className="max-w-md mx-auto">
-              <h1 className="text-[4rem] md:text-[5.5rem] font-bold tracking-tight text-white leading-tight">
-                ADONIX
-              </h1>
-              
-              <p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-2">
-                SOCIAL FITNESS · ELEVATED
-              </p>
-              
-              <p className="text-[11px] tracking-[0.15em] text-gray-500 uppercase mt-3 leading-relaxed">
-                A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-              </p>
-              
-              <p className="text-gray-400 italic text-base mt-6 leading-relaxed">
-                "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
-              </p>
-
-              {/* BUTTON */}
-              <div className="mt-8">
-                <button 
-                  onClick={() => window.location.href = '/choose-role'}
-                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap inline-block"
-                >
-                  EXPLORE CURATION
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN - GIRL IMAGE (50%) - NO OVERLAP */}
-        <div className="w-1/2 bg-black flex items-center justify-center">
+        {/* GIRL IMAGE - POSITIONED ON RIGHT SIDE, LARGE, TRANSPARENT */}
+        <div className="absolute right-0 top-0 h-full w-1/2 flex items-center justify-end z-0">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[90%] h-auto object-contain brightness-110 contrast-125"
+            className="h-full w-auto object-contain brightness-110 contrast-125"
           />
+        </div>
+
+        {/* TEXT CONTENT - LEFT SIDE, OVER THE BLACK BACKGROUND */}
+        <div className="relative z-10 flex flex-col justify-center min-h-screen">
+          <div className="max-w-2xl mx-auto px-8 md:px-12 lg:px-16 w-full">
+            
+            {/* LARGE LOGO */}
+            <div className="mb-6">
+              <img 
+                src="/adonixlogo.png" 
+                alt="Adonix Logo" 
+                className="w-64 md:w-80 h-auto"
+              />
+            </div>
+
+            {/* ADONIX - LARGE TEXT */}
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight">
+              ADONIX
+            </h1>
+            
+            {/* SOCIAL FITNESS · ELEVATED */}
+            <p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-3">
+              SOCIAL FITNESS · ELEVATED
+            </p>
+            
+            {/* DESCRIPTION LINE */}
+            <p className="text-xs tracking-[0.15em] text-gray-500 uppercase mt-4 max-w-md">
+              A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+            </p>
+            
+            {/* QUOTE TEXT */}
+            <p className="text-gray-400 text-sm mt-6 max-w-md leading-relaxed">
+              The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment.
+            </p>
+
+            {/* EXPLORE CURATION BUTTON */}
+            <div className="mt-8">
+              <button 
+                onClick={() => window.location.href = '/choose-role'}
+                className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
+              >
+                EXPLORE CURATION
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/10 bg-black w-full px-8 md:px-12 lg:px-16 py-6 overflow-x-hidden">
+      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
