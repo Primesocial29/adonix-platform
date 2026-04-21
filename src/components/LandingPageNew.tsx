@@ -108,8 +108,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* TWO-COLUMN CONTENT AREA - NO SEPARATION */}
-      <div className="flex flex-1 flex-row overflow-x-hidden relative">
+      {/* SINGLE BLACK BACKGROUND - NO SEPARATION */}
+      <div className="flex flex-1 flex-row overflow-x-hidden relative bg-black">
         
         {/* LOGIN/SETUP - TOP RIGHT */}
         <div 
@@ -119,8 +119,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (60%) - NO BORDER, NO SEPARATION */}
-        <div className="w-[60%] flex flex-col overflow-x-hidden bg-black">
+        {/* LEFT CONTENT */}
+        <div className="w-1/2 flex flex-col overflow-x-hidden bg-black">
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
             {/* LOGO */}
@@ -150,7 +150,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
               </p>
 
-              {/* EXPLORE CURATION BUTTON - FULLY VISIBLE */}
+              {/* EXPLORE CURATION BUTTON */}
               <div className="mt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
@@ -163,12 +163,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (40%) - GIRL IMAGE LARGE, ONLY SLIGHTLY SCALED DOWN */}
-        <div className="w-[40%] relative overflow-hidden bg-black flex items-center justify-center">
+        {/* RIGHT SIDE - GIRL IMAGE FULL SIZE, NO SHRINKING */}
+        <div className="w-1/2 relative overflow-hidden bg-black flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-[95%] h-auto object-contain brightness-110 contrast-125"
+            className="w-full h-full object-cover brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
