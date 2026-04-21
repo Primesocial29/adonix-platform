@@ -109,22 +109,30 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
     <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       
       {/* TWO-COLUMN CONTENT AREA - NO LINE BETWEEN COLUMNS */}
-      <div className="flex flex-1 flex-row">
+      <div className="flex flex-1 flex-row relative">
         
+        {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
+        <div 
+          onClick={() => window.location.href = '/login'}
+          className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-20"
+        >
+          LOGIN / SETUP
+        </div>
+
         {/* LEFT COLUMN (50%) */}
         <div className="w-1/2 flex flex-col">
-          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 pt-24 pb-8">
+          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - TWICE AS BIG, MOVED DOWN */}
-            <div className="flex justify-center mb-12">
+            {/* LOGO - 2X BIGGER */}
+            <div className="flex justify-center mb-12 mt-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-96 md:w-112 h-auto"
+                className="w-80 md:w-96 h-auto"
               />
             </div>
 
-            {/* TEXT - SPREADS OUT TO COVER NEGATIVE SPACE */}
+            {/* TEXT - SPREAD OUT TO COVER NEGATIVE SPACE */}
             <div className="max-w-lg mx-auto space-y-8">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
@@ -144,7 +152,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </p>
               </div>
               
-              <div className="pt-2 space-y-3">
+              <div className="pt-2">
                 <p className="text-gray-400 italic leading-relaxed">
                   "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
                 </p>
@@ -163,23 +171,14 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) - GIRL IMAGE (15% of column height, smaller) */}
-        <div className="w-1/2 relative flex items-start justify-center bg-black pt-32">
-          <div className="w-3/4 max-w-sm mx-auto">
-            <img 
-              src="/girl_image_backgroundinterface.png" 
-              alt="Social Fitness Member" 
-              className="w-full h-auto object-contain grayscale brightness-110 contrast-125"
-            />
-          </div>
-          
-          {/* LOGIN/SETUP - Top Right */}
-          <div 
-            onClick={() => window.location.href = '/login'}
-            className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-10"
-          >
-            LOGIN / SETUP
-          </div>
+        {/* RIGHT COLUMN (50%) - GIRL IMAGE COVERS ENTIRE SECTION */}
+        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
+          <img 
+            src="/girl_image_backgroundinterface.png" 
+            alt="Social Fitness Member" 
+            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
       </div>
 
