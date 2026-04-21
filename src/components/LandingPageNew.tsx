@@ -118,7 +118,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             {/* LARGER LOGO - HIGHER UP */}
             <div className="flex justify-center mb-6">
               <img 
-                src="/adonixlogo.png" 
+                
                 alt="Adonix Logo" 
                 className="w-64 md:w-80 h-auto"
               />
