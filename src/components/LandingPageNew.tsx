@@ -106,10 +106,10 @@ primesocial@primesocial.xyz`;
 Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white font-sans">
+    <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* TWO-COLUMN CONTENT AREA - NO LINE BETWEEN COLUMNS */}
-      <div className="flex flex-1 flex-row relative">
+      {/* TWO-COLUMN CONTENT AREA - NO HORIZONTAL SCROLL */}
+      <div className="flex flex-1 flex-row overflow-x-hidden">
         
         {/* LOGIN/SETUP - TOP RIGHT OF ENTIRE PAGE */}
         <div 
@@ -119,16 +119,16 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           LOGIN / SETUP
         </div>
 
-        {/* LEFT COLUMN (50%) */}
-        <div className="w-1/2 flex flex-col">
-          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 py-12">
+        {/* LEFT COLUMN (55%) - BLACK BACKGROUND WITH CONTENT */}
+        <div className="w-[55%] flex flex-col overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 md:px-12 lg:px-16 py-12">
             
-            {/* LOGO - 2X BIGGER */}
+            {/* LOGO - 3X BIGGER */}
             <div className="flex justify-center mb-12 mt-8">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-80 md:w-96 h-auto"
+                className="w-full max-w-[400px] h-auto"
               />
             </div>
 
@@ -171,19 +171,19 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) - GIRL IMAGE COVERS ENTIRE SECTION */}
-        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
+        {/* RIGHT COLUMN (45%) - GIRL IMAGE (SMALLER) */}
+        <div className="w-[45%] relative overflow-hidden bg-zinc-900 flex items-center justify-center">
           <img 
             src="/girl_image_backgroundinterface.png" 
             alt="Social Fitness Member" 
-            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
+            className="w-[80%] h-auto object-contain grayscale brightness-110 contrast-125"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
       </div>
 
       {/* FULL-WIDTH FOOTER */}
-      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6">
+      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6 overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
