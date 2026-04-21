@@ -108,33 +108,34 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       
-      {/* TWO-COLUMN CONTENT AREA */}
+      {/* TWO-COLUMN CONTENT AREA - NO LINE BETWEEN COLUMNS */}
       <div className="flex flex-1 flex-row">
         
         {/* LEFT COLUMN (50%) */}
         <div className="w-1/2 flex flex-col">
-          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 pt-4 pb-8">
+          <div className="flex-1 overflow-y-auto px-8 md:px-12 lg:px-16 pt-24 pb-8">
             
-            {/* LARGE LOGO - HIGHER UP */}
-            <div className="flex justify-center mb-6">
+            {/* LOGO - TWICE AS BIG, MOVED DOWN */}
+            <div className="flex justify-center mb-12">
               <img 
                 src="/adonixlogo.png" 
                 alt="Adonix Logo" 
-                className="w-64 md:w-80 h-auto"
+                className="w-96 md:w-112 h-auto"
               />
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-md mx-auto space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
-                ADONIX
-              </h1>
+            {/* TEXT - SPREADS OUT TO COVER NEGATIVE SPACE */}
+            <div className="max-w-lg mx-auto space-y-8">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">
+                  ADONIX
+                </h1>
+                <p className="text-sm tracking-[0.2em] text-gray-400 uppercase">
+                  SOCIAL FITNESS · ELEVATED
+                </p>
+              </div>
               
-              <p className="text-sm tracking-[0.2em] text-gray-400 uppercase">
-                SOCIAL FITNESS · ELEVATED
-              </p>
-              
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <p className="text-gray-300 text-lg leading-relaxed">
                   A PRIVATE, CURATED FITNESS ENVIRONMENT
                 </p>
@@ -143,20 +144,17 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </p>
               </div>
               
-              <div className="pt-4 space-y-2">
+              <div className="pt-2 space-y-3">
                 <p className="text-gray-400 italic leading-relaxed">
-                  "The new standard for social fitness.
-                </p>
-                <p className="text-gray-400 italic leading-relaxed">
-                  Designed for those who are as engaging in person as they are driven in the moment."
+                  "The new standard for social fitness. Designed for those who are as engaging in person as they are driven in the moment."
                 </p>
               </div>
 
-              {/* EXPLORE CURATION Button */}
-              <div className="pt-6">
+              {/* EXPLORE CURATION - SINGLE LINE BUTTON */}
+              <div className="pt-8">
                 <button 
                   onClick={() => window.location.href = '/choose-role'}
-                  className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
+                  className="px-10 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                   EXPLORE CURATION
                 </button>
@@ -165,16 +163,17 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) - Girl Image + Login/Setup */}
-        <div className="w-1/2 relative overflow-hidden bg-zinc-900">
-          <img 
-            src="/girl_image_backgroundinterface.png" 
-            alt="Social Fitness Member" 
-            className="w-full h-full object-cover grayscale brightness-110 contrast-125"
-          />
+        {/* RIGHT COLUMN (50%) - GIRL IMAGE (15% of column height, smaller) */}
+        <div className="w-1/2 relative flex items-start justify-center bg-black pt-32">
+          <div className="w-3/4 max-w-sm mx-auto">
+            <img 
+              src="/girl_image_backgroundinterface.png" 
+              alt="Social Fitness Member" 
+              className="w-full h-auto object-contain grayscale brightness-110 contrast-125"
+            />
+          </div>
           
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
-          
+          {/* LOGIN/SETUP - Top Right */}
           <div 
             onClick={() => window.location.href = '/login'}
             className="absolute top-6 right-6 text-xs tracking-widest text-gray-300 font-medium hover:text-orange-400 cursor-pointer transition-colors z-10"
