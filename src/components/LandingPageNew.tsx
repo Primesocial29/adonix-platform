@@ -106,7 +106,7 @@ primesocial@primesocial.xyz`;
 Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white font-sans">
+    <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
       {/* FULL WIDTH LINE AT THE TOP */}
       <div className="absolute top-[52px] left-0 right-0 h-px bg-white/10 z-20"></div>
@@ -134,7 +134,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         {/* TEXT CONTENT */}
-        <div className="relative z-10 flex flex-col justify-center min-h-screen">
+        <div className="relative z-10 flex flex-col justify-center min-h-screen py-8">
           <div className="max-w-4xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
             {/* LOGO */}
@@ -161,24 +161,24 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT - EXACTLY 3 LINES, CENTERED, WIDER CONTAINER */}
-            <div className="mt-8 bg-black/15 p-8 rounded-lg w-full">
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap">
+            {/* QUOTE TEXT - CENTERED, FITS WITHOUT SCROLLING */}
+            <div className="mt-6 bg-black/15 p-6 rounded-lg w-full">
+              <p className="text-white text-[16px] italic font-bold text-center leading-snug">
                 The new standard for social fitness.
               </p>
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap mt-1">
+              <p className="text-white text-[16px] italic font-bold text-center leading-snug mt-1">
                 Designed for those who are as engaging in
               </p>
-              <p className="text-white text-[17px] italic font-bold text-center leading-tight whitespace-nowrap mt-1">
+              <p className="text-white text-[16px] italic font-bold text-center leading-snug mt-1">
                 person as they are driven in the moment.
               </p>
             </div>
 
             {/* BUTTON */}
-            <div className="mt-26 flex justify-center">
+            <div className="mt-8 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
-                className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
+                className="px-10 py-3 text-base bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
               >
                 EXPLORE CURATION
               </button>
@@ -188,7 +188,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       </div>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6 relative z-10">
+      <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-4 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-xs text-gray-500">
@@ -206,7 +206,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               </button>
             </div>
           </div>
-          <div className="text-center text-xs text-gray-600 mt-4">
+          <div className="text-center text-xs text-gray-600 mt-2">
             Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.
           </div>
         </div>
