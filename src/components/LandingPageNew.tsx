@@ -147,35 +147,35 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
 
             {/* ADONIX TEXT */}
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white leading-tight text-center">
               ADONIX
             </h1>
             
             {/* SOCIAL FITNESS */}
-            <p className="text-sm tracking-[0.2em] text-white font-bold uppercase mt-1">
+            <p className="text-sm tracking-[0.2em] text-white font-bold uppercase mt-1 text-center">
               SOCIAL FITNESS · ELEVATED
             </p>
             
             {/* DESCRIPTION */}
-            <p className="text-[11px] tracking-[0.15em] text-white font-bold uppercase mt-1 max-w-md">
+            <p className="text-[11px] tracking-[0.15em] text-white font-bold uppercase mt-1 text-center max-w-md mx-auto">
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
-            {/* QUOTE TEXT - 3 SEPARATE LINES FROM LEFT TO RIGHT */}
+            {/* QUOTE TEXT - CENTERED, 3 LINES */}
             <div className="mt-8 bg-black/15 p-6 rounded-lg">
-              <p className="text-white text-[17px] italic font-bold text-left leading-tight w-full">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight w-full">
                 The new standard for social fitness.
               </p>
-              <p className="text-white text-[17px] italic font-bold text-left leading-tight w-full mt-2">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight w-full mt-2">
                 Designed for those who are as engaging in
               </p>
-              <p className="text-white text-[17px] italic font-bold text-left leading-tight w-full mt-2">
+              <p className="text-white text-[17px] italic font-bold text-center leading-tight w-full mt-2">
                 person as they are driven in the moment.
               </p>
             </div>
 
-            {/* BUTTON - moved down half an inch (mt-6 added to previous mt-20 = mt-26) */}
-            <div className="mt-26 flex justify-center">
+            {/* BUTTON - moved down half an inch (mt-26 to mt-30) */}
+            <div className="mt-30 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-4 text-lg bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
