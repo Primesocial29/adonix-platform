@@ -148,14 +148,14 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </h1>
             
             {/* SOCIAL FITNESS · ELEVATED */}
-            <p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-3">
-              SOCIAL FITNESS · ELEVATED
-            </p>
-            
-            {/* DESCRIPTION LINE */}
-            <p className="text-xs tracking-[0.15em] text-gray-500 uppercase mt-4 max-w-md">
-              A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-            </p>
+<p className="text-sm tracking-[0.2em] text-gray-400 uppercase mt-3">
+  SOCIAL FITNESS · ELEVATED
+</p>
+
+{/* DESCRIPTION LINE */}
+<p className="text-xs tracking-[0.15em] text-gray-500 uppercase mt-4 max-w-md">
+  A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+</p>
             
             {/* QUOTE TEXT */}
             <p className="text-gray-400 text-sm mt-6 max-w-md leading-relaxed">
