@@ -735,47 +735,48 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   </div>
                   
                   {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <select
-                        value={birthMonth}
-                        onChange={(e) => setBirthMonth(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Month</option>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <option key={month} value={month}>{month}</option>
-                        ))}
-                      </select>
+                 {/* Birth Date with Dropdowns - DARK GRAY BACKGROUND */}
+<div>
+  <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
+  <div className="grid grid-cols-3 gap-2">
+    <select
+      value={birthMonth}
+      onChange={(e) => setBirthMonth(e.target.value)}
+      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Month</option>
+      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+        <option key={month} value={month}>{month}</option>
+      ))}
+    </select>
 
-                      <select
-                        value={birthDay}
-                        onChange={(e) => setBirthDay(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Day</option>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                          <option key={day} value={day}>{day}</option>
-                        ))}
-                      </select>
+    <select
+      value={birthDay}
+      onChange={(e) => setBirthDay(e.target.value)}
+      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Day</option>
+      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+        <option key={day} value={day}>{day}</option>
+      ))}
+    </select>
 
-                      <select
-                        value={birthYear}
-                        onChange={(e) => setBirthYear(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Year</option>
-                        {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Used only to verify you are 18+. Deleted immediately after confirmation.
-                    </p>
-                  </div>
+    <select
+      value={birthYear}
+      onChange={(e) => setBirthYear(e.target.value)}
+      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+    >
+      <option value="">Year</option>
+      {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+        <option key={year} value={year}>{year}</option>
+      ))}
+    </select>
+  </div>
+  {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+  <p className="text-xs text-gray-500 mt-2">
+    Used only to verify you are 18+. Deleted immediately after confirmation.
+  </p>
+</div>
                   
                   {/* Important Information Box */}
                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
