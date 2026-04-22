@@ -148,7 +148,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         {/* TEXT CONTENT */}
-        <div className="relative z-10 flex flex-col justify-start min-h-screen pt-56">
+        <div className="relative z-10 flex flex-col justify-center min-h-screen py-8">
           <div className="max-w-4xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
             {/* LOGO (keeping your existing logo) */}
@@ -171,7 +171,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </p>
             
             {/* DESCRIPTION - CENTERED */}
-            <p className="text-[10px] tracking-[0.15em] text-white font-bold uppercase mt-4 text-center mx-auto">
+            <p className="text-[9px] tracking-[0.15em] text-white font-bold uppercase mt-4 text-center mx-auto">
               A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
             </p>
             
@@ -189,7 +189,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
 
             {/* BUTTON */}
-            <div className="mt-32 flex justify-center">
+            <div className="mt-20 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-3 text-base bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
