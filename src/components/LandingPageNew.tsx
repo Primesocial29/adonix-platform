@@ -148,7 +148,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         {/* TEXT CONTENT */}
-        <div className="relative z-10 flex flex-col justify-center min-h-screen py-8">
+        <div className="relative z-10 flex flex-col justify-start min-h-screen pt-32"">
           <div className="max-w-4xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
             {/* LOGO (keeping your existing logo) */}
