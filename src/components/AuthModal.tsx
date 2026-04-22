@@ -735,7 +735,6 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   </div>
                   
                   {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
-                 {/* Birth Date with Dropdowns - DARK GRAY BACKGROUND */}
 <div>
   <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
   <div className="grid grid-cols-3 gap-2">
