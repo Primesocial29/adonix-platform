@@ -41,9 +41,17 @@ function App() {
     return <LandingPageNew />;
   }
 
-  if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
-    return <RoleSelection />;
-  }
+if (currentRoute === '/test-landing') {
+  return <LandingPageNew />;
+}
+
+if (currentRoute === '/test-landing') {
+  return <LandingPageNew />;
+}
+
+if (currentRoute === '/setup' || currentRoute === '/' || currentRoute === '') {
+  return <RoleSelection />;
+}
 
   if (currentRoute === '/partner-setup') {
     return <PartnerFlow />;
