@@ -108,42 +108,28 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-x-hidden">
       
-      {/* HEADER - SAME AS OTHER PAGES */}
-      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img 
-                src="/adonixlogo.png" 
-                alt="Adonix Logo" 
-                className="h-10 w-auto"
-              />
-              <span className="text-xl font-bold text-white">ADONIX</span>
-              <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
-            </div>
-            {/* LOGIN/SETUP BUTTON IN HEADER */}
-            <div 
-              onClick={() => window.location.href = '/login'}
-              className="text-xs tracking-widest text-white font-medium hover:text-orange-400 cursor-pointer transition-colors"
-            >
-              LOGIN/SETUP
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FULL WIDTH LINE AT THE TOP (below header) */}
-      <div className="w-full h-px bg-white/10"></div>
+      {/* FULL WIDTH LINE AT THE TOP */}
+      <div className="absolute top-[52px] left-0 right-0 h-px bg-white/10 z-20"></div>
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col relative">
         
+        {/* LOGIN/SETUP - TOP RIGHT */}
+        <div className="absolute top-6 right-6 z-20">
+          <div 
+            onClick={() => window.location.href = '/login'}
+            className="text-xs tracking-widest text-white font-medium hover:text-orange-400 cursor-pointer transition-colors text-right"
+          >
+            LOGIN/SETUP
+          </div>
+        </div>
+
         {/* GIRL IMAGE */}
-        <div className="absolute right-[-10px] top-0 h-full w-[80%] flex items-center justify-end z-0">
+        <div className="absolute right-[-60px] top-0 h-full w-[80%] flex items-center justify-end z-0">
           <img 
-            src="/GIRL2.png" 
+            src="/girl4.png" 
             alt="Social Fitness Member" 
-            className="w-[62%] h-auto object-contain brightness-110 contrast-125"
+            className="w-[95%] h-auto object-contain brightness-110 contrast-125"
           />
         </div>
 
@@ -151,7 +137,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         <div className="relative z-10 flex flex-col justify-center min-h-screen py-8">
           <div className="max-w-4xl mx-auto px-8 md:px-12 lg:px-16 w-full">
             
-            {/* LOGO (keeping your existing logo) */}
+            {/* LOGO */}
             <div className="mb-6">
               <img 
                 src="/adonixlogo.png" 
@@ -170,12 +156,12 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               SOCIAL FITNESS · ELEVATED
             </p>
             
-            {/* DESCRIPTION - CENTERED */}
-            <p className="text-[10px] tracking-[0.15em] text-white font-bold uppercase mt-4 text-center mx-auto">
-              A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-            </p>
+            {/* DESCRIPTION */}
+            <p className="text-[9px] tracking-[0.15em] text-white font-bold uppercase mt-4 text-center mx-auto">
+  A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+</p>
             
-            {/* QUOTE TEXT */}
+            {/* QUOTE TEXT - CENTERED, FITS WITHOUT SCROLLING */}
             <div className="mt-6 bg-black/15 p-6 rounded-lg w-full">
               <p className="text-white text-[16px] italic font-bold text-center leading-snug">
                 The new standard for social fitness.
