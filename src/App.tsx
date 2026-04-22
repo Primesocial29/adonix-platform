@@ -515,7 +515,7 @@ California Residents:
                   <select
                     value={birthMonth}
                     onChange={(e) => { setBirthMonth(e.target.value); setBirthDateError(''); }}
-                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Month</option>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
