@@ -123,7 +123,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
             {/* LOGIN/SETUP BUTTON IN HEADER */}
             <div 
-              onClick={() => window.location.href = '/choose-role''}
+              onClick={() => window.location.href = '/choose-role'}
               className="text-xs tracking-widest text-white font-medium hover:text-orange-400 cursor-pointer transition-colors"
             >
               LOGIN/SETUP
@@ -191,7 +191,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             {/* BUTTON */}
             <div className="mt-20 flex justify-center">
               <button 
-                onClick={() => window.location.href = ''/choose-role'}
+                onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-3 text-base bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
               >
                 EXPLORE CURATION
