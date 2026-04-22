@@ -157,9 +157,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </p>
             
             {/* DESCRIPTION */}
-            <p className="text-[9px] tracking-[0.15em] text-white font-bold uppercase mt-1 max-w-md">
-              A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
-            </p>
+            <p className="text-[9px] tracking-[0.15em] text-white font-bold uppercase mt-4 text-center mx-auto">
+  A PRIVATE, CURATED FITNESS ENVIRONMENT DESIGNED FOR THOSE WHO DEMAND ELITE STANDARDS
+</p>
             
             {/* QUOTE TEXT - CENTERED, FITS WITHOUT SCROLLING */}
             <div className="mt-6 bg-black/15 p-6 rounded-lg w-full">
