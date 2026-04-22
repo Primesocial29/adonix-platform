@@ -52,7 +52,7 @@ export default function AgeVerification({ onVerified }: AgeVerificationProps) {
           </div>
           <h1 className="text-4xl font-bold mb-4">Age Verification</h1>
           <p className="text-gray-400 text-lg">
-            Hot Buddies is an adult platform. Please verify you are 18 or older to continue.
+            Adonix is an adult platform. Please verify you are 18 or older to continue.
           </p>
         </div>
 
