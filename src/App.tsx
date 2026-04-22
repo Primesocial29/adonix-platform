@@ -525,7 +525,7 @@ California Residents:
                   <select
                     value={birthDay}
                     onChange={(e) => { setBirthDay(e.target.value); setBirthDateError(''); }}
-                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    className="px-3 py-2 bg-gray-700 10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Day</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
@@ -535,7 +535,7 @@ California Residents:
                   <select
                     value={birthYear}
                     onChange={(e) => { setBirthYear(e.target.value); setBirthDateError(''); }}
-                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    className="px-3 py-2 g-gray-700 10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Year</option>
                     {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
