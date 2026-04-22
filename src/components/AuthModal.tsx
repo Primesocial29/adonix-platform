@@ -734,14 +734,14 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                     </div>
                   </div>
                   
-                  {/* Birth Date with Dropdowns */}
+                  {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
                     <div className="grid grid-cols-3 gap-2">
                       <select
                         value={birthMonth}
                         onChange={(e) => setBirthMonth(e.target.value)}
-                        className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                       >
                         <option value="">Month</option>
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
@@ -752,7 +752,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                       <select
                         value={birthDay}
                         onChange={(e) => setBirthDay(e.target.value)}
-                        className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                       >
                         <option value="">Day</option>
                         {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
@@ -763,7 +763,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                       <select
                         value={birthYear}
                         onChange={(e) => setBirthYear(e.target.value)}
-                        className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                       >
                         <option value="">Year</option>
                         {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
@@ -789,7 +789,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                     </ul>
                   </div>
                   
-                  {/* Terms Checkboxes - DISABLED until documents are read */}
+                  {/* Terms Checkboxes - UPDATED with w-5 h-5 */}
                   <div className="space-y-2">
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
@@ -797,7 +797,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                         checked={acceptedTerms}
                         onChange={() => setAcceptedTerms(!acceptedTerms)}
                         disabled={!hasReadTerms}
-                        className="mt-0.5 w-4 h-4 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm text-gray-300">
                         I have read and agree to the{' '}
@@ -817,7 +817,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                         checked={acceptedPrivacy}
                         onChange={() => setAcceptedPrivacy(!acceptedPrivacy)}
                         disabled={!hasReadPrivacy}
-                        className="mt-0.5 w-4 h-4 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <span className="text-sm text-gray-300">
                         I have read and agree to the{' '}
@@ -842,7 +842,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                         type="checkbox"
                         checked={acceptedGatekeeper}
                         onChange={() => setAcceptedGatekeeper(!acceptedGatekeeper)}
-                        className="mt-0.5 w-4 h-4 accent-red-600"
+                        className="mt-0.5 w-5 h-5 accent-red-600"
                       />
                       <span className="text-sm text-gray-300">
                         I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
