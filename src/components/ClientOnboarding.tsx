@@ -1186,15 +1186,15 @@ California Residents:
                 {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
               </div>
               
-              {/* Birth Date with Dropdowns */}
+              {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-3 gap-2">
                   <select
-  value={birthMonth}
-  onChange={(e) => setBirthMonth(e.target.value)}
-  className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
->
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                  >
                     <option value="">Month</option>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                       <option key={month} value={month}>{month}</option>
@@ -1204,7 +1204,7 @@ California Residents:
                   <select
                     value={birthDay}
                     onChange={(e) => setBirthDay(e.target.value)}
-                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Day</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
@@ -1215,7 +1215,7 @@ California Residents:
                   <select
                     value={birthYear}
                     onChange={(e) => setBirthYear(e.target.value)}
-                    className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
                   >
                     <option value="">Year</option>
                     {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
@@ -1234,7 +1234,7 @@ California Residents:
                     id="ageVerifyConsent"
                     checked={ageVerifyConsent}
                     onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                    className="mt-1 w-5 h-5 accent-red-600"
                   />
                   <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
                     I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained. <span className="text-red-500">*</span>
@@ -1247,7 +1247,7 @@ California Residents:
                     id="facialAgeConsent"
                     checked={facialAgeConsent}
                     onChange={(e) => setFacialAgeConsent(e.target.checked)}
-                    className="mt-1 w-4 h-4 bg-white/5 border border-white/10 rounded focus:ring-red-500"
+                    className="mt-1 w-5 h-5 accent-red-600"
                   />
                   <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
                     I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span>
