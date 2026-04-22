@@ -141,7 +141,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         {/* GIRL IMAGE */}
         <div className="absolute right-[-10px] top-0 h-full w-[80%] flex items-center justify-end z-0">
           <img 
-            src="/girl2.png" 
+            src="/girl4.png" 
             alt="Social Fitness Member" 
             className="w-[62%] h-auto object-contain brightness-110 contrast-125"
           />
