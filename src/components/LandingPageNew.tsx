@@ -189,7 +189,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
 
             {/* BUTTON */}
-            <div className="mt-16 flex justify-center">
+            <div className="mt-30 flex justify-center">
               <button 
                 onClick={() => window.location.href = '/choose-role'}
                 className="px-10 py-3 text-base bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold tracking-wide transition-all transform hover:scale-105 active:scale-95"
