@@ -93,6 +93,9 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+  // ✅ EARLY RETURN - If modal is not open, render nothing
+  if (!isOpen) return null;
+  
   const { signIn, signUp } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
