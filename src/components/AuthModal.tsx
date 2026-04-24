@@ -514,45 +514,45 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
-  // IMPORTANT: All hooks are above this line. Return statements are at the bottom.
-  
-  // Welcome step (Role Selection) - moved inside the component but after all hooks
-  const renderWelcomeStep = () => (
-    <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-3">🔥</div>
-            <h2 className="text-3xl font-bold text-white mb-2">Join Adonix Fit</h2>
-            <p className="text-lg text-gray-300">Choose your path</p>
-          </div>
-          <div className="flex flex-col gap-4">
-            <button onClick={() => handleRoleSelect('member')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💸</div>
-              <div className="font-bold text-xl text-white mb-2">I WANT TO SWEAT</div>
-              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will pay for sessions</div>
+  // Return based on step
+  if (step === 'welcome') {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
+            <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+              <X className="w-6 h-6" />
             </button>
-            <button onClick={() => handleRoleSelect('partner')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-              <div className="font-bold text-xl text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</div>
-              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will earn money</div>
-            </button>
-          </div>
-          <div className="text-center mt-8">
-            <button onClick={handleSignInClick} className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10">Already have an account? <span className="text-red-500">Sign in →</span></button>
+            <div className="text-center mb-8">
+              <div className="text-5xl mb-3">🔥</div>
+              <h2 className="text-3xl font-bold text-white mb-2">Join Adonix Fit</h2>
+              <p className="text-lg text-gray-300">Choose your path</p>
+            </div>
+            <div className="flex flex-col gap-4">
+              <button onClick={() => handleRoleSelect('member')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💸</div>
+                <div className="font-bold text-xl text-white mb-2">I WANT TO SWEAT</div>
+                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will pay for sessions</div>
+              </button>
+              <button onClick={() => handleRoleSelect('partner')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
+                <div className="font-bold text-xl text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</div>
+                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will earn money</div>
+              </button>
+            </div>
+            <div className="text-center mt-8">
+              <button onClick={handleSignInClick} className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10">Already have an account? <span className="text-red-500">Sign in →</span></button>
+            </div>
           </div>
         </div>
-      </div>
-      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={handleTermsAgreed} />
-      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} title="Privacy Policy" content={fullPrivacyContent} onAgree={handlePrivacyAgreed} />
-    </>
-  );
+        <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={handleTermsAgreed} />
+        <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} title="Privacy Policy" content={fullPrivacyContent} onAgree={handlePrivacyAgreed} />
+      </>
+    );
+  }
 
   // Credentials step (Sign up form)
-  const renderCredentialsStep = () => (
+  return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -606,4 +606,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
         </div>
       </div>
       <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={handleTermsAgreed} />
-     
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} title="Privacy Policy" content={fullPrivacyContent} onAgree={handlePrivacyAgreed} />
+    </>
+  );
+}
