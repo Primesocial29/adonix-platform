@@ -190,6 +190,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const handleRoleSelect = (role: 'member' | 'partner') => {
     setSelectedRole(role);
+    setIsLogin(false);
     setStep('credentials');
   };
 
@@ -267,7 +268,31 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       try {
         await signIn(email, password);
         onClose();
-        window.location.href = '/dashboard';
+        // After login, redirect based on user role
+        const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+        if (loggedInUser) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_partner, profile_complete')
+            .eq('id', loggedInUser.id)
+            .single();
+          
+          if (profile?.is_partner) {
+            if (profile?.profile_complete) {
+              window.location.href = '/partner-dashboard';
+            } else {
+              window.location.href = '/partner-setup';
+            }
+          } else {
+            if (profile?.profile_complete) {
+              window.location.href = '/client-dashboard';
+            } else {
+              window.location.href = '/client-setup';
+            }
+          }
+        } else {
+          window.location.href = '/dashboard';
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Login failed');
       } finally {
@@ -354,17 +379,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
 
     try {
-      console.log('Signing up with role:', selectedRole);
       await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
       onClose();
       
+      // Redirect to appropriate setup page based on role
       setTimeout(() => {
         if (selectedRole === 'partner') {
           window.location.replace('/partner-setup');
         } else {
-          window.location.replace('/client-onboarding');
+          window.location.replace('/client-setup');
         }
-      }, 1000);
+      }, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
     } finally {
@@ -387,6 +412,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const passwordHasLower = /[a-z]/.test(password);
   const passwordHasNumber = /[0-9]/.test(password);
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
+  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
@@ -496,7 +522,7 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
-  // ========== WELCOME STEP ==========
+  // ========== WELCOME STEP (Role Selection) ==========
   if (step === 'welcome') {
     return (
       <>
@@ -511,8 +537,8 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
 
             <div className="text-center mb-8">
               <div className="text-5xl mb-3">🔥</div>
-              <h2 className="text-3xl font-bold text-white mb-2">I Want to Sweat</h2>
-              <p className="text-lg text-gray-300">Join the social fitness network</p>
+              <h2 className="text-3xl font-bold text-white mb-2">Join Adonix Fit</h2>
+              <p className="text-lg text-gray-300">Choose your path</p>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -521,10 +547,10 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                 onClick={() => handleRoleSelect('member')}
                 className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
               >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔥</div>
-                <div className="font-bold text-xl text-white mb-2">I Want to Sweat</div>
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💸</div>
+                <div className="font-bold text-xl text-white mb-2">I WANT TO SWEAT</div>
                 <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💸 I will pay for sessions
+                  I will pay for sessions
                 </div>
               </button>
 
@@ -534,9 +560,9 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                 className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
               >
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-                <div className="font-bold text-xl text-white mb-2">I Make People Sweat</div>
+                <div className="font-bold text-xl text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</div>
                 <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  💵 I will earn money
+                  I will earn money
                 </div>
               </button>
             </div>
@@ -590,19 +616,19 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
             <div className="text-center mb-6">
               {!isLogin && selectedRole === 'member' && (
                 <>
-                  <div className="text-5xl mb-2">🔥</div>
-                  <h2 className="text-2xl font-bold text-white">I Want to Sweat</h2>
+                  <div className="text-5xl mb-2">💸</div>
+                  <h2 className="text-2xl font-bold text-white">I WANT TO SWEAT</h2>
                   <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                    💸 You will pay for sessions
+                    You will pay for sessions
                   </p>
                 </>
               )}
               {!isLogin && selectedRole === 'partner' && (
                 <>
                   <div className="text-5xl mb-2">💰</div>
-                  <h2 className="text-2xl font-bold text-white">I Make People Sweat</h2>
+                  <h2 className="text-2xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h2>
                   <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                    💵 You will earn money
+                    You will earn money
                   </p>
                 </>
               )}
@@ -626,7 +652,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   {/* First & Last Name */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">First Name</label>
+                      <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={firstName}
@@ -635,7 +661,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">Last Name</label>
+                      <label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={lastName}
@@ -647,7 +673,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   
                   {/* Email */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+                    <label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
                     <input
                       type="email"
                       value={email}
@@ -659,7 +685,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
+                    <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
                     <input
                       type="tel"
                       value={phone}
@@ -671,7 +697,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   
                   {/* Username */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Username</label>
+                    <label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
                       <input
@@ -708,7 +734,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   
                   {/* Password */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Password</label>
+                    <label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
                     <input
                       type="password"
                       value={password}
@@ -734,48 +760,48 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                     </div>
                   </div>
                   
-                  {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
-<div>
-  <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-  <div className="grid grid-cols-3 gap-2">
-    <select
-      value={birthMonth}
-      onChange={(e) => setBirthMonth(e.target.value)}
-      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Month</option>
-      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-        <option key={month} value={month}>{month}</option>
-      ))}
-    </select>
+                  {/* Birth Date with Dropdowns - DARK GRAY BACKGROUND */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        value={birthMonth}
+                        onChange={(e) => setBirthMonth(e.target.value)}
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      >
+                        <option value="">Month</option>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                          <option key={month} value={month}>{month}</option>
+                        ))}
+                      </select>
 
-    <select
-      value={birthDay}
-      onChange={(e) => setBirthDay(e.target.value)}
-      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Day</option>
-      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-        <option key={day} value={day}>{day}</option>
-      ))}
-    </select>
+                      <select
+                        value={birthDay}
+                        onChange={(e) => setBirthDay(e.target.value)}
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      >
+                        <option value="">Day</option>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <option key={day} value={day}>{day}</option>
+                        ))}
+                      </select>
 
-    <select
-      value={birthYear}
-      onChange={(e) => setBirthYear(e.target.value)}
-      className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-    >
-      <option value="">Year</option>
-      {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-        <option key={year} value={year}>{year}</option>
-      ))}
-    </select>
-  </div>
-  {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-  <p className="text-xs text-gray-500 mt-2">
-    Used only to verify you are 18+. Deleted immediately after confirmation.
-  </p>
-</div>
+                      <select
+                        value={birthYear}
+                        onChange={(e) => setBirthYear(e.target.value)}
+                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                      >
+                        <option value="">Year</option>
+                        {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Used only to verify you are 18+. Deleted immediately after confirmation.
+                    </p>
+                  </div>
                   
                   {/* Important Information Box */}
                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
@@ -807,7 +833,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                           className="text-red-400 underline hover:text-red-300"
                         >
                           Terms of Service
-                        </button>.
+                        </button>. <span className="text-red-500">*</span>
                       </span>
                     </label>
                     
@@ -827,7 +853,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                           className="text-red-400 underline hover:text-red-300"
                         >
                           Privacy Policy
-                        </button>.
+                        </button>. <span className="text-red-500">*</span>
                       </span>
                     </label>
                     
@@ -845,7 +871,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                         className="mt-0.5 w-5 h-5 accent-red-600"
                       />
                       <span className="text-sm text-gray-300">
-                        I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service.
+                        I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
                       </span>
                     </label>
                   </div>
@@ -879,7 +905,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
               
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (!isLogin && !isPasswordValid)}
                 className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-lg font-semibold transition-all text-white"
               >
                 {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
