@@ -105,9 +105,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [username, setUsername] = useState('');
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -133,14 +130,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
-  const validateUsername = (value: string) => {
-    if (!value) return '';
-    if (value.length < 3) return 'Username must be at least 3 characters';
-    if (value.length > 20) return 'Username cannot exceed 20 characters';
-    if (!/^[a-zA-Z0-9_.]+$/.test(value)) return 'Use only letters, numbers, underscore (_), and period (.)';
-    return '';
-  };
-
   const calculateAge = (month: string, day: string, year: string): number | null => {
     if (!month || !day || !year) return null;
     const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -164,33 +153,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return { isValid: true, error: null };
   };
 
-  // Check username availability
-  useEffect(() => {
-    const checkAvailability = async () => {
-      if (!username || username.length < 3 || validateUsername(username)) {
-        setUsernameAvailable(null);
-        return;
-      }
-      setCheckingUsername(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('username', username.toLowerCase())
-          .maybeSingle();
-        if (error) throw error;
-        setUsernameAvailable(!data);
-      } catch (err) {
-        console.error('Error checking username:', err);
-        setUsernameAvailable(null);
-      } finally {
-        setCheckingUsername(false);
-      }
-    };
-    const timeout = setTimeout(checkAvailability, 500);
-    return () => clearTimeout(timeout);
-  }, [username]);
-
   const handleRoleSelect = (role: 'member' | 'partner') => {
     setSelectedRole(role);
     setIsLogin(false);
@@ -207,7 +169,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setFirstName('');
       setLastName('');
       setPhone('');
-      setUsername('');
       setBirthMonth('');
       setBirthDay('');
       setBirthYear('');
@@ -240,7 +201,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setFirstName('');
     setLastName('');
     setPhone('');
-    setUsername('');
     setBirthMonth('');
     setBirthDay('');
     setBirthYear('');
@@ -365,29 +325,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setLoading(false);
       return;
     }
-    if (!username) {
-      setError('Please choose a username.');
-      setLoading(false);
-      return;
-    }
-    
-    const usernameValidationError = validateUsername(username);
-    if (usernameValidationError) {
-      setError(usernameValidationError);
-      setLoading(false);
-      return;
-    }
-    
-    if (!usernameAvailable) {
-      setError('This username is already taken. Please choose another.');
-      setLoading(false);
-      return;
-    }
 
+    // Generate a temporary username based on first and last name
+    const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
     const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
 
     try {
-      await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
+      await signUp(email, password, selectedRole, autoUsername, formattedBirthDate);
       onClose();
       
       setTimeout(() => {
@@ -549,7 +493,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
     );
   }
 
-  // CREDENTIALS STEP - Sign up / Sign in form
+  // CREDENTIALS STEP - Sign up / Sign in form (NO USERNAME FIELD)
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -578,7 +522,6 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
                   </div>
                   <div><label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" placeholder="you@example.com" /></div>
                   <div><label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label><input type="tel" value={phone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /></div>
-                  <div><label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span><input type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} className={`w-full pl-7 pr-10 py-2 bg-white/10 border rounded-lg focus:outline-none text-white ${usernameAvailable === true ? 'border-green-500' : usernameAvailable === false ? 'border-red-500' : 'border-white/20 focus:border-red-500'}`} placeholder="jess_fit" />{checkingUsername && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div></div>)}{usernameAvailable === true && !checkingUsername && username.length >= 3 && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><Check className="w-4 h-4 text-green-500" /></div>)}{usernameAvailable === false && !checkingUsername && username.length >= 3 && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><AlertCircle className="w-4 h-4 text-red-500" /></div>)}</div><p className="text-xs text-gray-500 mt-1">3-20 characters • letters, numbers, underscore (_), period (.) only</p></div>
                   <div><label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /><div className="mt-2 space-y-1 text-xs"><p className={passwordMinLength ? 'text-green-400' : 'text-gray-500'}>{passwordMinLength ? '✓' : '○'} At least 8 characters</p><p className={passwordHasUpper ? 'text-green-400' : 'text-gray-500'}>{passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter</p><p className={passwordHasLower ? 'text-green-400' : 'text-gray-500'}>{passwordHasLower ? '✓' : '○'} At least 1 lowercase letter</p><p className={passwordHasNumber ? 'text-green-400' : 'text-gray-500'}>{passwordHasNumber ? '✓' : '○'} At least 1 number</p><p className={passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}>{passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p></div></div>
                   <div><label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label><div className="grid grid-cols-3 gap-2"><select value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Month</option>{Array.from({ length: 12 }, (_, i) => i + 1).map(month => (<option key={month} value={month}>{month}</option>))}</select><select value={birthDay} onChange={(e) => setBirthDay(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Day</option>{Array.from({ length: 31 }, (_, i) => i + 1).map(day => (<option key={day} value={day}>{day}</option>))}</select><select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Year</option>{Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (<option key={year} value={year}>{year}</option>))}</select></div>{birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}<p className="text-xs text-gray-500 mt-2">Used only to verify you are 18+. Deleted immediately after confirmation.</p></div>
                   <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg"><p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p><ul className="space-y-1 text-xs text-yellow-200/80"><li>• Adonix is a social fitness network, not a professional service.</li><li>• You are joining to meet fitness partners in public locations only.</li><li>• No professional fitness services are provided or implied.</li><li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li><li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li></ul></div>
