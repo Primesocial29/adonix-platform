@@ -11,7 +11,7 @@ interface AuthModalProps {
 type UserRole = 'member' | 'partner' | null;
 type Step = 'welcome' | 'credentials';
 
-// Terms Modal Component with scroll-to-bottom requirement (MUST SCROLL TO AGREE)
+// Terms Modal Component with scroll-to-bottom requirement
 function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: boolean; onClose: () => void; title: string; content: string; onAgree?: () => void }) {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -93,7 +93,7 @@ function TermsModal({ isOpen, onClose, title, content, onAgree }: { isOpen: bool
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  // ✅ EARLY RETURN - If modal is not open, render nothing
+  // Early return - if modal is not open, render nothing
   if (!isOpen) return null;
   
   const { signIn, signUp } = useAuth();
@@ -133,7 +133,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const passwordHasSpecial = /[!@#$%^&*]/.test(password);
   const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
-  // Username validation helper
   const validateUsername = (value: string) => {
     if (!value) return '';
     if (value.length < 3) return 'Username must be at least 3 characters';
@@ -142,7 +141,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return '';
   };
 
-  // Calculate age from dropdowns
   const calculateAge = (month: string, day: string, year: string): number | null => {
     if (!month || !day || !year) return null;
     const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -155,17 +153,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return age;
   };
 
-  // Validate age from dropdowns
   const validateAgeFromDropdowns = () => {
     if (!birthMonth || !birthDay || !birthYear) {
       return { isValid: false, error: 'Please enter your full birth date.' };
     }
-    
     const age = calculateAge(birthMonth, birthDay, birthYear);
     if (age === null || age < 18) {
       return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit.' };
     }
-    
     return { isValid: true, error: null };
   };
 
@@ -517,7 +512,7 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
-  // Return based on step
+  // WELCOME STEP - Role Selection
   if (step === 'welcome') {
     return (
       <>
@@ -554,7 +549,7 @@ By using Adonix Fit, you agree to this Privacy Policy.`;
     );
   }
 
-  // Credentials step (Sign up form)
+  // CREDENTIALS STEP - Sign up / Sign in form
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
