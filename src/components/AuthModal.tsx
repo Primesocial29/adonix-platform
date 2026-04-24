@@ -108,7 +108,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Terms acceptance - must read and agree to both
+  // Terms acceptance
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -122,8 +122,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [birthYear, setBirthYear] = useState('');
   const [birthDateError, setBirthDateError] = useState('');
 
-  if (!isOpen) return null;
+  // Password strength checks
+  const passwordMinLength = password.length >= 8;
+  const passwordHasUpper = /[A-Z]/.test(password);
+  const passwordHasLower = /[a-z]/.test(password);
+  const passwordHasNumber = /[0-9]/.test(password);
+  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
+  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
+  // Username validation helper
   const validateUsername = (value: string) => {
     if (!value) return '';
     if (value.length < 3) return 'Username must be at least 3 characters';
@@ -159,13 +166,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     return { isValid: true, error: null };
   };
 
+  // Check username availability
   useEffect(() => {
     const checkAvailability = async () => {
       if (!username || username.length < 3 || validateUsername(username)) {
         setUsernameAvailable(null);
         return;
       }
-
       setCheckingUsername(true);
       try {
         const { data, error } = await supabase
@@ -173,7 +180,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           .select('username')
           .eq('username', username.toLowerCase())
           .maybeSingle();
-
         if (error) throw error;
         setUsernameAvailable(!data);
       } catch (err) {
@@ -183,7 +189,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         setCheckingUsername(false);
       }
     };
-
     const timeout = setTimeout(checkAvailability, 500);
     return () => clearTimeout(timeout);
   }, [username]);
@@ -248,7 +253,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setAcceptedGatekeeper(false);
   };
 
-  // Handle terms agreement from modal
   const handleTermsAgreed = () => {
     setHasReadTerms(true);
     setAcceptedTerms(true);
@@ -257,6 +261,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handlePrivacyAgreed = () => {
     setHasReadPrivacy(true);
     setAcceptedPrivacy(true);
+  };
+
+  const handlePhoneChange = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    let formatted = '';
+    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+    setPhone(formatted);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -268,7 +281,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       try {
         await signIn(email, password);
         onClose();
-        // After login, redirect based on user role
         const { data: { user: loggedInUser } } = await supabase.auth.getUser();
         if (loggedInUser) {
           const { data: profile } = await supabase
@@ -328,7 +340,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
     
-    // Validate birth date from dropdowns
     const ageValidation = validateAgeFromDropdowns();
     if (!ageValidation.isValid) {
       setError(ageValidation.error);
@@ -336,7 +347,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       return;
     }
     
-    // MUST have read AND agreed to both terms and privacy
     if (!hasReadTerms || !acceptedTerms) {
       setError('You must read and agree to the Terms of Service.');
       setLoading(false);
@@ -382,7 +392,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       await signUp(email, password, selectedRole, username.toLowerCase(), formattedBirthDate);
       onClose();
       
-      // Redirect to appropriate setup page based on role
       setTimeout(() => {
         if (selectedRole === 'partner') {
           window.location.replace('/partner-setup');
@@ -396,23 +405,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setLoading(false);
     }
   };
-
-  const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    let formatted = '';
-    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
-    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
-    setPhone(formatted);
-  };
-
-  // Password strength checks
-  const passwordMinLength = password.length >= 8;
-  const passwordHasUpper = /[A-Z]/.test(password);
-  const passwordHasLower = /[a-z]/.test(password);
-  const passwordHasNumber = /[0-9]/.test(password);
-  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
-  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
 
   const fullTermsContent = `ADONIX FIT - TERMS OF SERVICE
 Effective: April 9, 2026 | Last updated: April 9, 2026
@@ -522,438 +514,96 @@ Effective: April 9, 2026 | Last updated: April 9, 2026
 
 By using Adonix Fit, you agree to this Privacy Policy.`;
 
-  // ========== WELCOME STEP (Role Selection) ==========
-  if (step === 'welcome') {
-    return (
-      <>
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
+  // IMPORTANT: All hooks are above this line. Return statements are at the bottom.
+  
+  // Welcome step (Role Selection) - moved inside the component but after all hooks
+  const renderWelcomeStep = () => (
+    <>
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-lg w-full p-8 relative">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-3">🔥</div>
+            <h2 className="text-3xl font-bold text-white mb-2">Join Adonix Fit</h2>
+            <p className="text-lg text-gray-300">Choose your path</p>
+          </div>
+          <div className="flex flex-col gap-4">
+            <button onClick={() => handleRoleSelect('member')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
+              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💸</div>
+              <div className="font-bold text-xl text-white mb-2">I WANT TO SWEAT</div>
+              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will pay for sessions</div>
             </button>
-
-            <div className="text-center mb-8">
-              <div className="text-5xl mb-3">🔥</div>
-              <h2 className="text-3xl font-bold text-white mb-2">Join Adonix Fit</h2>
-              <p className="text-lg text-gray-300">Choose your path</p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {/* I Want to Sweat button - Goes to signup form with member role */}
-              <button
-                onClick={() => handleRoleSelect('member')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💸</div>
-                <div className="font-bold text-xl text-white mb-2">I WANT TO SWEAT</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  I will pay for sessions
-                </div>
-              </button>
-
-              {/* I Make People Sweat button - Goes to signup form with partner role */}
-              <button
-                onClick={() => handleRoleSelect('partner')}
-                className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full"
-              >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
-                <div className="font-bold text-xl text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</div>
-                <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">
-                  I will earn money
-                </div>
-              </button>
-            </div>
-
-            <div className="text-center mt-8">
-              <button
-                onClick={handleSignInClick}
-                className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10"
-              >
-                Already have an account? <span className="text-red-500">Sign in →</span>
-              </button>
-            </div>
+            <button onClick={() => handleRoleSelect('partner')} className="group p-6 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-500 hover:bg-red-500/10 transition-all text-center w-full">
+              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">💰</div>
+              <div className="font-bold text-xl text-white mb-2">I WANT TO MAKE PEOPLE SWEAT</div>
+              <div className="text-sm font-medium text-gray-300 bg-white/10 py-1 px-2 rounded-full inline-block">I will earn money</div>
+            </button>
+          </div>
+          <div className="text-center mt-8">
+            <button onClick={handleSignInClick} className="text-base font-semibold text-gray-300 hover:text-white transition-colors bg-white/5 px-6 py-2 rounded-full hover:bg-white/10">Already have an account? <span className="text-red-500">Sign in →</span></button>
           </div>
         </div>
+      </div>
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={handleTermsAgreed} />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} title="Privacy Policy" content={fullPrivacyContent} onAgree={handlePrivacyAgreed} />
+    </>
+  );
 
-        <TermsModal
-          isOpen={showTermsModal === 'terms'}
-          onClose={() => setShowTermsModal(null)}
-          title="Terms of Service"
-          content={fullTermsContent}
-          onAgree={handleTermsAgreed}
-        />
-        
-        <TermsModal
-          isOpen={showTermsModal === 'privacy'}
-          onClose={() => setShowTermsModal(null)}
-          title="Privacy Policy"
-          content={fullPrivacyContent}
-          onAgree={handlePrivacyAgreed}
-        />
-      </>
-    );
-  }
-
-  // ========== CREDENTIALS STEP (Sign Up Form) ==========
-  return (
+  // Credentials step (Sign up form)
+  const renderCredentialsStep = () => (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
         <div className="bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-gray-900 border-b border-white/10 p-4 flex justify-between items-center">
-            <button onClick={handleBack} className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1">
-              ← Back
-            </button>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
+            <button onClick={handleBack} className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1">← Back</button>
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full"><X className="w-5 h-5 text-gray-400" /></button>
           </div>
-          
           <div className="p-6">
-            {/* Header with role info */}
             <div className="text-center mb-6">
               {!isLogin && selectedRole === 'member' && (
-                <>
-                  <div className="text-5xl mb-2">💸</div>
-                  <h2 className="text-2xl font-bold text-white">I WANT TO SWEAT</h2>
-                  <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                    You will pay for sessions
-                  </p>
-                </>
+                <><div className="text-5xl mb-2">💸</div><h2 className="text-2xl font-bold text-white">I WANT TO SWEAT</h2><p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">You will pay for sessions</p></>
               )}
               {!isLogin && selectedRole === 'partner' && (
-                <>
-                  <div className="text-5xl mb-2">💰</div>
-                  <h2 className="text-2xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h2>
-                  <p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">
-                    You will earn money
-                  </p>
-                </>
+                <><div className="text-5xl mb-2">💰</div><h2 className="text-2xl font-bold text-white">I WANT TO MAKE PEOPLE SWEAT</h2><p className="text-sm font-medium text-gray-300 mt-2 bg-white/10 py-1 px-3 rounded-full inline-block">You will earn money</p></>
               )}
-              {isLogin && (
-                <>
-                  <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-                  <p className="text-sm text-gray-400 mt-1">Sign in to continue</p>
-                </>
-              )}
+              {isLogin && (<><h2 className="text-2xl font-bold text-white">Welcome Back</h2><p className="text-sm text-gray-400 mt-1">Sign in to continue</p></>)}
             </div>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                {error}
-              </div>
-            )}
-            
+            {error && (<div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">{error}</div>)}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <>
-                  {/* First & Last Name */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      />
-                    </div>
+                    <div><label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label><input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /></div>
+                    <div><label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label><input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /></div>
                   </div>
-                  
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                  
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      placeholder="(555) 123-4567"
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  
-                  {/* Username */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                      <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                        className={`w-full pl-7 pr-10 py-2 bg-white/10 border rounded-lg focus:outline-none text-white ${
-                          usernameAvailable === true
-                            ? 'border-green-500'
-                            : usernameAvailable === false
-                            ? 'border-red-500'
-                            : 'border-white/20 focus:border-red-500'
-                        }`}
-                        placeholder="jess_fit"
-                      />
-                      {checkingUsername && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                        </div>
-                      )}
-                      {usernameAvailable === true && !checkingUsername && username.length >= 3 && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <Check className="w-4 h-4 text-green-500" />
-                        </div>
-                      )}
-                      {usernameAvailable === false && !checkingUsername && username.length >= 3 && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <AlertCircle className="w-4 h-4 text-red-500" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">3-20 characters • letters, numbers, underscore (_), period (.) only</p>
-                  </div>
-                  
-                  {/* Password */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                    />
-                    <div className="mt-2 space-y-1 text-xs">
-                      <p className={passwordMinLength ? 'text-green-400' : 'text-gray-500'}>
-                        {passwordMinLength ? '✓' : '○'} At least 8 characters
-                      </p>
-                      <p className={passwordHasUpper ? 'text-green-400' : 'text-gray-500'}>
-                        {passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter
-                      </p>
-                      <p className={passwordHasLower ? 'text-green-400' : 'text-gray-500'}>
-                        {passwordHasLower ? '✓' : '○'} At least 1 lowercase letter
-                      </p>
-                      <p className={passwordHasNumber ? 'text-green-400' : 'text-gray-500'}>
-                        {passwordHasNumber ? '✓' : '○'} At least 1 number
-                      </p>
-                      <p className={passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}>
-                        {passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Birth Date with Dropdowns - DARK GRAY BACKGROUND */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <select
-                        value={birthMonth}
-                        onChange={(e) => setBirthMonth(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Month</option>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <option key={month} value={month}>{month}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={birthDay}
-                        onChange={(e) => setBirthDay(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Day</option>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                          <option key={day} value={day}>{day}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={birthYear}
-                        onChange={(e) => setBirthYear(e.target.value)}
-                        className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      >
-                        <option value="">Year</option>
-                        {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Used only to verify you are 18+. Deleted immediately after confirmation.
-                    </p>
-                  </div>
-                  
-                  {/* Important Information Box */}
-                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
-                    <ul className="space-y-1 text-xs text-yellow-200/80">
-                      <li>• Adonix is a social fitness network, not a professional service.</li>
-                      <li>• You are joining to meet fitness partners in public locations only.</li>
-                      <li>• No professional fitness services are provided or implied.</li>
-                      <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
-                      <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
-                    </ul>
-                  </div>
-                  
-                  {/* Terms Checkboxes - UPDATED with w-5 h-5 */}
+                  <div><label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" placeholder="you@example.com" /></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label><input type="tel" value={phone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span><input type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} className={`w-full pl-7 pr-10 py-2 bg-white/10 border rounded-lg focus:outline-none text-white ${usernameAvailable === true ? 'border-green-500' : usernameAvailable === false ? 'border-red-500' : 'border-white/20 focus:border-red-500'}`} placeholder="jess_fit" />{checkingUsername && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div></div>)}{usernameAvailable === true && !checkingUsername && username.length >= 3 && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><Check className="w-4 h-4 text-green-500" /></div>)}{usernameAvailable === false && !checkingUsername && username.length >= 3 && (<div className="absolute right-3 top-1/2 -translate-y-1/2"><AlertCircle className="w-4 h-4 text-red-500" /></div>)}</div><p className="text-xs text-gray-500 mt-1">3-20 characters • letters, numbers, underscore (_), period (.) only</p></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /><div className="mt-2 space-y-1 text-xs"><p className={passwordMinLength ? 'text-green-400' : 'text-gray-500'}>{passwordMinLength ? '✓' : '○'} At least 8 characters</p><p className={passwordHasUpper ? 'text-green-400' : 'text-gray-500'}>{passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter</p><p className={passwordHasLower ? 'text-green-400' : 'text-gray-500'}>{passwordHasLower ? '✓' : '○'} At least 1 lowercase letter</p><p className={passwordHasNumber ? 'text-green-400' : 'text-gray-500'}>{passwordHasNumber ? '✓' : '○'} At least 1 number</p><p className={passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}>{passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p></div></div>
+                  <div><label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label><div className="grid grid-cols-3 gap-2"><select value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Month</option>{Array.from({ length: 12 }, (_, i) => i + 1).map(month => (<option key={month} value={month}>{month}</option>))}</select><select value={birthDay} onChange={(e) => setBirthDay(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Day</option>{Array.from({ length: 31 }, (_, i) => i + 1).map(day => (<option key={day} value={day}>{day}</option>))}</select><select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"><option value="">Year</option>{Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (<option key={year} value={year}>{year}</option>))}</select></div>{birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}<p className="text-xs text-gray-500 mt-2">Used only to verify you are 18+. Deleted immediately after confirmation.</p></div>
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg"><p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p><ul className="space-y-1 text-xs text-yellow-200/80"><li>• Adonix is a social fitness network, not a professional service.</li><li>• You are joining to meet fitness partners in public locations only.</li><li>• No professional fitness services are provided or implied.</li><li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li><li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li></ul></div>
                   <div className="space-y-2">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptedTerms}
-                        onChange={() => setAcceptedTerms(!acceptedTerms)}
-                        disabled={!hasReadTerms}
-                        className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <span className="text-sm text-gray-300">
-                        I have read and agree to the{' '}
-                        <button 
-                          type="button" 
-                          onClick={() => setShowTermsModal('terms')} 
-                          className="text-red-400 underline hover:text-red-300"
-                        >
-                          Terms of Service
-                        </button>. <span className="text-red-500">*</span>
-                      </span>
-                    </label>
-                    
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptedPrivacy}
-                        onChange={() => setAcceptedPrivacy(!acceptedPrivacy)}
-                        disabled={!hasReadPrivacy}
-                        className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                      <span className="text-sm text-gray-300">
-                        I have read and agree to the{' '}
-                        <button 
-                          type="button" 
-                          onClick={() => setShowTermsModal('privacy')} 
-                          className="text-red-400 underline hover:text-red-300"
-                        >
-                          Privacy Policy
-                        </button>. <span className="text-red-500">*</span>
-                      </span>
-                    </label>
-                    
-                    {(!hasReadTerms || !hasReadPrivacy) && (
-                      <p className="text-xs text-yellow-400 mt-1">
-                        ⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking the boxes.
-                      </p>
-                    )}
-                    
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={acceptedGatekeeper}
-                        onChange={() => setAcceptedGatekeeper(!acceptedGatekeeper)}
-                        className="mt-0.5 w-5 h-5 accent-red-600"
-                      />
-                      <span className="text-sm text-gray-300">
-                        I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
-                      </span>
-                    </label>
+                    <label className="flex items-start gap-2 cursor-pointer"><input type="checkbox" checked={acceptedTerms} onChange={() => setAcceptedTerms(!acceptedTerms)} disabled={!hasReadTerms} className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed" /><span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline hover:text-red-300">Terms of Service</button>. <span className="text-red-500">*</span></span></label>
+                    <label className="flex items-start gap-2 cursor-pointer"><input type="checkbox" checked={acceptedPrivacy} onChange={() => setAcceptedPrivacy(!acceptedPrivacy)} disabled={!hasReadPrivacy} className="mt-0.5 w-5 h-5 accent-red-600 disabled:opacity-50 disabled:cursor-not-allowed" /><span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline hover:text-red-300">Privacy Policy</button>. <span className="text-red-500">*</span></span></label>
+                    {(!hasReadTerms || !hasReadPrivacy) && (<p className="text-xs text-yellow-400 mt-1">⚠️ You must read and agree to both the Terms of Service and Privacy Policy before checking the boxes.</p>)}
+                    <label className="flex items-start gap-2 cursor-pointer"><input type="checkbox" checked={acceptedGatekeeper} onChange={() => setAcceptedGatekeeper(!acceptedGatekeeper)} className="mt-0.5 w-5 h-5 accent-red-600" /><span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span></span></label>
                   </div>
                 </>
               )}
-
               {isLogin && (
                 <>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Email Address</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" placeholder="you@example.com" /></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" /></div>
                 </>
               )}
-              
-              <button
-                type="submit"
-                disabled={loading || (!isLogin && !isPasswordValid)}
-                className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-lg font-semibold transition-all text-white"
-              >
-                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-              </button>
-              
-              {!isLogin && (
-                <div className="text-center pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSignUpClick}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Already have an account? <span className="text-red-500">Sign in</span>
-                  </button>
-                </div>
-              )}
-              
-              {isLogin && (
-                <div className="text-center pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSignUpClick}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Don't have an account? <span className="text-red-500">Sign up</span>
-                  </button>
-                </div>
-              )}
+              <button type="submit" disabled={loading || (!isLogin && !isPasswordValid)} className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 rounded-lg font-semibold transition-all text-white">{loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}</button>
+              {!isLogin && (<div className="text-center pt-2"><button type="button" onClick={handleSignUpClick} className="text-sm text-gray-400 hover:text-white transition-colors">Already have an account? <span className="text-red-500">Sign in</span></button></div>)}
+              {isLogin && (<div className="text-center pt-2"><button type="button" onClick={handleSignUpClick} className="text-sm text-gray-400 hover:text-white transition-colors">Don't have an account? <span className="text-red-500">Sign up</span></button></div>)}
             </form>
           </div>
         </div>
       </div>
-
-      <TermsModal
-        isOpen={showTermsModal === 'terms'}
-        onClose={() => setShowTermsModal(null)}
-        title="Terms of Service"
-        content={fullTermsContent}
-        onAgree={handleTermsAgreed}
-      />
-      
-      <TermsModal
-        isOpen={showTermsModal === 'privacy'}
-        onClose={() => setShowTermsModal(null)}
-        title="Privacy Policy"
-        content={fullPrivacyContent}
-        onAgree={handlePrivacyAgreed}
-      />
-    </>
-  );
-}
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} title="Terms of Service" content={fullTermsContent} onAgree={handleTermsAgreed} />
+     
