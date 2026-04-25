@@ -1223,50 +1223,30 @@ export default function PartnerDashboard() {
             {!settingsSubScreen ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Settings</h2>
-                
                 <div className="space-y-3">
                   <button onClick={() => setSettingsSubScreen('username')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Username</p>
-                      <p className="text-xs text-gray-400">@{username || 'set a username'}</p>
-                    </div>
+                    <div><p className="font-medium text-white">Username</p><p className="text-xs text-gray-400">@{username || 'set a username'}</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
-                  
                   <button onClick={() => setSettingsSubScreen('email')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Email Address</p>
-                      <p className="text-xs text-gray-400">{user?.email || 'no email'}</p>
-                    </div>
+                    <div><p className="font-medium text-white">Email Address</p><p className="text-xs text-gray-400">{user?.email || 'no email'}</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
-                  
                   <button onClick={() => setSettingsSubScreen('phone')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Phone Number</p>
-                      <p className="text-xs text-gray-400">{newPhone || 'no phone number'}</p>
-                    </div>
+                    <div><p className="font-medium text-white">Phone Number</p><p className="text-xs text-gray-400">{newPhone || 'no phone number'}</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
-                  
                   <button onClick={() => setSettingsSubScreen('password')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Password</p>
-                      <p className="text-xs text-gray-400">Change your password</p>
-                    </div>
+                    <div><p className="font-medium text-white">Password</p><p className="text-xs text-gray-400">Change your password</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
-                  
                   <button onClick={() => setSettingsSubScreen('notifications')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-white">Notifications</p>
-                      <p className="text-xs text-gray-400">Manage your notification preferences</p>
-                    </div>
+                    <div><p className="font-medium text-white">Notifications</p><p className="text-xs text-gray-400">Manage your notification preferences</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
                 </div>
               </>
-            ) : settingsSubScreen === 'username' && (
+            ) : settingsSubScreen === 'username' ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Change Username</h2>
                 <div className="space-y-4">
@@ -1274,189 +1254,78 @@ export default function PartnerDashboard() {
                     <label className="block text-sm text-gray-400 mb-1">New Username <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
-                      <input
-                        type="text"
-                        value={editUsername}
-                        onChange={(e) => {
-                          const val = e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.]/g, '');
-                          if (val.length <= 20) {
-                            setEditUsername(val);
-                            setUsernameError('');
-                          }
-                        }}
-                        placeholder="username"
-                        className="w-full pl-7 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                      />
+                      <input type="text" value={editUsername} onChange={(e) => { const val = e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.]/g, ''); if (val.length <= 20) { setEditUsername(val); setUsernameError(''); } }} placeholder="username" className="w-full pl-7 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Letters, numbers, underscore (_), and period (.) only. 3-20 characters.</p>
                   </div>
                   {usernameError && <p className="text-red-400 text-sm">{usernameError}</p>}
                   {usernameAvailable === false && <p className="text-red-400 text-sm">Username already taken</p>}
                   {usernameAvailable === true && <p className="text-green-400 text-sm">Username is available!</p>}
-                  
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
                     <button onClick={updateUsername} disabled={!editUsername || editUsername.length < 3 || usernameAvailable !== true} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                   </div>
                 </div>
               </>
-            ) : settingsSubScreen === 'email' && (
+            ) : settingsSubScreen === 'email' ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Change Email Address</h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">New Email Address <span className="text-red-500">*</span></label>
-                    <input
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="newemail@example.com"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label>
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter your current password"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
+                  <div><label className="block text-sm text-gray-400 mb-1">New Email Address <span className="text-red-500">*</span></label><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="newemail@example.com" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label><input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter your current password" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
                   {emailError && <p className="text-red-400 text-sm">{emailError}</p>}
-                  
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
                     <button onClick={updateEmail} disabled={!newEmail || !currentPassword} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                   </div>
                 </div>
               </>
-            ) : settingsSubScreen === 'phone' && (
+            ) : settingsSubScreen === 'phone' ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Change Phone Number</h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">New Phone Number <span className="text-red-500">*</span></label>
-                    <input
-                      type="tel"
-                      value={newPhone}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\D/g, '');
-                        let formatted = '';
-                        if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
-                        if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-                        if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
-                        setNewPhone(formatted);
-                        setPhoneError('');
-                      }}
-                      placeholder="(555) 123-4567"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
+                  <div><label className="block text-sm text-gray-400 mb-1">New Phone Number <span className="text-red-500">*</span></label><input type="tel" value={newPhone} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = ''; if (digits.length >= 1) formatted = '(' + digits.substring(0, 3); if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6); if (digits.length >= 7) formatted += '-' + digits.substring(6, 10); setNewPhone(formatted); setPhoneError(''); }} placeholder="(555) 123-4567" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
                   {phoneError && <p className="text-red-400 text-sm">{phoneError}</p>}
-                  
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
                     <button onClick={updatePhone} disabled={!newPhone || newPhone.replace(/\D/g, '').length !== 10} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                   </div>
                 </div>
               </>
-            ) : settingsSubScreen === 'password' && (
+            ) : settingsSubScreen === 'password' ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Change Password</h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label>
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">New Password <span className="text-red-500">*</span></label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                    <div className="mt-2 space-y-1 text-xs">
-                      <p className={newPassword.length >= 8 ? 'text-green-400' : 'text-gray-500'}>{newPassword.length >= 8 ? '✓' : '○'} At least 8 characters</p>
-                      <p className={/[A-Z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[A-Z]/.test(newPassword) ? '✓' : '○'} At least 1 uppercase letter</p>
-                      <p className={/[a-z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[a-z]/.test(newPassword) ? '✓' : '○'} At least 1 lowercase letter</p>
-                      <p className={/[0-9]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[0-9]/.test(newPassword) ? '✓' : '○'} At least 1 number</p>
-                      <p className={/[!@#$%^&*]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[!@#$%^&*]/.test(newPassword) ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Confirm New Password <span className="text-red-500">*</span></label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                    />
-                  </div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label><input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">New Password <span className="text-red-500">*</span></label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /><div className="mt-2 space-y-1 text-xs"><p className={newPassword.length >= 8 ? 'text-green-400' : 'text-gray-500'}>{newPassword.length >= 8 ? '✓' : '○'} At least 8 characters</p><p className={/[A-Z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[A-Z]/.test(newPassword) ? '✓' : '○'} At least 1 uppercase letter</p><p className={/[a-z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[a-z]/.test(newPassword) ? '✓' : '○'} At least 1 lowercase letter</p><p className={/[0-9]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[0-9]/.test(newPassword) ? '✓' : '○'} At least 1 number</p><p className={/[!@#$%^&*]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[!@#$%^&*]/.test(newPassword) ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p></div></div>
+                  <div><label className="block text-sm text-gray-400 mb-1">Confirm New Password <span className="text-red-500">*</span></label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
                   {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
-                  
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
                     <button onClick={updatePassword} disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 8} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                   </div>
                 </div>
               </>
-            ) : settingsSubScreen === 'notifications' && (
+            ) : settingsSubScreen === 'notifications' ? (
               <>
                 <h2 className="text-xl font-bold mb-4">Notification Preferences</h2>
                 <div className="space-y-4">
                   <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
-                    <div>
-                      <p className="font-medium text-white">Email Notifications</p>
-                      <p className="text-xs text-gray-400">Receive updates about booking requests and messages</p>
-                    </div>
-                    <button
-                      onClick={() => setEmailNotifications(!emailNotifications)}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${emailNotifications ? 'bg-red-600' : 'bg-gray-600'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailNotifications ? 'translate-x-6' : ''}`} />
-                    </button>
+                    <div><p className="font-medium text-white">Email Notifications</p><p className="text-xs text-gray-400">Receive updates about booking requests and messages</p></div>
+                    <button onClick={() => setEmailNotifications(!emailNotifications)} className={`relative w-12 h-6 rounded-full transition-colors ${emailNotifications ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailNotifications ? 'translate-x-6' : ''}`} /></button>
                   </label>
-                  
                   <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
-                    <div>
-                      <p className="font-medium text-white">SMS Notifications</p>
-                      <p className="text-xs text-gray-400">Get text message alerts for new booking requests</p>
-                    </div>
-                    <button
-                      onClick={() => setSmsNotifications(!smsNotifications)}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${smsNotifications ? 'bg-red-600' : 'bg-gray-600'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${smsNotifications ? 'translate-x-6' : ''}`} />
-                    </button>
+                    <div><p className="font-medium text-white">SMS Notifications</p><p className="text-xs text-gray-400">Get text message alerts for new booking requests</p></div>
+                    <button onClick={() => setSmsNotifications(!smsNotifications)} className={`relative w-12 h-6 rounded-full transition-colors ${smsNotifications ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${smsNotifications ? 'translate-x-6' : ''}`} /></button>
                   </label>
-                  
                   <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
-                    <div>
-                      <p className="font-medium text-white">Marketing Emails</p>
-                      <p className="text-xs text-gray-400">Receive promotions and updates from Adonix</p>
-                    </div>
-                    <button
-                      onClick={() => setMarketingEmails(!marketingEmails)}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${marketingEmails ? 'bg-red-600' : 'bg-gray-600'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${marketingEmails ? 'translate-x-6' : ''}`} />
-                    </button>
+                    <div><p className="font-medium text-white">Marketing Emails</p><p className="text-xs text-gray-400">Receive promotions and updates from Adonix</p></div>
+                    <button onClick={() => setMarketingEmails(!marketingEmails)} className={`relative w-12 h-6 rounded-full transition-colors ${marketingEmails ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${marketingEmails ? 'translate-x-6' : ''}`} /></button>
                   </label>
-                  
-                  <div className="flex gap-3 mt-6">
-                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Back</button>
-                  </div>
+                  <div className="flex gap-3 mt-6"><button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Back</button></div>
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       )}
@@ -1471,18 +1340,9 @@ export default function PartnerDashboard() {
             <h2 className="text-xl font-bold mb-4">Help & Support</h2>
             <div className="space-y-3 text-sm text-gray-300">
               <p>Need help? We're here for you 24/7.</p>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Contact Support</p>
-                <p className="text-xs text-gray-400">primesocial@primesocial.xyz</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Report an Issue</p>
-                <p className="text-xs text-gray-400">We review all reports within 24 hours.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Safety Concerns</p>
-                <p className="text-xs text-gray-400">For urgent safety issues, contact local authorities first, then notify us.</p>
-              </div>
+              <div className="p-3 bg-white/5 rounded-lg"><p className="font-medium text-white">Contact Support</p><p className="text-xs text-gray-400">primesocial@primesocial.xyz</p></div>
+              <div className="p-3 bg-white/5 rounded-lg"><p className="font-medium text-white">Report an Issue</p><p className="text-xs text-gray-400">We review all reports within 24 hours.</p></div>
+              <div className="p-3 bg-white/5 rounded-lg"><p className="font-medium text-white">Safety Concerns</p><p className="text-xs text-gray-400">For urgent safety issues, contact local authorities first, then notify us.</p></div>
             </div>
             <button onClick={() => setShowHelpModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
           </div>
@@ -1506,29 +1366,10 @@ export default function PartnerDashboard() {
               <li>Your services, rates, and schedule</li>
             </ul>
             <p className="text-sm text-gray-300 mb-2">Type <span className="font-bold text-red-400">DELETE</span> to confirm:</p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              disabled={deletingAccount}
-              className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4"
-              placeholder="Type DELETE"
-            />
+            <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} disabled={deletingAccount} className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4" placeholder="Type DELETE" />
             <div className="flex gap-3">
-              <button
-                onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }}
-                disabled={deletingAccount}
-                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
-                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deletingAccount ? 'Deleting...' : 'Permanent Delete'}
-              </button>
+              <button onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }} disabled={deletingAccount} className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50">Cancel</button>
+              <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE' || deletingAccount} className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">{deletingAccount ? 'Deleting...' : 'Permanent Delete'}</button>
             </div>
           </div>
         </div>
