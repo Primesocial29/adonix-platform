@@ -487,7 +487,6 @@ California Residents:
         if (data) {
           setLivePhotoUrl(data.live_photo_url);
           setAllPhotos(data.photos || (data.live_photo_url ? [data.live_photo_url] : []));
-          // setBio(data.bio || '');
           setCertifications(data.certifications || []);
           setServiceTypes(data.service_types || []);
           setCustomServiceTypes(data.custom_service_types || []);
@@ -583,6 +582,10 @@ California Residents:
     } finally {
       setUploadingPhoto(false);
     }
+  };
+
+  const handleTakePhoto = () => {
+    setShowCamera(true);
   };
 
   const handleRetakePhoto = () => {
@@ -908,6 +911,23 @@ California Residents:
     }));
   };
 
+  // Real-time validation for step 1
+  const validateStep1 = () => {
+    let isValid = true;
+    if (!firstName.trim()) { setFirstNameError('First name is required'); isValid = false; }
+    if (!lastName.trim()) { setLastNameError('Last name is required'); isValid = false; }
+    if (!email || emailError) { isValid = false; }
+    if (!phone || phoneError) { isValid = false; }
+    if (!isPasswordValid) { isValid = false; }
+    if (!validateAge()) { isValid = false; }
+    if (!ageVerifyConsent) { isValid = false; }
+    if (!facialAgeConsent) { isValid = false; }
+    if (!termsAccepted) { isValid = false; }
+    if (!privacyAccepted) { isValid = false; }
+    if (!gatekeeperAccepted) { isValid = false; }
+    return isValid;
+  };
+
   const isStep1Complete = () => {
     return firstName && !firstNameError && lastName && !lastNameError && email && !emailError && 
            phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && 
@@ -1132,9 +1152,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Progress Bar */}
-          <div className="mb-8">
+        {/* Sticky Progress Bar */}
+        <div className="sticky top-[73px] z-10 bg-black pt-2 pb-4 border-b border-white/10">
+          <div className="max-w-4xl mx-auto px-4">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
               <span>Step {currentStep} of {totalSteps}</span>
               <span className="text-red-400 font-mono font-bold">{Math.round(stepProgress)}%</span>
@@ -1150,7 +1170,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               ))}
             </div>
           </div>
+        </div>
 
+        <div className="max-w-4xl mx-auto px-4 py-8">
           {/* STEP 1: CREATE ACCOUNT */}
           {currentStep === 1 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
@@ -1400,6 +1422,17 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                     <span className="text-[10px] text-gray-400">Add Photo</span>
                   </button>
                 )}
+              </div>
+              
+              {/* Take Photo Button - Clear indication */}
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={handleTakePhoto}
+                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105"
+                >
+                  <Camera className="w-5 h-5" />
+                  TAKE LIVE PHOTO
+                </button>
               </div>
               
               <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
