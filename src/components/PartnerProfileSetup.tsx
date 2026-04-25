@@ -61,6 +61,71 @@ function formatTimeLabel(time: string): string {
   return `${display}:${minute} ${period}`;
 }
 
+// Terms Modal with scroll-to-accept
+function TermsModal({ isOpen, onClose, onAccept, title, content }: { 
+  isOpen: boolean; onClose: () => void; onAccept: () => void; title: string; content: string 
+}) {
+  const [canAccept, setCanAccept] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCanAccept(false);
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = 0;
+        }
+      }, 100);
+    }
+  }, [isOpen]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10;
+    if (isAtBottom && !canAccept) {
+      setCanAccept(true);
+    }
+  };
+
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 border-b border-white/10">
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <div 
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4"
+        >
+          <div className="whitespace-pre-wrap">{content}</div>
+          <div className="h-10 text-center text-xs text-gray-500 pt-4">
+            {!canAccept && "▼ Scroll to the bottom to accept ▼"}
+          </div>
+        </div>
+        <div className="p-4 border-t border-white/10">
+          <button 
+            onClick={onAccept}
+            disabled={!canAccept}
+            className={`w-full px-4 py-2 rounded-lg font-semibold transition ${
+              canAccept 
+                ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white' 
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            I Agree
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Footer Modal Component - view only, no agreement needed
 function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
   if (!isOpen) return null;
@@ -176,8 +241,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
+  const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
+  const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   
   // ========== STEP 1: ACCOUNT SETUP ==========
@@ -263,6 +329,48 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [step6Error, setStep6Error] = useState('');
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
+
+  // Terms content for modals
+  const termsContent = `ADONIX - SOCIAL NETWORKING AGREEMENT
+
+1. This is a social fitness network, not a professional service marketplace.
+
+2. Partners are independent social participants, not employees or contractors of Adonix.
+
+3. Suggested contributions are voluntary social gifts, not professional service fees.
+
+4. All meetups must occur at verified public locations. No private residences, hotels, or Airbnbs.
+
+5. You are responsible for your own safety and well-being during meetups.
+
+6. Adonix is not liable for any injuries, damages, or incidents that occur during meetups.
+
+7. Platform Support (15%) + processing fees are deducted from each suggested contribution.
+
+8. Violation of these terms may result in permanent account suspension.`;
+
+  const privacyContent = `ADONIX - PRIVACY POLICY
+
+Information We Collect:
+- Name, email, phone number, age, city, photos, and location data
+- Meetup history and preferences
+
+How We Use Your Information:
+- To facilitate meetups and verify identities
+- To improve our platform and match you with partners
+
+Data Sharing:
+- We do not sell your personal data
+- Payment information is processed securely through Stripe
+
+Location Data:
+- Used only during active meetups for GPS check-in verification
+
+Data Retention:
+- You may request deletion of your account and data at any time
+
+California Residents:
+- You have the right to opt out of data sharing under CPRA`;
 
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -379,7 +487,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
         if (data) {
           setLivePhotoUrl(data.live_photo_url);
           setAllPhotos(data.photos || (data.live_photo_url ? [data.live_photo_url] : []));
-          setBio(data.bio || '');
+          // setBio(data.bio || '');
           setCertifications(data.certifications || []);
           setServiceTypes(data.service_types || []);
           setCustomServiceTypes(data.custom_service_types || []);
@@ -1137,18 +1245,58 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </ul>
                 </div>
                 
+                {/* Terms Checkboxes with scroll-to-accept buttons */}
                 <div className="space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={termsAccepted} onChange={() => setTermsAccepted(!termsAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span></span>
+                    <input 
+                      type="checkbox" 
+                      checked={termsAccepted} 
+                      onChange={() => !termsAccepted && setShowTermsModal('terms')} 
+                      className="mt-1 w-5 h-5 accent-red-600"
+                      disabled={termsAccepted}
+                    />
+                    <span className="text-sm text-gray-300">
+                      I have read and agree to the{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setShowTermsModal('terms')} 
+                        className="text-red-400 underline hover:text-red-300"
+                      >
+                        Terms of Service
+                      </button>. <span className="text-red-500">*</span>
+                    </span>
                   </label>
+                  
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowPrivacyModal(true)} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span></span>
+                    <input 
+                      type="checkbox" 
+                      checked={privacyAccepted} 
+                      onChange={() => !privacyAccepted && setShowTermsModal('privacy')} 
+                      className="mt-1 w-5 h-5 accent-red-600"
+                      disabled={privacyAccepted}
+                    />
+                    <span className="text-sm text-gray-300">
+                      I have read and agree to the{' '}
+                      <button 
+                        type="button" 
+                        onClick={() => setShowTermsModal('privacy')} 
+                        className="text-red-400 underline hover:text-red-300"
+                      >
+                        Privacy Policy
+                      </button>. <span className="text-red-500">*</span>
+                    </span>
                   </label>
+                  
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={gatekeeperAccepted} onChange={(e) => setGatekeeperAccepted(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span></span>
+                    <input
+                      type="checkbox"
+                      checked={gatekeeperAccepted}
+                      onChange={(e) => setGatekeeperAccepted(e.target.checked)}
+                      className="mt-1 w-5 h-5 accent-red-600"
+                    />
+                    <span className="text-sm text-gray-300">
+                      I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
+                    </span>
                   </label>
                 </div>
               </div>
@@ -1416,8 +1564,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6">
           <div className="max-w-7xl mx-auto text-center">
             <div className="flex flex-wrap justify-center gap-6 text-xs mb-3">
-              <button onClick={() => setShowTermsModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Terms of Service</button>
-              <button onClick={() => setShowPrivacyModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Privacy Policy</button>
+              <button onClick={() => setShowFooterTermsModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Terms of Service</button>
+              <button onClick={() => setShowFooterPrivacyModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Privacy Policy</button>
               <button onClick={() => setShowSafetyModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Safety Guidelines</button>
             </div>
             <div className="text-xs text-gray-500">© 2026 ADONIX. All rights reserved.</div>
@@ -1433,8 +1581,32 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
-      <FooterInfoModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
-      <FooterInfoModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
+      {/* Scroll-to-accept Terms Modals */}
+      <TermsModal
+        isOpen={showTermsModal === 'terms'}
+        onClose={() => setShowTermsModal(null)}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setShowTermsModal(null);
+        }}
+        title="Terms of Service"
+        content={termsContent}
+      />
+      
+      <TermsModal
+        isOpen={showTermsModal === 'privacy'}
+        onClose={() => setShowTermsModal(null)}
+        onAccept={() => {
+          setPrivacyAccepted(true);
+          setShowTermsModal(null);
+        }}
+        title="Privacy Policy"
+        content={privacyContent}
+      />
+      
+      {/* Footer Modals - view only */}
+      <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
+      <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
       <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
     </>
   );
