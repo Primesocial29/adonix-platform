@@ -1509,55 +1509,190 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
 
           {/* STEP 4: ACTIVITIES & RATES */}
-          {currentStep === 4 && (
-            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-              <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
-              <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
-              
-              {step4Error && (
-                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                  {step4Error}
-                </div>
-              )}
-              
-              <div className="flex flex-wrap gap-2 mb-6">
-                {SERVICE_TYPES.map(s => (<button key={s} onClick={() => toggleService(s)} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${serviceTypes.includes(s) ? 'bg-red-600 text-white shadow-lg' : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'}`}>{s} {serviceTypes.includes(s) && '✓'}</button>))}
+{currentStep === 4 && (
+  <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+    <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
+    <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
+    
+    {step4Error && (
+      <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+        {step4Error}
+      </div>
+    )}
+    
+    <div className="flex flex-wrap gap-2 mb-6">
+      {SERVICE_TYPES.map(s => (
+        <button
+          key={s}
+          onClick={() => toggleService(s)}
+          className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+            serviceTypes.includes(s)
+              ? 'bg-red-600 text-white shadow-lg scale-[1.02]'
+              : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
+          }`}
+        >
+          {s} {serviceTypes.includes(s) && '✓'}
+        </button>
+      ))}
+    </div>
+    
+    <div className="flex gap-2 mb-4">
+      <input
+        type="text"
+        value={customServiceInput}
+        onChange={(e) => setCustomServiceInput(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && addCustomService()}
+        placeholder="Add custom activity..."
+        className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm"
+      />
+      <button onClick={addCustomService} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
+        <Plus className="w-4 h-4" />
+      </button>
+    </div>
+    {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
+    
+    <p className="text-xs text-gray-400 mb-4">💡 Pro tip: Enable half-hour rates for each activity if you want to offer shorter sessions. This is what your clients will see, so they know exactly what you offer and how long. No surprises. Just sweat.</p>
+    
+    {/* Error summary for services section */}
+    {allSelectedServices.length > 0 && (
+      <div className="mb-4 space-y-1">
+        {allSelectedServices.map(service => {
+          const rate = serviceRates[service];
+          const hourlyValid = rate?.hourly && rate.hourly >= 50 && rate.hourly <= 500;
+          const halfHourValid = !serviceHalfHourEnabled[service] || (rate?.halfHour && rate.halfHour >= 30 && rate.halfHour <= (rate?.hourly || 500));
+          
+          if (!hourlyValid || (serviceHalfHourEnabled[service] && !halfHourValid)) {
+            return (
+              <p key={service} className="text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {service}: {!hourlyValid ? 'Hourly rate must be $50-$500' : 'Half-hour rate must be $30-$' + (rate?.hourly || 'hourly rate')}
+              </p>
+            );
+          }
+          return null;
+        }).filter(Boolean)}
+      </div>
+    )}
+    
+    {allSelectedServices.length > 0 && (
+      <div className="mt-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm font-medium text-white">Set suggested contributions per activity:</p>
+          <p className="text-xs text-gray-500">Click the X to remove an activity</p>
+        </div>
+        {allSelectedServices.map(service => {
+          const isHalfHourOn = serviceHalfHourEnabled[service] || false;
+          const rate = serviceRates[service];
+          const hourlyError = rate?.hourly && (rate.hourly < 50 || rate.hourly > 500);
+          const halfHourError = isHalfHourOn && rate?.halfHour && (rate.halfHour < 30 || rate.halfHour > (rate?.hourly || 500));
+          
+          return (
+            <div key={service} className={`p-4 bg-black rounded-xl border ${hourlyError || halfHourError ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'}`}>
+              <div className="flex justify-between items-center mb-3">
+                <p className="font-semibold text-white">{service}</p>
+                {/* X button to remove the activity */}
+                <button 
+                  onClick={() => {
+                    // Remove from serviceTypes or customServiceTypes
+                    if (serviceTypes.includes(service)) {
+                      toggleService(service);
+                    } else if (customServiceTypes.includes(service)) {
+                      removeCustomService(service);
+                    }
+                  }}
+                  className="text-gray-400 hover:text-red-400 transition-colors p-1"
+                  title="Remove this activity"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
               
-              <div className="flex gap-2 mb-4">
-                <input type="text" value={customServiceInput} onChange={(e) => setCustomServiceInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomService()} placeholder="Add custom activity..." className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm" />
-                <button onClick={addCustomService} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
-              </div>
-              {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
-              
-              <p className="text-xs text-gray-400 mb-4">💡 Pro tip: Enable half-hour rates for each activity if you want to offer shorter sessions. This is what your clients will see, so they know exactly what you offer and how long. No surprises. Just sweat.</p>
-              
-              {allSelectedServices.length > 0 && (
-                <div className="space-y-4">
-                  {allSelectedServices.map(service => {
-                    const isHalfHourOn = serviceHalfHourEnabled[service] || false;
-                    const rate = serviceRates[service];
-                    const hourlyError = rate?.hourly && (rate.hourly < 50 || rate.hourly > 500);
-                    return (
-                      <div key={service} className="p-4 bg-black rounded-xl border border-white/10">
-                        <div className="flex justify-between items-center mb-3"><p className="font-semibold text-white">{service}</p>{customServiceTypes.includes(service) && (<button onClick={() => removeCustomService(service)} className="text-gray-400 hover:text-red-400"><X className="w-4 h-4" /></button>)}</div>
-                        <div className="space-y-3">
-                          <div><label className="block text-xs text-gray-400 mb-1">Hourly Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.hourly || ''} onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)} placeholder="0.00" min="50" max="500" step="1" className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${hourlyError ? 'border-red-500' : 'border-white/10'}`} /><span className="text-gray-400 text-sm">/ hr</span></div><p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>{hourlyError && <p className="text-xs text-red-400 mt-1">Hourly rate must be between $50 and $500</p>}</div>
-                          {isHalfHourOn && (<div><label className="block text-xs text-gray-400 mb-1">Half-Hour Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.halfHour || ''} onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)} placeholder="0.00" min="30" max={rate?.hourly || 500} step="1" className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none text-white" /><span className="text-gray-400 text-sm">/ 30m</span></div><p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p></div>)}
-                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10"><div><p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p><p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p></div><button onClick={() => toggleServiceHalfHour(service)} className={`relative w-12 h-6 rounded-full transition-colors ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} /></button></div>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">
+                    Hourly Suggested Contribution <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-500 font-bold">$</span>
+                    <input
+                      type="number"
+                      value={rate?.hourly || ''}
+                      onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
+                      placeholder="0.00"
+                      min="50"
+                      max="500"
+                      step="1"
+                      className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${
+                        hourlyError ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-red-500'
+                      }`}
+                    />
+                    <span className="text-gray-400 text-sm">/ hr</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>
+                  {hourlyError && (
+                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Hourly rate must be between $50 and $500
+                    </p>
+                  )}
                 </div>
-              )}
-              
-              <div className="flex justify-between gap-4 mt-8">
-                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
-                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+
+                {isHalfHourOn && (
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">
+                      Half-Hour Suggested Contribution <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-red-500 font-bold">$</span>
+                      <input
+                        type="number"
+                        value={rate?.halfHour || ''}
+                        onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
+                        placeholder="0.00"
+                        min="30"
+                        max={rate?.hourly || 500}
+                        step="1"
+                        className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${
+                          halfHourError ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-red-500'
+                        }`}
+                      />
+                      <span className="text-gray-400 text-sm">/ 30m</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p>
+                    {halfHourError && (
+                      <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Half-hour rate must be between $30 and ${rate?.hourly || 'hourly rate'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 mt-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p>
+                  </div>
+                  <button
+                    onClick={() => toggleServiceHalfHour(service)}
+                    className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} />
+                  </button>
+                </div>
               </div>
             </div>
-          )}
+          );
+        })}
+      </div>
+    )}
+    
+    <div className="flex justify-between gap-4 mt-8">
+      <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+      <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+    </div>
+  </div>
+)}
 
           {/* STEP 5: LOCATIONS & SCHEDULE */}
           {currentStep === 5 && (
