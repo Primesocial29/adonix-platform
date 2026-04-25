@@ -576,9 +576,11 @@ California Residents:
       setAllPhotos(updatedPhotos);
       setLivePhotoUrl(newPhotoUrl);
       setPhotoAccepted(true);
+      setTempPhotoUrl('');
+      alert('Photo saved successfully!');
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Failed to upload photo.');
+      alert('Failed to upload photo. Please try again.');
     } finally {
       setUploadingPhoto(false);
     }
@@ -1391,7 +1393,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 3: PHOTOS */}
+          {/* STEP 3: PHOTOS - FIXED */}
           {currentStep === 3 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Show the world who's about to make them sweat.</h2>
@@ -1403,7 +1405,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               )}
               
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
+              {/* Photo Gallery */}
+              <div className="flex flex-wrap justify-center gap-4 mb-6">
                 {allPhotos.map((photo, idx) => (
                   <div key={idx} className="relative group">
                     <div className={`w-24 h-24 rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'}`}>
@@ -1411,30 +1414,69 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                     </div>
                     {idx === 0 && <div className="absolute -top-2 -left-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">MAIN</div>}
                     <div className="absolute bottom-1 right-1 flex gap-1">
-                      {idx !== 0 && (<button onClick={() => handleSetPrimaryPhoto(idx)} className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-600">Set Primary</button>)}
+                      {idx !== 0 && (
+                        <button onClick={() => handleSetPrimaryPhoto(idx)} className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-600">Set Primary</button>
+                      )}
                       <button onClick={() => handleDeletePhoto(idx)} className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-700">✕</button>
                     </div>
                   </div>
                 ))}
-                {allPhotos.length < MAX_PHOTOS && (
-                  <button onClick={handleAddPhoto} className="w-24 h-24 rounded-xl border-2 border-dashed border-white/30 bg-white/5 hover:bg-white/10 transition flex flex-col items-center justify-center gap-1">
-                    <Camera className="w-6 h-6 text-gray-400" />
-                    <span className="text-[10px] text-gray-400">Add Photo</span>
+              </div>
+              
+              {/* Preview after taking photo */}
+              {tempPhotoUrl && !photoAccepted && (
+                <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-red-500/50">
+                      <img src={tempPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleAcceptPhoto}
+                        disabled={uploadingPhoto}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold flex items-center gap-2 transition"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {uploadingPhoto ? 'Saving...' : 'Accept Photo'}
+                      </button>
+                      <button
+                        onClick={handleRetakePhoto}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition"
+                      >
+                        Retake
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Take Photo Button - only show if no photos and no preview */}
+              {allPhotos.length === 0 && !tempPhotoUrl && (
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={handleTakePhoto}
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105"
+                  >
+                    <Camera className="w-5 h-5" />
+                    TAKE YOUR FIRST LIVE PHOTO
                   </button>
-                )}
-              </div>
+                </div>
+              )}
               
-              {/* Take Photo Button - Clear indication */}
-              <div className="flex justify-center mb-6">
-                <button
-                  onClick={handleTakePhoto}
-                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105"
-                >
-                  <Camera className="w-5 h-5" />
-                  TAKE LIVE PHOTO
-                </button>
-              </div>
+              {/* Add Photo button - only show if at least 1 photo exists and less than max */}
+              {allPhotos.length > 0 && allPhotos.length < MAX_PHOTOS && !tempPhotoUrl && (
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={handleAddPhoto}
+                    className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition-all"
+                  >
+                    <Plus className="w-5 h-5" />
+                    ADD ANOTHER PHOTO
+                  </button>
+                </div>
+              )}
               
+              {/* Guidance Text */}
               <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
                 <p className="font-semibold text-white mb-1">🎯 You. Right Now. No Filters.</p>
                 <p className="text-sm text-gray-300 mb-3">Adonix is about real people showing up as themselves. That means live photos only — taken inside the app, in this moment.</p>
