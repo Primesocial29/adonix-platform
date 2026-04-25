@@ -56,6 +56,25 @@ export default function PartnerDashboard() {
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [pastMeetups, setPastMeetups] = useState<any[]>([]);
 
+  // Settings state
+  const [settingsSubScreen, setSettingsSubScreen] = useState<string | null>(null);
+  const [editUsername, setEditUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [smsNotifications, setSmsNotifications] = useState(false);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+
   // Logout function
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -85,6 +104,33 @@ export default function PartnerDashboard() {
       loadPhotos();
     }
   }, [user]);
+
+  // Check username availability for settings
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!editUsername || editUsername.length < 3) {
+        setUsernameAvailable(null);
+        return;
+      }
+      setCheckingUsername(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', editUsername.toLowerCase())
+          .maybeSingle();
+        if (error) throw error;
+        setUsernameAvailable(!data);
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+    const timeout = setTimeout(checkAvailability, 500);
+    return () => clearTimeout(timeout);
+  }, [editUsername]);
 
   const loadPhotos = async () => {
     if (!user) return;
@@ -199,7 +245,7 @@ export default function PartnerDashboard() {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('service_types, custom_service_types, service_rates, service_areas, availability')
+        .select('service_types, custom_service_types, service_rates, service_areas, availability, username, phone')
         .eq('id', user.id)
         .single();
       
@@ -208,7 +254,6 @@ export default function PartnerDashboard() {
         setCustomServiceTypes(data.custom_service_types || []);
         const rates = data.service_rates || {};
         setServiceRates(rates);
-        // Initialize per-service half-hour toggle based on whether halfHour exists and > 0
         const halfHourSettings: Record<string, boolean> = {};
         Object.keys(rates).forEach(service => {
           halfHourSettings[service] = !!(rates[service]?.halfHour && rates[service].halfHour > 0);
@@ -216,6 +261,9 @@ export default function PartnerDashboard() {
         setServiceHalfHourEnabled(halfHourSettings);
         setServiceAreas(data.service_areas || []);
         setAvailability(data.availability || []);
+        setUsername(data.username || '');
+        setEditUsername(data.username || '');
+        setNewPhone(data.phone || '');
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -275,6 +323,82 @@ export default function PartnerDashboard() {
       setBioError('');
     } catch (err) {
       alert('Failed to update bio');
+    }
+  };
+
+  // Settings handlers
+  const updateUsername = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ username: editUsername.toLowerCase() })
+      .eq('id', user.id);
+    if (error) {
+      setUsernameError(error.message);
+    } else {
+      setUsername(editUsername);
+      setSettingsSubScreen(null);
+      alert('Username updated successfully!');
+    }
+  };
+
+  const updateEmail = async () => {
+    if (!user) return;
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: currentPassword,
+    });
+    if (signInError) {
+      setEmailError('Incorrect password');
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error) {
+      setEmailError(error.message);
+    } else {
+      setSettingsSubScreen(null);
+      alert('Email updated! Please verify your new email address.');
+    }
+  };
+
+  const updatePhone = async () => {
+    if (!user) return;
+    const digits = newPhone.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      setPhoneError('Please enter a valid 10-digit phone number');
+      return;
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ phone: newPhone })
+      .eq('id', user.id);
+    if (error) {
+      setPhoneError(error.message);
+    } else {
+      await refreshProfile();
+      setSettingsSubScreen(null);
+      alert('Phone number updated successfully!');
+    }
+  };
+
+  const updatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setSettingsSubScreen(null);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      alert('Password updated successfully!');
     }
   };
 
@@ -356,7 +480,6 @@ export default function PartnerDashboard() {
     });
   };
 
-  // Custom service functions
   const addCustomService = () => {
     const val = customServiceInput.trim();
     if (!val) return;
@@ -387,7 +510,6 @@ export default function PartnerDashboard() {
   const toggleServiceHalfHour = (service: string) => {
     const newValue = !serviceHalfHourEnabled[service];
     setServiceHalfHourEnabled(prev => ({ ...prev, [service]: newValue }));
-    // If turning OFF, clear the halfHour rate
     if (!newValue) {
       setServiceRates(prev => ({
         ...prev,
@@ -397,7 +519,6 @@ export default function PartnerDashboard() {
   };
 
   const saveServices = async () => {
-    // Clean up rates: remove halfHour for services where toggle is OFF
     const cleanedRates = { ...serviceRates };
     Object.keys(cleanedRates).forEach(service => {
       if (!serviceHalfHourEnabled[service]) {
@@ -862,7 +983,7 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Services & Rates Modal - UPDATED with per-service toggles and custom activity */}
+      {/* Services & Rates Modal */}
       {showServicesModal && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowServicesModal(false)}>
           <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
@@ -871,7 +992,6 @@ export default function PartnerDashboard() {
               <button onClick={() => setShowServicesModal(false)} className="text-gray-400 hover:text-white">✕</button>
             </div>
             
-            {/* Service Type Buttons */}
             <p className="text-xs text-gray-400 mb-2">Select your activities:</p>
             <div className="flex flex-wrap gap-2 mb-6">
               {SERVICE_TYPES.map(service => (
@@ -889,7 +1009,6 @@ export default function PartnerDashboard() {
               ))}
             </div>
 
-            {/* Add Custom Activity */}
             <div className="flex gap-2 mb-4">
               <input
                 type="text"
@@ -905,7 +1024,6 @@ export default function PartnerDashboard() {
             </div>
             {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
 
-            {/* Custom Services Display */}
             {customServiceTypes.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
                 {customServiceTypes.map(service => (
@@ -919,7 +1037,6 @@ export default function PartnerDashboard() {
               </div>
             )}
 
-            {/* Service Cards with Per-Service Toggle */}
             {([...serviceTypes, ...customServiceTypes]).length > 0 && (
               <div className="space-y-4 mb-6">
                 <p className="text-sm font-medium text-white">Set suggested contributions per activity:</p>
@@ -937,7 +1054,6 @@ export default function PartnerDashboard() {
                       </div>
                       
                       <div className="space-y-3">
-                        {/* Hourly Rate */}
                         <div>
                           <label className="block text-xs text-gray-400 mb-1">
                             Hourly Suggested Contribution <span className="text-red-500">*</span>
@@ -959,7 +1075,6 @@ export default function PartnerDashboard() {
                           <p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>
                         </div>
 
-                        {/* Half-Hour Rate - Only shows if toggle is ON */}
                         {isHalfHourOn && (
                           <div>
                             <label className="block text-xs text-gray-400 mb-1">
@@ -983,7 +1098,6 @@ export default function PartnerDashboard() {
                           </div>
                         )}
 
-                        {/* Half-Hour Toggle - At the BOTTOM of the card */}
                         <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 mt-2">
                           <div>
                             <p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p>
@@ -1003,7 +1117,6 @@ export default function PartnerDashboard() {
               </div>
             )}
 
-            {/* Buttons */}
             <div className="flex gap-3 mt-4">
               <button onClick={saveServices} className="flex-1 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-lg font-semibold hover:scale-105 transition">Save Changes</button>
               <button onClick={() => setShowServicesModal(false)} className="flex-1 py-2 bg-gray-600 rounded-lg font-semibold hover:bg-gray-700 transition">Cancel</button>
@@ -1078,7 +1191,7 @@ export default function PartnerDashboard() {
                 )}
               </div>
               <div>
-                <p className="font-bold text-lg">@{(profile as any)?.username || profile?.first_name?.toLowerCase() || 'partner'}</p>
+                <p className="font-bold text-lg">@{username || profile?.first_name?.toLowerCase() || 'partner'}</p>
                 <p className="text-xs text-gray-400">{user?.email}</p>
               </div>
             </div>
@@ -1093,29 +1206,257 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Settings Modal */}
+      {/* Settings Modal - Updated with nested screens */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !settingsSubScreen && setShowSettingsModal(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => {
+              if (settingsSubScreen) {
+                setSettingsSubScreen(null);
+              } else {
+                setShowSettingsModal(false);
+              }
+            }} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-4">Settings</h2>
-            <div className="space-y-3 text-sm text-gray-300">
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Email Notifications</p>
-                <p className="text-xs text-gray-400">Receive updates about booking requests and messages.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Location Services</p>
-                <p className="text-xs text-gray-400">Used for GPS check-in verification during meetups.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Account Email</p>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-            </div>
-            <button onClick={() => setShowSettingsModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
+            
+            {!settingsSubScreen ? (
+              <>
+                <h2 className="text-xl font-bold mb-4">Settings</h2>
+                
+                <div className="space-y-3">
+                  <button onClick={() => setSettingsSubScreen('username')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">Username</p>
+                      <p className="text-xs text-gray-400">@{username || 'set a username'}</p>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  
+                  <button onClick={() => setSettingsSubScreen('email')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">Email Address</p>
+                      <p className="text-xs text-gray-400">{user?.email || 'no email'}</p>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  
+                  <button onClick={() => setSettingsSubScreen('phone')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">Phone Number</p>
+                      <p className="text-xs text-gray-400">{newPhone || 'no phone number'}</p>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  
+                  <button onClick={() => setSettingsSubScreen('password')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">Password</p>
+                      <p className="text-xs text-gray-400">Change your password</p>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  
+                  <button onClick={() => setSettingsSubScreen('notifications')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">Notifications</p>
+                      <p className="text-xs text-gray-400">Manage your notification preferences</p>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+              </>
+            ) : settingsSubScreen === 'username' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Change Username</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">New Username <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                      <input
+                        type="text"
+                        value={editUsername}
+                        onChange={(e) => {
+                          const val = e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.]/g, '');
+                          if (val.length <= 20) {
+                            setEditUsername(val);
+                            setUsernameError('');
+                          }
+                        }}
+                        placeholder="username"
+                        className="w-full pl-7 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Letters, numbers, underscore (_), and period (.) only. 3-20 characters.</p>
+                  </div>
+                  {usernameError && <p className="text-red-400 text-sm">{usernameError}</p>}
+                  {usernameAvailable === false && <p className="text-red-400 text-sm">Username already taken</p>}
+                  {usernameAvailable === true && <p className="text-green-400 text-sm">Username is available!</p>}
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
+                    <button onClick={updateUsername} disabled={!editUsername || editUsername.length < 3 || usernameAvailable !== true} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                  </div>
+                </div>
+              </>
+            ) : settingsSubScreen === 'email' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Change Email Address</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">New Email Address <span className="text-red-500">*</span></label>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="newemail@example.com"
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  {emailError && <p className="text-red-400 text-sm">{emailError}</p>}
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
+                    <button onClick={updateEmail} disabled={!newEmail || !currentPassword} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                  </div>
+                </div>
+              </>
+            ) : settingsSubScreen === 'phone' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Change Phone Number</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">New Phone Number <span className="text-red-500">*</span></label>
+                    <input
+                      type="tel"
+                      value={newPhone}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        let formatted = '';
+                        if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+                        if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+                        if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+                        setNewPhone(formatted);
+                        setPhoneError('');
+                      }}
+                      placeholder="(555) 123-4567"
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  {phoneError && <p className="text-red-400 text-sm">{phoneError}</p>}
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
+                    <button onClick={updatePhone} disabled={!newPhone || newPhone.replace(/\D/g, '').length !== 10} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                  </div>
+                </div>
+              </>
+            ) : settingsSubScreen === 'password' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Change Password</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Current Password <span className="text-red-500">*</span></label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">New Password <span className="text-red-500">*</span></label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                    <div className="mt-2 space-y-1 text-xs">
+                      <p className={newPassword.length >= 8 ? 'text-green-400' : 'text-gray-500'}>{newPassword.length >= 8 ? '✓' : '○'} At least 8 characters</p>
+                      <p className={/[A-Z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[A-Z]/.test(newPassword) ? '✓' : '○'} At least 1 uppercase letter</p>
+                      <p className={/[a-z]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[a-z]/.test(newPassword) ? '✓' : '○'} At least 1 lowercase letter</p>
+                      <p className={/[0-9]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[0-9]/.test(newPassword) ? '✓' : '○'} At least 1 number</p>
+                      <p className={/[!@#$%^&*]/.test(newPassword) ? 'text-green-400' : 'text-gray-500'}>{/[!@#$%^&*]/.test(newPassword) ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Confirm New Password <span className="text-red-500">*</span></label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  {passwordError && <p className="text-red-400 text-sm">{passwordError}</p>}
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
+                    <button onClick={updatePassword} disabled={!currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 8} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
+                  </div>
+                </div>
+              </>
+            ) : settingsSubScreen === 'notifications' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Notification Preferences</h2>
+                <div className="space-y-4">
+                  <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
+                    <div>
+                      <p className="font-medium text-white">Email Notifications</p>
+                      <p className="text-xs text-gray-400">Receive updates about booking requests and messages</p>
+                    </div>
+                    <button
+                      onClick={() => setEmailNotifications(!emailNotifications)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${emailNotifications ? 'bg-red-600' : 'bg-gray-600'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailNotifications ? 'translate-x-6' : ''}`} />
+                    </button>
+                  </label>
+                  
+                  <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
+                    <div>
+                      <p className="font-medium text-white">SMS Notifications</p>
+                      <p className="text-xs text-gray-400">Get text message alerts for new booking requests</p>
+                    </div>
+                    <button
+                      onClick={() => setSmsNotifications(!smsNotifications)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${smsNotifications ? 'bg-red-600' : 'bg-gray-600'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${smsNotifications ? 'translate-x-6' : ''}`} />
+                    </button>
+                  </label>
+                  
+                  <label className="flex items-center justify-between p-4 bg-white/5 rounded-xl cursor-pointer">
+                    <div>
+                      <p className="font-medium text-white">Marketing Emails</p>
+                      <p className="text-xs text-gray-400">Receive promotions and updates from Adonix</p>
+                    </div>
+                    <button
+                      onClick={() => setMarketingEmails(!marketingEmails)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${marketingEmails ? 'bg-red-600' : 'bg-gray-600'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${marketingEmails ? 'translate-x-6' : ''}`} />
+                    </button>
+                  </label>
+                  
+                  <div className="flex gap-3 mt-6">
+                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Back</button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
