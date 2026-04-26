@@ -270,7 +270,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [step1Error, setStep1Error] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // ========== STEP 2: PROFILE ==========
+  // ========== STEP 2: PROFILE & LEGAL ==========
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -283,6 +283,21 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [certifications, setCertifications] = useState<string[]>([]);
   const [customCertInput, setCustomCertInput] = useState('');
   const [certError, setCertError] = useState('');
+  
+  // NEW: Emergency Contact Fields
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [emergencyRelationship, setEmergencyRelationship] = useState('');
+  const [emergencyConfirmed, setEmergencyConfirmed] = useState(false);
+  
+  // NEW: Legal Declaration Checkboxes
+  const [affirmNoSexOffender, setAffirmNoSexOffender] = useState(false);
+  const [affirmNoViolentFelony, setAffirmNoViolentFelony] = useState(false);
+  const [affirmNotDatingApp, setAffirmNotDatingApp] = useState(false);
+  const [affirmAssumptionOfRisk, setAffirmAssumptionOfRisk] = useState(false);
+  const [affirmGpsConsent, setAffirmGpsConsent] = useState(false);
+  const [affirmTermsAndPrivacy, setAffirmTermsAndPrivacy] = useState(false);
+  
   const [step2Error, setStep2Error] = useState('');
   
   // ========== STEP 3: PHOTOS ==========
@@ -514,6 +529,17 @@ California Residents:
           setCancellationWindow(data.cancellation_window || 24);
           setUsername(data.username || '');
           setCity(data.city || '');
+          // Load emergency contact data
+          setEmergencyName(data.emergency_name || '');
+          setEmergencyPhone(data.emergency_phone || '');
+          setEmergencyRelationship(data.emergency_relationship || '');
+          // Load legal declarations
+          setAffirmNoSexOffender(data.affirm_no_sex_offender || false);
+          setAffirmNoViolentFelony(data.affirm_no_violent_felony || false);
+          setAffirmNotDatingApp(data.affirm_not_dating_app || false);
+          setAffirmAssumptionOfRisk(data.affirm_assumption_of_risk || false);
+          setAffirmGpsConsent(data.affirm_gps_consent || false);
+          setAffirmTermsAndPrivacy(data.affirm_terms_and_privacy || false);
         }
       } catch (err) {
         console.error('Load error:', err);
@@ -580,7 +606,7 @@ California Residents:
       alert('Photo saved successfully!');
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Failed to upload photo. Please try again.');
+      alert('Failed to upload photo.');
     } finally {
       setUploadingPhoto(false);
     }
@@ -913,23 +939,6 @@ California Residents:
     }));
   };
 
-  // Real-time validation for step 1
-  const validateStep1 = () => {
-    let isValid = true;
-    if (!firstName.trim()) { setFirstNameError('First name is required'); isValid = false; }
-    if (!lastName.trim()) { setLastNameError('Last name is required'); isValid = false; }
-    if (!email || emailError) { isValid = false; }
-    if (!phone || phoneError) { isValid = false; }
-    if (!isPasswordValid) { isValid = false; }
-    if (!validateAge()) { isValid = false; }
-    if (!ageVerifyConsent) { isValid = false; }
-    if (!facialAgeConsent) { isValid = false; }
-    if (!termsAccepted) { isValid = false; }
-    if (!privacyAccepted) { isValid = false; }
-    if (!gatekeeperAccepted) { isValid = false; }
-    return isValid;
-  };
-
   const isStep1Complete = () => {
     return firstName && !firstNameError && lastName && !lastNameError && email && !emailError && 
            phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && 
@@ -937,7 +946,10 @@ California Residents:
   };
 
   const isStep2Complete = () => {
-    return username && usernameAvailable === true && city;
+    return username && usernameAvailable === true && city && 
+           emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
+           affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
+           affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
   };
 
   const isStep3Complete = () => {
@@ -984,12 +996,25 @@ California Residents:
       }
     } else if (currentStep === 2) {
       if (!isStep2Complete()) {
-        setStep2Error('Please complete all required fields.');
+        setStep2Error('Please complete all required fields and check all boxes.');
         return;
       }
       setStep2Error('');
       if (user) {
-        await supabase.from('profiles').update({ username: username.toLowerCase(), city, certifications }).eq('id', user.id);
+        await supabase.from('profiles').update({ 
+          username: username.toLowerCase(), 
+          city, 
+          certifications,
+          emergency_name: emergencyName,
+          emergency_phone: emergencyPhone,
+          emergency_relationship: emergencyRelationship,
+          affirm_no_sex_offender: affirmNoSexOffender,
+          affirm_no_violent_felony: affirmNoViolentFelony,
+          affirm_not_dating_app: affirmNotDatingApp,
+          affirm_assumption_of_risk: affirmAssumptionOfRisk,
+          affirm_gps_consent: affirmGpsConsent,
+          affirm_terms_and_privacy: affirmTermsAndPrivacy
+        }).eq('id', user.id);
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
@@ -1269,58 +1294,18 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </ul>
                 </div>
                 
-                {/* Terms Checkboxes with scroll-to-accept buttons */}
                 <div className="space-y-3">
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={termsAccepted} 
-                      onChange={() => !termsAccepted && setShowTermsModal('terms')} 
-                      className="mt-1 w-5 h-5 accent-red-600"
-                      disabled={termsAccepted}
-                    />
-                    <span className="text-sm text-gray-300">
-                      I have read and agree to the{' '}
-                      <button 
-                        type="button" 
-                        onClick={() => setShowTermsModal('terms')} 
-                        className="text-red-400 underline hover:text-red-300"
-                      >
-                        Terms of Service
-                      </button>. <span className="text-red-500">*</span>
-                    </span>
+                    <input type="checkbox" checked={termsAccepted} onChange={() => setTermsAccepted(!termsAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span></span>
                   </label>
-                  
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={privacyAccepted} 
-                      onChange={() => !privacyAccepted && setShowTermsModal('privacy')} 
-                      className="mt-1 w-5 h-5 accent-red-600"
-                      disabled={privacyAccepted}
-                    />
-                    <span className="text-sm text-gray-300">
-                      I have read and agree to the{' '}
-                      <button 
-                        type="button" 
-                        onClick={() => setShowTermsModal('privacy')} 
-                        className="text-red-400 underline hover:text-red-300"
-                      >
-                        Privacy Policy
-                      </button>. <span className="text-red-500">*</span>
-                    </span>
+                    <input type="checkbox" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowPrivacyModal(true)} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span></span>
                   </label>
-                  
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={gatekeeperAccepted}
-                      onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                      className="mt-1 w-5 h-5 accent-red-600"
-                    />
-                    <span className="text-sm text-gray-300">
-                      I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
-                    </span>
+                    <input type="checkbox" checked={gatekeeperAccepted} onChange={(e) => setGatekeeperAccepted(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span></span>
                   </label>
                 </div>
               </div>
@@ -1333,10 +1318,11 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 2: YOUR PROFILE */}
+          {/* STEP 2: YOUR PROFILE & LEGAL (UPDATED) */}
           {currentStep === 2 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-              <h2 className="text-2xl font-bold text-center mb-6">Your Profile</h2>
+              <h2 className="text-2xl font-bold text-center mb-6">Your Profile & Legal Information</h2>
+              <p className="text-center text-gray-400 mb-6">Please complete your profile and review legal requirements.</p>
               
               {step2Error && (
                 <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
@@ -1345,6 +1331,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               )}
               
               <div className="space-y-6">
+                {/* Username */}
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label>
                   <div className="relative">
@@ -1358,6 +1345,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   {usernameAvailable === false && <p className="text-red-400 text-xs mt-1">Username already taken</p>}
                 </div>
                 
+                {/* City */}
                 <div className="relative">
                   <label className="block text-sm text-gray-400 mb-1">Your City <span className="text-red-500">*</span></label>
                   <input type="text" value={city} onChange={(e) => handleCityInputChange(e.target.value)} placeholder="Los Angeles, CA" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" />
@@ -1368,6 +1356,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   )}
                 </div>
                 
+                {/* Credentials */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="w-5 h-5 text-red-500" />
@@ -1384,6 +1373,95 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </div>
                   {certError && <p className="text-xs text-red-400 mt-1">{certError}</p>}
                 </div>
+                
+                {/* Emergency Contact - NEW */}
+                <div className="border border-red-500/30 bg-red-500/5 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldCheck className="w-5 h-5 text-red-500" />
+                    <h3 className="text-base font-semibold text-white">Emergency Contact <span className="text-red-500">*</span></h3>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-4">This information is only used for safety emergencies and will never be shared publicly.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Contact Name <span className="text-red-500">*</span></label>
+                      <input type="text" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} placeholder="John Doe" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                      <input type="tel" value={emergencyPhone} onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        let formatted = '';
+                        if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+                        if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+                        if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+                        setEmergencyPhone(formatted);
+                      }} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm text-gray-400 mb-1">Relationship <span className="text-red-500">*</span></label>
+                    <select value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
+                      <option value="">Select relationship</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Friend">Friend</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer mt-2">
+                    <input type="checkbox" checked={emergencyConfirmed} onChange={(e) => setEmergencyConfirmed(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I confirm this emergency contact information is accurate and can be used in case of emergency. <span className="text-red-500">*</span></span>
+                  </label>
+                </div>
+                
+                {/* Legal Declarations - NEW all required */}
+                <div className="border border-yellow-500/30 bg-yellow-500/5 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-5 h-5 text-yellow-500" />
+                    <h3 className="text-base font-semibold text-white">Legal & Safety Declarations <span className="text-red-500">*</span></h3>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-4">You must check all boxes to continue. These are legally required for platform safety.</p>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNoSexOffender} onChange={(e) => setAffirmNoSexOffender(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I am NOT a registered sex offender. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNoViolentFelony} onChange={(e) => setAffirmNoViolentFelony(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I have NO felony convictions for violent crimes (assault, battery, domestic violence, etc.). <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNotDatingApp} onChange={(e) => setAffirmNotDatingApp(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — NOT a dating app or escort service. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmAssumptionOfRisk} onChange={(e) => setAffirmAssumptionOfRisk(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I acknowledge that all meetups are at my own risk and I voluntarily assume all risks of physical activity. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmGpsConsent} onChange={(e) => setAffirmGpsConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I consent to GPS location tracking during active meetups for safety verification. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmTermsAndPrivacy} onChange={(e) => setAffirmTermsAndPrivacy(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I have read and agree to the Terms of Service and Privacy Policy. <span className="text-red-500">*</span></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+                  <p className="text-xs text-blue-300 text-center">
+                    ℹ️ All information is protected and used only for safety and legal compliance.
+                  </p>
+                </div>
               </div>
               
               <div className="flex justify-between gap-4 mt-8">
@@ -1393,7 +1471,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 3: PHOTOS - FIXED */}
+          {/* STEP 3: PHOTOS */}
           {currentStep === 3 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Show the world who's about to make them sweat.</h2>
@@ -1405,8 +1483,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               )}
               
-              {/* Photo Gallery */}
-              <div className="flex flex-wrap justify-center gap-4 mb-6">
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
                 {allPhotos.map((photo, idx) => (
                   <div key={idx} className="relative group">
                     <div className={`w-24 h-24 rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'}`}>
@@ -1414,16 +1491,28 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                     </div>
                     {idx === 0 && <div className="absolute -top-2 -left-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">MAIN</div>}
                     <div className="absolute bottom-1 right-1 flex gap-1">
-                      {idx !== 0 && (
-                        <button onClick={() => handleSetPrimaryPhoto(idx)} className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-600">Set Primary</button>
-                      )}
+                      {idx !== 0 && (<button onClick={() => handleSetPrimaryPhoto(idx)} className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-600">Set Primary</button>)}
                       <button onClick={() => handleDeletePhoto(idx)} className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-700">✕</button>
                     </div>
                   </div>
                 ))}
+                {allPhotos.length < MAX_PHOTOS && (
+                  <button onClick={handleAddPhoto} className="w-24 h-24 rounded-xl border-2 border-dashed border-white/30 bg-white/5 hover:bg-white/10 transition flex flex-col items-center justify-center gap-1">
+                    <Camera className="w-6 h-6 text-gray-400" />
+                    <span className="text-[10px] text-gray-400">Add Photo</span>
+                  </button>
+                )}
               </div>
               
-              {/* Preview after taking photo */}
+              {!tempPhotoUrl && allPhotos.length === 0 && (
+                <div className="flex justify-center mb-6">
+                  <button onClick={handleTakePhoto} className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105">
+                    <Camera className="w-5 h-5" />
+                    TAKE YOUR FIRST LIVE PHOTO
+                  </button>
+                </div>
+              )}
+              
               {tempPhotoUrl && !photoAccepted && (
                 <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
                   <div className="flex flex-col items-center gap-4">
@@ -1431,52 +1520,25 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                       <img src={tempPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex gap-3">
-                      <button
-                        onClick={handleAcceptPhoto}
-                        disabled={uploadingPhoto}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold flex items-center gap-2 transition"
-                      >
+                      <button onClick={handleAcceptPhoto} disabled={uploadingPhoto} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold flex items-center gap-2 transition">
                         <CheckCircle className="w-4 h-4" />
                         {uploadingPhoto ? 'Saving...' : 'Accept Photo'}
                       </button>
-                      <button
-                        onClick={handleRetakePhoto}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition"
-                      >
-                        Retake
-                      </button>
+                      <button onClick={handleRetakePhoto} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition">Retake</button>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* Take Photo Button - only show if no photos and no preview */}
-              {allPhotos.length === 0 && !tempPhotoUrl && (
-                <div className="flex justify-center mb-6">
-                  <button
-                    onClick={handleTakePhoto}
-                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105"
-                  >
-                    <Camera className="w-5 h-5" />
-                    TAKE YOUR FIRST LIVE PHOTO
-                  </button>
-                </div>
-              )}
-              
-              {/* Add Photo button - only show if at least 1 photo exists and less than max */}
               {allPhotos.length > 0 && allPhotos.length < MAX_PHOTOS && !tempPhotoUrl && (
                 <div className="flex justify-center mb-6">
-                  <button
-                    onClick={handleAddPhoto}
-                    className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition-all"
-                  >
+                  <button onClick={handleAddPhoto} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition-all">
                     <Plus className="w-5 h-5" />
                     ADD ANOTHER PHOTO
                   </button>
                 </div>
               )}
               
-              {/* Guidance Text */}
               <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
                 <p className="font-semibold text-white mb-1">🎯 You. Right Now. No Filters.</p>
                 <p className="text-sm text-gray-300 mb-3">Adonix is about real people showing up as themselves. That means live photos only — taken inside the app, in this moment.</p>
@@ -1509,190 +1571,55 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
           )}
 
           {/* STEP 4: ACTIVITIES & RATES */}
-{currentStep === 4 && (
-  <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-    <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
-    <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
-    
-    {step4Error && (
-      <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-        {step4Error}
-      </div>
-    )}
-    
-    <div className="flex flex-wrap gap-2 mb-6">
-      {SERVICE_TYPES.map(s => (
-        <button
-          key={s}
-          onClick={() => toggleService(s)}
-          className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-            serviceTypes.includes(s)
-              ? 'bg-red-600 text-white shadow-lg scale-[1.02]'
-              : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-          }`}
-        >
-          {s} {serviceTypes.includes(s) && '✓'}
-        </button>
-      ))}
-    </div>
-    
-    <div className="flex gap-2 mb-4">
-      <input
-        type="text"
-        value={customServiceInput}
-        onChange={(e) => setCustomServiceInput(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && addCustomService()}
-        placeholder="Add custom activity..."
-        className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm"
-      />
-      <button onClick={addCustomService} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
-        <Plus className="w-4 h-4" />
-      </button>
-    </div>
-    {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
-    
-    <p className="text-xs text-gray-400 mb-4">💡 Pro tip: Enable half-hour rates for each activity if you want to offer shorter sessions. This is what your clients will see, so they know exactly what you offer and how long. No surprises. Just sweat.</p>
-    
-    {/* Error summary for services section */}
-    {allSelectedServices.length > 0 && (
-      <div className="mb-4 space-y-1">
-        {allSelectedServices.map(service => {
-          const rate = serviceRates[service];
-          const hourlyValid = rate?.hourly && rate.hourly >= 50 && rate.hourly <= 500;
-          const halfHourValid = !serviceHalfHourEnabled[service] || (rate?.halfHour && rate.halfHour >= 30 && rate.halfHour <= (rate?.hourly || 500));
-          
-          if (!hourlyValid || (serviceHalfHourEnabled[service] && !halfHourValid)) {
-            return (
-              <p key={service} className="text-xs text-red-400 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                {service}: {!hourlyValid ? 'Hourly rate must be $50-$500' : 'Half-hour rate must be $30-$' + (rate?.hourly || 'hourly rate')}
-              </p>
-            );
-          }
-          return null;
-        }).filter(Boolean)}
-      </div>
-    )}
-    
-    {allSelectedServices.length > 0 && (
-      <div className="mt-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-sm font-medium text-white">Set suggested contributions per activity:</p>
-          <p className="text-xs text-gray-500">Click the X to remove an activity</p>
-        </div>
-        {allSelectedServices.map(service => {
-          const isHalfHourOn = serviceHalfHourEnabled[service] || false;
-          const rate = serviceRates[service];
-          const hourlyError = rate?.hourly && (rate.hourly < 50 || rate.hourly > 500);
-          const halfHourError = isHalfHourOn && rate?.halfHour && (rate.halfHour < 30 || rate.halfHour > (rate?.hourly || 500));
-          
-          return (
-            <div key={service} className={`p-4 bg-black rounded-xl border ${hourlyError || halfHourError ? 'border-red-500/50 bg-red-500/5' : 'border-white/10'}`}>
-              <div className="flex justify-between items-center mb-3">
-                <p className="font-semibold text-white">{service}</p>
-                {/* X button to remove the activity */}
-                <button 
-                  onClick={() => {
-                    // Remove from serviceTypes or customServiceTypes
-                    if (serviceTypes.includes(service)) {
-                      toggleService(service);
-                    } else if (customServiceTypes.includes(service)) {
-                      removeCustomService(service);
-                    }
-                  }}
-                  className="text-gray-400 hover:text-red-400 transition-colors p-1"
-                  title="Remove this activity"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          {currentStep === 4 && (
+            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+              <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
+              <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
+              
+              {step4Error && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                  {step4Error}
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-2 mb-6">
+                {SERVICE_TYPES.map(s => (<button key={s} onClick={() => toggleService(s)} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${serviceTypes.includes(s) ? 'bg-red-600 text-white shadow-lg' : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'}`}>{s} {serviceTypes.includes(s) && '✓'}</button>))}
               </div>
               
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">
-                    Hourly Suggested Contribution <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-red-500 font-bold">$</span>
-                    <input
-                      type="number"
-                      value={rate?.hourly || ''}
-                      onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)}
-                      placeholder="0.00"
-                      min="50"
-                      max="500"
-                      step="1"
-                      className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${
-                        hourlyError ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-red-500'
-                      }`}
-                    />
-                    <span className="text-gray-400 text-sm">/ hr</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>
-                  {hourlyError && (
-                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      Hourly rate must be between $50 and $500
-                    </p>
-                  )}
+              <div className="flex gap-2 mb-4">
+                <input type="text" value={customServiceInput} onChange={(e) => setCustomServiceInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomService()} placeholder="Add custom activity..." className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm" />
+                <button onClick={addCustomService} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
+              </div>
+              {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
+              
+              <p className="text-xs text-gray-400 mb-4">💡 Pro tip: Enable half-hour rates for each activity if you want to offer shorter sessions. This is what your clients will see, so they know exactly what you offer and how long. No surprises. Just sweat.</p>
+              
+              {allSelectedServices.length > 0 && (
+                <div className="space-y-4">
+                  {allSelectedServices.map(service => {
+                    const isHalfHourOn = serviceHalfHourEnabled[service] || false;
+                    const rate = serviceRates[service];
+                    const hourlyError = rate?.hourly && (rate.hourly < 50 || rate.hourly > 500);
+                    return (
+                      <div key={service} className="p-4 bg-black rounded-xl border border-white/10">
+                        <div className="flex justify-between items-center mb-3"><p className="font-semibold text-white">{service}</p>{customServiceTypes.includes(service) && (<button onClick={() => removeCustomService(service)} className="text-gray-400 hover:text-red-400"><X className="w-4 h-4" /></button>)}</div>
+                        <div className="space-y-3">
+                          <div><label className="block text-xs text-gray-400 mb-1">Hourly Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.hourly || ''} onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)} placeholder="0.00" min="50" max="500" step="1" className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${hourlyError ? 'border-red-500' : 'border-white/10'}`} /><span className="text-gray-400 text-sm">/ hr</span></div><p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>{hourlyError && <p className="text-xs text-red-400 mt-1">Hourly rate must be between $50 and $500</p>}</div>
+                          {isHalfHourOn && (<div><label className="block text-xs text-gray-400 mb-1">Half-Hour Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.halfHour || ''} onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)} placeholder="0.00" min="30" max={rate?.hourly || 500} step="1" className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none text-white" /><span className="text-gray-400 text-sm">/ 30m</span></div><p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p></div>)}
+                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10"><div><p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p><p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p></div><button onClick={() => toggleServiceHalfHour(service)} className={`relative w-12 h-6 rounded-full transition-colors ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} /></button></div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {isHalfHourOn && (
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1">
-                      Half-Hour Suggested Contribution <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-red-500 font-bold">$</span>
-                      <input
-                        type="number"
-                        value={rate?.halfHour || ''}
-                        onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)}
-                        placeholder="0.00"
-                        min="30"
-                        max={rate?.hourly || 500}
-                        step="1"
-                        className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${
-                          halfHourError ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-red-500'
-                        }`}
-                      />
-                      <span className="text-gray-400 text-sm">/ 30m</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p>
-                    {halfHourError && (
-                      <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        Half-hour rate must be between $30 and ${rate?.hourly || 'hourly rate'}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 mt-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p>
-                  </div>
-                  <button
-                    onClick={() => toggleServiceHalfHour(service)}
-                    className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}
-                  >
-                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} />
-                  </button>
-                </div>
+              )}
+              
+              <div className="flex justify-between gap-4 mt-8">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
               </div>
             </div>
-          );
-        })}
-      </div>
-    )}
-    
-    <div className="flex justify-between gap-4 mt-8">
-      <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
-      <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
-    </div>
-  </div>
-)}
+          )}
 
           {/* STEP 5: LOCATIONS & SCHEDULE */}
           {currentStep === 5 && (
@@ -1791,30 +1718,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
-      {/* Scroll-to-accept Terms Modals */}
-      <TermsModal
-        isOpen={showTermsModal === 'terms'}
-        onClose={() => setShowTermsModal(null)}
-        onAccept={() => {
-          setTermsAccepted(true);
-          setShowTermsModal(null);
-        }}
-        title="Terms of Service"
-        content={termsContent}
-      />
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
       
-      <TermsModal
-        isOpen={showTermsModal === 'privacy'}
-        onClose={() => setShowTermsModal(null)}
-        onAccept={() => {
-          setPrivacyAccepted(true);
-          setShowTermsModal(null);
-        }}
-        title="Privacy Policy"
-        content={privacyContent}
-      />
-      
-      {/* Footer Modals - view only */}
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
       <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
