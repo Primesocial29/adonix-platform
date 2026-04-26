@@ -29,6 +29,10 @@ export default function PartnerDashboard() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletingAccount, setDeletingAccount] = useState(false);
   
+  // Delete Account Password Verification
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletePasswordError, setDeletePasswordError] = useState('');
+  
   // Photo Gallery States
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
   const [showPhotoGalleryModal, setShowPhotoGalleryModal] = useState(false);
@@ -81,10 +85,31 @@ export default function PartnerDashboard() {
     window.location.href = '/';
   };
 
-  const handleDeleteAccount = async () => {
+  // Updated Delete Account with Password Verification
+  const handleDeleteAccountWithPassword = async () => {
     if (!user || deleteConfirmText !== 'DELETE') return;
+    if (!deletePassword) {
+      setDeletePasswordError('Please enter your password');
+      return;
+    }
+    
     setDeletingAccount(true);
+    setDeletePasswordError('');
+    
     try {
+      // Verify password first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: deletePassword,
+      });
+      
+      if (signInError) {
+        setDeletePasswordError('Incorrect password. Please try again.');
+        setDeletingAccount(false);
+        return;
+      }
+      
+      // Password verified - proceed with deletion
       await supabase.from('bookings').delete().or(`client_id.eq.${user.id},partner_id.eq.${user.id}`);
       await supabase.from('profiles').delete().eq('id', user.id);
       await supabase.auth.signOut();
@@ -1349,7 +1374,7 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Delete Account Modal */}
+      {/* Delete Account Modal - UPDATED with Password Verification */}
       {showDeleteAccountModal && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}>
           <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-red-500/40 relative" onClick={(e) => e.stopPropagation()}>
@@ -1365,11 +1390,45 @@ export default function PartnerDashboard() {
               <li>All messages and conversations</li>
               <li>Your services, rates, and schedule</li>
             </ul>
+            
+            {/* Password confirmation field */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Confirm your password to delete account <span className="text-red-500">*</span></label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                disabled={deletingAccount}
+                className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none"
+                placeholder="Enter your password"
+              />
+              {deletePasswordError && <p className="text-red-400 text-sm mt-1">{deletePasswordError}</p>}
+            </div>
+            
             <p className="text-sm text-gray-300 mb-2">Type <span className="font-bold text-red-400">DELETE</span> to confirm:</p>
-            <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} disabled={deletingAccount} className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4" placeholder="Type DELETE" />
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deletingAccount}
+              className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4"
+              placeholder="Type DELETE"
+            />
             <div className="flex gap-3">
-              <button onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }} disabled={deletingAccount} className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50">Cancel</button>
-              <button onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE' || deletingAccount} className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">{deletingAccount ? 'Deleting...' : 'Permanent Delete'}</button>
+              <button
+                onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); setDeletePassword(''); setDeletePasswordError(''); }}
+                disabled={deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccountWithPassword}
+                disabled={deleteConfirmText !== 'DELETE' || !deletePassword || deletingAccount}
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAccount ? 'Deleting...' : 'Permanent Delete'}
+              </button>
             </div>
           </div>
         </div>
