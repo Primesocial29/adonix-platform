@@ -155,7 +155,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoConfirmed, setPhotoConfirmed] = useState(false);
   
-  // Step 3: Your Vibe
+  // Step 3: Your Vibe (Profile & Legal)
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -169,6 +169,20 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [customGoal, setCustomGoal] = useState('');
   const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
   const [customGoalError, setCustomGoalError] = useState('');
+  
+  // NEW: Emergency Contact Fields (Step 3)
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [emergencyRelationship, setEmergencyRelationship] = useState('');
+  const [emergencyConfirmed, setEmergencyConfirmed] = useState(false);
+  
+  // NEW: Legal Declaration Checkboxes (Step 3)
+  const [affirmNoSexOffender, setAffirmNoSexOffender] = useState(false);
+  const [affirmNoViolentFelony, setAffirmNoViolentFelony] = useState(false);
+  const [affirmAssumptionOfRisk, setAffirmAssumptionOfRisk] = useState(false);
+  const [affirmGpsConsent, setAffirmGpsConsent] = useState(false);
+  const [affirmTermsAndPrivacy, setAffirmTermsAndPrivacy] = useState(false);
+  
   const [step3Error, setStep3Error] = useState('');
   
   // Step 4: Find Partners
@@ -187,7 +201,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [searching, setSearching] = useState(false);
   const partnersPerPage = 6;
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null); // ADDED FOR POPUP
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   
   // Password strength checks
   const passwordMinLength = password.length >= 8;
@@ -717,11 +731,60 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         setStep3Error('Please select at least one fitness goal.');
         return;
       }
+      
+      // NEW: Emergency Contact Validation
+      if (!emergencyName) {
+        setStep3Error('Please enter an emergency contact name.');
+        return;
+      }
+      if (!emergencyPhone || emergencyPhone.replace(/\D/g, '').length !== 10) {
+        setStep3Error('Please enter a valid emergency contact phone number.');
+        return;
+      }
+      if (!emergencyRelationship) {
+        setStep3Error('Please select the relationship to your emergency contact.');
+        return;
+      }
+      if (!emergencyConfirmed) {
+        setStep3Error('You must confirm that your emergency contact information is accurate.');
+        return;
+      }
+      
+      // NEW: Legal Declarations Validation
+      if (!affirmNoSexOffender) {
+        setStep3Error('You must affirm that you are not a registered sex offender.');
+        return;
+      }
+      if (!affirmNoViolentFelony) {
+        setStep3Error('You must affirm that you have no violent felony convictions.');
+        return;
+      }
+      if (!affirmAssumptionOfRisk) {
+        setStep3Error('You must acknowledge that meetups are at your own risk.');
+        return;
+      }
+      if (!affirmGpsConsent) {
+        setStep3Error('You must consent to GPS tracking during meetups.');
+        return;
+      }
+      if (!affirmTermsAndPrivacy) {
+        setStep3Error('You must agree to the Terms of Service and Privacy Policy.');
+        return;
+      }
+      
       setStep3Error('');
       await supabase.from('profiles').update({ 
         username, 
         city, 
-        fitness_goals: selectedGoals
+        fitness_goals: selectedGoals,
+        emergency_name: emergencyName,
+        emergency_phone: emergencyPhone,
+        emergency_relationship: emergencyRelationship,
+        affirm_no_sex_offender: affirmNoSexOffender,
+        affirm_no_violent_felony: affirmNoViolentFelony,
+        affirm_assumption_of_risk: affirmAssumptionOfRisk,
+        affirm_gps_consent: affirmGpsConsent,
+        affirm_terms_and_privacy: affirmTermsAndPrivacy
       }).eq('id', user?.id);
       setStep(4);
     }
@@ -732,7 +795,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   };
   
   const handleFindPartners = () => {
-    // Validate selections before searching
     if (selectedServices.length === 0) {
       alert('No activity, no sweat. Choose at least one — we\'ll handle the rest.');
       return;
@@ -743,7 +805,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
       return;
     }
     
-    // Get location and search
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -784,7 +845,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   
   const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent;
   const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
-  const isStep3Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0;
+  const isStep3Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0 && emergencyName && emergencyPhone && emergencyPhone.replace(/\D/g, '').length === 10 && emergencyRelationship && emergencyConfirmed && affirmNoSexOffender && affirmNoViolentFelony && affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
@@ -930,7 +991,6 @@ California Residents:
         <p className="text-xs text-gray-500 text-center mt-3">We'll use your location to find partners in your area.</p>
       </div>
       
-      {/* Partners Results Section - Only shows after search */}
       {hasSearched && (
         <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
           <h2 className="text-xl font-semibold mb-2">PARTNERS READY TO MOVE</h2>
@@ -1186,7 +1246,7 @@ California Residents:
                 {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
               </div>
               
-              {/* Birth Date with Dropdowns - UPDATED with dark gray background */}
+              {/* Birth Date with Dropdowns */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1250,7 +1310,7 @@ California Residents:
                     className="mt-1 w-5 h-5 accent-red-600"
                   />
                   <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation (optional). My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span>
+                    I consent to facial age estimation. My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span>
                   </label>
                 </div>
               </div>
@@ -1442,10 +1502,11 @@ California Residents:
           </div>
         )}
         
-        {/* Step 3: Your Vibe */}
+        {/* Step 3: Your Vibe + Legal + Emergency Contact */}
         {step === 3 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe? <span className="text-red-500">*</span></h2>
+            <p className="text-center text-gray-400 mb-6">Tell us about yourself and review legal requirements.</p>
             
             {step3Error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
@@ -1454,6 +1515,7 @@ California Residents:
             )}
             
             <div className="space-y-6">
+              {/* Username */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Username <span className="text-red-500">*</span></label>
                 <div className="relative">
@@ -1505,6 +1567,7 @@ California Residents:
                 <p className="text-xs text-gray-500 mt-1">Letters and numbers only. 3-20 characters. No blocked words.</p>
               </div>
               
+              {/* City */}
               <div className="relative">
                 <label className="block text-sm text-gray-400 mb-2">Your City <span className="text-red-500">*</span></label>
                 <input
@@ -1529,6 +1592,7 @@ California Residents:
                 )}
               </div>
               
+              {/* Fitness Goals */}
               <div>
                 <label className="block text-sm text-gray-400 mb-3">Why are you here? <span className="text-red-500">*</span> (Select all that apply)</label>
                 <div className="flex flex-wrap gap-2">
@@ -1570,11 +1634,94 @@ California Residents:
                 {customGoalError && <p className="text-red-400 text-sm mt-2">{customGoalError}</p>}
               </div>
               
+              {/* Emergency Contact - NEW */}
+              <div className="border border-red-500/30 bg-red-500/5 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="w-5 h-5 text-red-500" />
+                  <h3 className="text-base font-semibold text-white">Emergency Contact <span className="text-red-500">*</span></h3>
+                </div>
+                <p className="text-xs text-gray-400 mb-4">This information is only used for safety emergencies and will never be shared publicly.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Contact Name <span className="text-red-500">*</span></label>
+                    <input type="text" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} placeholder="John Doe" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                    <input type="tel" value={emergencyPhone} onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      let formatted = '';
+                      if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+                      if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+                      if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+                      setEmergencyPhone(formatted);
+                    }} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="block text-sm text-gray-400 mb-1">Relationship <span className="text-red-500">*</span></label>
+                  <select value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
+                    <option value="">Select relationship</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <label className="flex items-start gap-3 cursor-pointer mt-2">
+                  <input type="checkbox" checked={emergencyConfirmed} onChange={(e) => setEmergencyConfirmed(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                  <span className="text-sm text-gray-300">I confirm this emergency contact information is accurate and can be used in case of emergency. <span className="text-red-500">*</span></span>
+                </label>
+              </div>
+              
+              {/* Legal Declarations - NEW */}
+              <div className="border border-yellow-500/30 bg-yellow-500/5 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="w-5 h-5 text-yellow-500" />
+                  <h3 className="text-base font-semibold text-white">Legal & Safety Declarations <span className="text-red-500">*</span></h3>
+                </div>
+                <p className="text-xs text-gray-400 mb-4">You must check all boxes to continue. These are legally required for platform safety.</p>
+                
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={affirmNoSexOffender} onChange={(e) => setAffirmNoSexOffender(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I am NOT a registered sex offender. <span className="text-red-500">*</span></span>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={affirmNoViolentFelony} onChange={(e) => setAffirmNoViolentFelony(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I have NO felony convictions for violent crimes (assault, battery, domestic violence, etc.). <span className="text-red-500">*</span></span>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={affirmAssumptionOfRisk} onChange={(e) => setAffirmAssumptionOfRisk(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I acknowledge that all meetups are at my own risk and I voluntarily assume all risks of physical activity. <span className="text-red-500">*</span></span>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={affirmGpsConsent} onChange={(e) => setAffirmGpsConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I consent to GPS location tracking during active meetups for safety verification. <span className="text-red-500">*</span></span>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={affirmTermsAndPrivacy} onChange={(e) => setAffirmTermsAndPrivacy(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I have read and agree to the Terms of Service and Privacy Policy. <span className="text-red-500">*</span></span>
+                  </label>
+                </div>
+              </div>
+              
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
                 <p className="text-xs text-blue-300 text-center">
-                  ℹ️ Profile information is self-reported and not verified by Adonix.
+                  ℹ️ All information is protected and used only for safety and legal compliance.
                 </p>
               </div>
+            </div>
+            
+            <div className="flex justify-between gap-4 mt-8">
+              <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+              <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
             </div>
           </div>
         )}
@@ -1649,7 +1796,6 @@ California Residents:
         content={privacyContent}
       />
 
-      {/* Partner Profile Popup */}
       {selectedPartner && (
         <PartnerProfileView
           partner={selectedPartner as any}
