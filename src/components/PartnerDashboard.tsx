@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Calendar, Clock, MapPin } from 'lucide-react';
 
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -46,6 +46,11 @@ export default function PartnerDashboard() {
   const [showVenuesModal, setShowVenuesModal] = useState(false);
   const [showServicesModal, setShowServicesModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  
+  // Booking Requests Modal
+  const [showBookingRequests, setShowBookingRequests] = useState(false);
+  const [bookingRequests, setBookingRequests] = useState<any[]>([]);
+  const [processingBookingId, setProcessingBookingId] = useState<string | null>(null);
   
   // Data for modals
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
@@ -97,7 +102,6 @@ export default function PartnerDashboard() {
     setDeletePasswordError('');
     
     try {
-      // Verify password first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email!,
         password: deletePassword,
@@ -109,7 +113,6 @@ export default function PartnerDashboard() {
         return;
       }
       
-      // Password verified - proceed with deletion
       await supabase.from('bookings').delete().or(`client_id.eq.${user.id},partner_id.eq.${user.id}`);
       await supabase.from('profiles').delete().eq('id', user.id);
       await supabase.auth.signOut();
@@ -121,12 +124,94 @@ export default function PartnerDashboard() {
     }
   };
 
+  // Fetch booking requests for partner
+  const fetchBookingRequests = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          client:client_id (
+            id,
+            first_name,
+            username,
+            live_photo_url,
+            bio
+          )
+        `)
+        .eq('partner_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setBookingRequests(data || []);
+    } catch (err) {
+      console.error('Error fetching booking requests:', err);
+    }
+  };
+
+  // Accept booking request
+  const acceptBooking = async (bookingId: string) => {
+    setProcessingBookingId(bookingId);
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+      
+      if (error) throw error;
+      
+      await fetchBookingRequests();
+      await fetchMeetups();
+      alert('Booking confirmed! You can now message the client.');
+    } catch (err) {
+      console.error('Error accepting booking:', err);
+      alert('Failed to accept booking. Please try again.');
+    } finally {
+      setProcessingBookingId(null);
+    }
+  };
+
+  // Decline booking request
+  const declineBooking = async (bookingId: string) => {
+    const reason = prompt('Please provide a reason for declining (optional):');
+    
+    setProcessingBookingId(bookingId);
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'declined',
+          decline_reason: reason || null,
+          declined_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+      
+      if (error) throw error;
+      
+      await fetchBookingRequests();
+      alert('Booking request declined.');
+    } catch (err) {
+      console.error('Error declining booking:', err);
+      alert('Failed to decline booking. Please try again.');
+    } finally {
+      setProcessingBookingId(null);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadProfileData();
       fetchMeetups();
       fetchContributions();
       loadPhotos();
+      fetchBookingRequests();
     }
   }, [user]);
 
@@ -664,7 +749,7 @@ export default function PartnerDashboard() {
           </div>
         </div>
 
-        {/* Pending Requests Section */}
+        {/* Pending Meetup Invitations */}
         {pendingMeetups.length > 0 && (
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
@@ -735,6 +820,14 @@ export default function PartnerDashboard() {
 
         {/* Quick Action Buttons */}
         <div className="grid grid-cols-2 gap-3 mb-8">
+          <button onClick={() => setShowBookingRequests(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition relative">
+            📋 Booking Requests
+            {bookingRequests.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {bookingRequests.length}
+              </span>
+            )}
+          </button>
           <button onClick={() => setShowAllMeetupsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">All Meetups</button>
           <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Contributions</button>
           <button onClick={() => setShowVenuesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Verified Venues</button>
@@ -944,6 +1037,106 @@ export default function PartnerDashboard() {
           onClose={() => setShowAddPhotoModal(false)}
           aspectRatio="square"
         />
+      )}
+
+      {/* Booking Requests Modal */}
+      {showBookingRequests && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowBookingRequests(false)}>
+          <div className="bg-gray-900 rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gray-900 border-b border-white/10 p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">📋 Pending Booking Requests</h2>
+              <button onClick={() => setShowBookingRequests(false)} className="p-1 hover:bg-white/10 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {bookingRequests.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No pending booking requests.</p>
+                </div>
+              ) : (
+                bookingRequests.map((booking) => {
+                  const client = booking.client;
+                  const bookingDateTime = new Date(booking.booking_date);
+                  const formattedDate = bookingDateTime.toLocaleDateString();
+                  const formattedTime = bookingDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const durationHours = booking.session_duration / 60;
+                  
+                  return (
+                    <div key={booking.id} className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-red-500/30 transition">
+                      <div className="flex gap-4">
+                        <div className="w-16 h-16 rounded-full overflow-hidden bg-red-500/20 flex-shrink-0">
+                          {client?.live_photo_url ? (
+                            <img src={client.live_photo_url} alt={client.first_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl">👤</div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold text-white text-lg">
+                                {client?.first_name || 'Client'} @{client?.username || 'unknown'}
+                              </h3>
+                              <div className="flex items-center gap-3 mt-1 text-sm text-gray-400">
+                                <span className="flex items-center gap-1">💪 {booking.selected_service || booking.activity}</span>
+                                <span className="flex items-center gap-1">⏱️ {durationHours}h</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-green-400">${booking.total_amount?.toFixed(2)}</p>
+                              <p className="text-xs text-gray-500">You'll receive ${booking.partner_payout?.toFixed(2)}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <Calendar className="w-4 h-4 text-gray-500" />
+                              <span>{formattedDate}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-300">
+                              <Clock className="w-4 h-4 text-gray-500" />
+                              <span>{formattedTime}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-300 col-span-2">
+                              <MapPin className="w-4 h-4 text-gray-500" />
+                              <span>{booking.location_name}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 p-3 bg-white/5 rounded-lg">
+                            <p className="text-xs text-gray-500 mb-1">Contact Info</p>
+                            <p className="text-sm text-gray-300">📧 {booking.contact_email}</p>
+                            <p className="text-sm text-gray-300">📞 {booking.client_phone}</p>
+                          </div>
+                          
+                          <div className="flex gap-3 mt-4">
+                            <button
+                              onClick={() => acceptBooking(booking.id)}
+                              disabled={processingBookingId === booking.id}
+                              className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg font-semibold transition disabled:opacity-50"
+                            >
+                              {processingBookingId === booking.id ? 'Processing...' : '✓ Accept'}
+                            </button>
+                            <button
+                              onClick={() => declineBooking(booking.id)}
+                              disabled={processingBookingId === booking.id}
+                              className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50"
+                            >
+                              {processingBookingId === booking.id ? 'Processing...' : '✗ Decline'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* All Meetups Modal */}
@@ -1231,7 +1424,7 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Settings Modal - Updated with nested screens */}
+      {/* Settings Modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !settingsSubScreen && setShowSettingsModal(false)}>
           <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
@@ -1374,7 +1567,7 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Delete Account Modal - UPDATED with Password Verification */}
+      {/* Delete Account Modal */}
       {showDeleteAccountModal && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}>
           <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-red-500/40 relative" onClick={(e) => e.stopPropagation()}>
@@ -1391,7 +1584,6 @@ export default function PartnerDashboard() {
               <li>Your services, rates, and schedule</li>
             </ul>
             
-            {/* Password confirmation field */}
             <div className="mb-4">
               <label className="block text-sm text-gray-400 mb-2">Confirm your password to delete account <span className="text-red-500">*</span></label>
               <input
