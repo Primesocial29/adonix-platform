@@ -1,130 +1,72 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { supabase as supabaseClient, Profile } from '../lib/supabase';
-import { Search, MapPin, Dumbbell, Star, ChevronLeft, ChevronRight, X, Plus, Navigation, AlertCircle, Target, LogOut } from 'lucide-react';
-import PartnerProfileView from './PartnerProfileView';
 import { useAuth } from '../hooks/useAuth';
+import { MapPin, Clock, DollarSign, Star, Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import PartnerProfileView from './PartnerProfileView';
 
-interface BrowsePartnersProps {
-  onSelectPartner?: (partner: Profile) => void;
-  presetCity?: string;
+interface Partner {
+  id: string;
+  first_name: string;
+  username: string;
+  live_photo_url: string;
+  bio: string;
+  avg_rating: number;
+  total_reviews: number;
+  service_types: string[];
+  custom_service_types: string[];
+  service_rates: Record<string, { hourly: number; halfHour: number }>;
+  city: string;
+  _distance?: number;
 }
 
-const BASE_SERVICE_OPTIONS = [
+const SERVICE_TYPES = [
   'Walking', 'Jogging', 'Running', 'Biking', 'Yoga', 'Weight Lifting',
   'HIIT', 'Calisthenics', 'Swimming', 'Boxing', 'Pilates', 'Stretching'
 ];
 
-const BLOCKED_WORDS = [
-  'offensive', 'profanity', 'hate', 'adult', 'explicit', 'scam', 'illegal',
-  'violence', 'abuse', 'spam', 'nude', 'porn', 'gambling', 'drugs', 'crypto',
-  'bitcoin', 'darkweb', 'escort', 'sexual', 'xxx', 'fuck', 'shit', 'bitch',
-  'asshole', 'naked', 'whore', 'sex'
+const SORT_OPTIONS = [
+  { value: 'distance', label: 'Distance (closest first)' },
+  { value: 'rating', label: 'Rating (highest first)' },
+  { value: 'price_low', label: 'Price (lowest first)' },
+  { value: 'price_high', label: 'Price (highest first)' },
 ];
 
-// Footer Modal Component - view only
-function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
-  if (!isOpen) return null;
+const PRICE_RANGES = [
+  { label: '$50 - $100', min: 50, max: 100 },
+  { label: '$100 - $150', min: 100, max: 150 },
+  { label: '$150 - $200', min: 150, max: 200 },
+  { label: '$200 - $300', min: 200, max: 300 },
+  { label: '$300+', min: 300, max: 1000 },
+];
 
-  return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
-        <div className="flex justify-between items-center p-4 border-b border-white/10">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400 hover:text-white" />
-          </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
-          {content}
-        </div>
-        
-        <div className="p-4 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function BrowsePartners({ onSelectPartner, presetCity = '' }: BrowsePartnersProps) {
-  const { signOut, user, profile } = useAuth();
-  const [partners, setPartners] = useState<Profile[]>([]);
-  const [filteredPartners, setFilteredPartners] = useState<Profile[]>([]);
+export default function BrowsePartners() {
+  const { user, profile } = useAuth();
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [customServices, setCustomServices] = useState<string[]>([]);
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customServiceName, setCustomServiceName] = useState('');
-  const [customError, setCustomError] = useState('');
-  const [distance, setDistance] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPartner, setSelectedPartner] = useState<Profile | null>(null);
-  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-  
-  // Footer modal states
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showSafetyModal, setShowSafetyModal] = useState(false);
-
-  // Menu modal states
-  const [showMyProfileModal, setShowMyProfileModal] = useState(false);
-  const [showMyPhotosModal, setShowMyPhotosModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [deletingAccount, setDeletingAccount] = useState(false);
-  const [myPhotos, setMyPhotos] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    supabaseClient.from('profiles').select('photos, live_photo_url').eq('id', user.id).maybeSingle().then(({ data }) => {
-      if (data?.photos && data.photos.length > 0) setMyPhotos(data.photos);
-      else if (data?.live_photo_url) setMyPhotos([data.live_photo_url]);
-    });
-  }, [user]);
-
-  const handleDeleteAccount = async () => {
-    if (!user || deleteConfirmText !== 'DELETE') return;
-    setDeletingAccount(true);
-    try {
-      await supabaseClient.from('bookings').delete().or(`client_id.eq.${user.id},partner_id.eq.${user.id}`);
-      await supabaseClient.from('profiles').delete().eq('id', user.id);
-      await supabaseClient.auth.signOut();
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Delete account error:', err);
-      alert('Failed to delete account. Please contact support.');
-      setDeletingAccount(false);
-    }
-  };
-  
-  // Location states
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationLoading, setLocationLoading] = useState(true);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [locationPermissionAsked, setLocationPermissionAsked] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
+  const [sortBy, setSortBy] = useState('distance');
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(10);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const partnersPerPage = 9;
+  
+  // Selected partner for profile view
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  
+  // Mobile filter sidebar
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const allServiceOptions = [...BASE_SERVICE_OPTIONS, ...customServices];
-  const MAX_CUSTOM_SERVICES = 2;
-
-  const handleLogout = async () => {
-    await signOut();
-    window.location.href = '/';
-  };
-
-  // Calculate distance between two coordinates (Haversine formula)
+  // Calculate distance between two coordinates (in miles)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 3959;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -136,95 +78,78 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     return R * c;
   };
 
-  // Get current location
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
-      setLocationLoading(false);
-      return;
-    }
-
+  // Get user's location
+  const getUserLocation = () => {
     setLocationLoading(true);
-    setLocationError(null);
-
-    const handleSuccess = (position: GeolocationPosition) => {
-      setUserLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
-      setLocationError(null);
-      setLocationLoading(false);
-      setLocationPermissionAsked(true);
-    };
-
-    const handleError = (error: GeolocationPositionError) => {
-      let errorMsg = '';
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          errorMsg = 'Location access denied. Please enable location in your browser settings to find partners near you.';
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMsg = 'Location unavailable. Please check your device GPS settings and try again.';
-          break;
-        case error.TIMEOUT:
-          errorMsg = 'Location request timed out. Please try again.';
-          break;
-        default:
-          errorMsg = 'Unable to get your location. Please try again.';
-      }
-      setLocationError(errorMsg);
-      setLocationLoading(false);
-      setLocationPermissionAsked(true);
-    };
-
+    setLocationError('');
     navigator.geolocation.getCurrentPosition(
-      handleSuccess,
-      (err) => {
-        if (err.code === err.TIMEOUT || err.code === err.POSITION_UNAVAILABLE) {
-          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-            enableHighAccuracy: false,
-            timeout: 15000,
-            maximumAge: 300000,
-          });
-        } else {
-          handleError(err);
-        }
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setLocationLoading(false);
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 60000,
+      (error) => {
+        let errorMsg = 'Unable to get your location. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMsg += 'Please enable location access to find partners near you.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMsg += 'Location unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMsg += 'Request timed out.';
+            break;
+        }
+        setLocationError(errorMsg);
+        setLocationLoading(false);
+        // Still load partners (without distance calculation)
+        fetchPartners();
       }
     );
   };
 
-  // Ask for location when page loads
-  useEffect(() => {
-    getCurrentLocation();
-  }, []);
-
-  // Fetch all partners
-  useEffect(() => {
-    fetchPartners();
-  }, []);
-
-  // Apply filters
-  useEffect(() => {
-    applyFilters();
-  }, [partners, searchTerm, selectedServices, distance, userLocation, customServices]);
-
+  // Fetch partners
   const fetchPartners = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('is_partner', true)
         .eq('profile_complete', true);
-
+      
       if (error) throw error;
-      setPartners(data || []);
-      setFilteredPartners(data || []);
+      
+      let partnersWithDistance = (data || []).map((partner: any) => {
+        let distance = null;
+        if (userLocation && partner.service_areas_center_lat && partner.service_areas_center_lng) {
+          distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            partner.service_areas_center_lat,
+            partner.service_areas_center_lng
+          );
+        }
+        // Get primary service rate
+        const allServices = [...(partner.service_types || []), ...(partner.custom_service_types || [])];
+        const primaryService = allServices[0] || 'Fitness';
+        const hourlyRate = partner.service_rates?.[primaryService]?.hourly || 75;
+        
+        return {
+          ...partner,
+          _distance: distance,
+          _primary_rate: hourlyRate,
+          avg_rating: partner.avg_rating || 0,
+          total_reviews: partner.total_reviews || 0,
+          city: partner.city || 'Location not specified'
+        };
+      });
+      
+      setPartners(partnersWithDistance);
+      applyFilters(partnersWithDistance);
     } catch (err) {
       console.error('Error fetching partners:', err);
     } finally {
@@ -232,261 +157,226 @@ export default function BrowsePartners({ onSelectPartner, presetCity = '' }: Bro
     }
   };
 
-  const toggleService = (service: string) => {
-    setSelectedServices(prev =>
-      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
-    );
-    setCurrentPage(1);
-  };
-
-  const containsBlockedWord = (name: string): boolean => {
-    const lowerName = name.toLowerCase().trim();
-    return BLOCKED_WORDS.some(word => lowerName.includes(word.toLowerCase()));
-  };
-
-  const addCustomService = () => {
-    const name = customServiceName.trim();
-    setCustomError('');
+  // Apply all filters
+  const applyFilters = (partnersList = partners) => {
+    let filtered = [...partnersList];
     
-    if (customServices.length >= MAX_CUSTOM_SERVICES) {
-      setCustomError(`You can only add up to ${MAX_CUSTOM_SERVICES} custom services.`);
-      return;
-    }
-    if (!name) {
-      setCustomError('Please enter a service name.');
-      return;
-    }
-    if (containsBlockedWord(name)) {
-      setCustomError(`"${name}" contains inappropriate language. Please use a professional service name.`);
-      return;
-    }
-    if (allServiceOptions.some(s => s.toLowerCase() === name.toLowerCase())) {
-      setCustomError(`"${name}" already exists in the list.`);
-      return;
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.first_name?.toLowerCase().includes(query) ||
+        p.username?.toLowerCase().includes(query) ||
+        p.bio?.toLowerCase().includes(query) ||
+        p.city?.toLowerCase().includes(query)
+      );
     }
     
-    setCustomServices([...customServices, name]);
-    setCustomServiceName('');
-    setShowCustomInput(false);
-    setCurrentPage(1);
-  };
-
-  const removeCustomService = (serviceToRemove: string) => {
-    setCustomServices(customServices.filter(s => s !== serviceToRemove));
-    setSelectedServices(prev => prev.filter(s => s !== serviceToRemove));
-    setCurrentPage(1);
-  };
-
-  const clearFilters = () => {
-    setSelectedServices([]);
-    setDistance(10);
-    setSearchTerm('');
-    setCurrentPage(1);
-  };
-
-  const applyFilters = () => {
-    let filtered = [...partners];
-
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(partner => {
-        const username = (partner as any).username || '';
-        return username.toLowerCase().includes(searchLower) ||
-               partner.bio?.toLowerCase().includes(searchLower);
-      });
-    }
-
+    // Filter by services
     if (selectedServices.length > 0) {
-      filtered = filtered.filter(partner => {
-        const services = (partner as any).service_types || [];
-        const customPartnerServices = (partner as any).custom_service_types || [];
-        const allPartnerServices = [...services, ...customPartnerServices];
-        return selectedServices.some(service => allPartnerServices.includes(service));
+      filtered = filtered.filter(p => {
+        const partnerServices = [...(p.service_types || []), ...(p.custom_service_types || [])];
+        return selectedServices.some(s => partnerServices.includes(s));
       });
     }
-
-    if (userLocation) {
-      filtered = filtered.filter(partner => {
-        if ((partner as any).service_areas_center_lat && (partner as any).service_areas_center_lng) {
-          const dist = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            (partner as any).service_areas_center_lat,
-            (partner as any).service_areas_center_lng
-          );
-          (partner as any)._distance = dist;
-          return dist <= distance;
-        }
-        (partner as any)._distance = null;
-        return true;
-      });
-    } else {
-      filtered.forEach(partner => {
-        (partner as any)._distance = null;
-      });
+    
+    // Filter by price range
+    if (selectedPriceRange) {
+      filtered = filtered.filter(p => 
+        p._primary_rate >= selectedPriceRange.min && 
+        p._primary_rate <= selectedPriceRange.max
+      );
     }
-
+    
+    // Filter by distance (if user location available)
+    if (userLocation && searchRadius < 25) {
+      filtered = filtered.filter(p => 
+        p._distance !== null && p._distance <= searchRadius
+      );
+    }
+    
+    // Sort
+    switch (sortBy) {
+      case 'distance':
+        filtered.sort((a, b) => (a._distance || 999) - (b._distance || 999));
+        break;
+      case 'rating':
+        filtered.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+        break;
+      case 'price_low':
+        filtered.sort((a, b) => (a._primary_rate || 999) - (b._primary_rate || 999));
+        break;
+      case 'price_high':
+        filtered.sort((a, b) => (b._primary_rate || 0) - (a._primary_rate || 0));
+        break;
+    }
+    
     setFilteredPartners(filtered);
     setCurrentPage(1);
   };
 
-  const activeFilterCount = (searchTerm ? 1 : 0) + selectedServices.length + (distance !== 10 ? 1 : 0);
-  const totalPages = Math.ceil(filteredPartners.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  // Apply filters whenever any filter changes
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery, selectedServices, selectedPriceRange, sortBy, searchRadius, userLocation]);
+
+  // Fetch partners when user location is set
+  useEffect(() => {
+    if (userLocation) {
+      fetchPartners();
+    }
+  }, [userLocation]);
+
+  // Initial load
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedServices([]);
+    setSelectedPriceRange(null);
+    setSortBy('distance');
+    setSearchRadius(10);
+    setMobileFiltersOpen(false);
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
+  const startIndex = (currentPage - 1) * partnersPerPage;
+  const endIndex = startIndex + partnersPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
 
-  const footerTermsContent = `ADONIX FIT - TERMS OF SERVICE
-Effective: April 17, 2026 | Prime Social LLC
+  // Toggle service selection
+  const toggleService = (service: string) => {
+    setSelectedServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    );
+  };
 
-1. ACCEPTANCE
-Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dating or escort services. Solicitation results in a permanent ban.
-
-2. ELIGIBILITY & SAFETY WARRANTY
-You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender.
-
-3. BIPA COMPLIANCE
-Facial estimation data is deleted immediately after verification. Separate written consent required.
-
-4. ZERO-TOLERANCE
-Immediate permanent ban for: Harassment, Stalking, Non-Consensual Photos, Nudity, AI Impersonation, External Payments.
-
-5. PUBLIC ONLY
-Meetings in private residences, hotels, or any non-public location are a material breach.
-
-6. ASSUMPTION OF RISK
-YOU VOLUNTARILY ASSUME ALL RISKS OF PHYSICAL ACTIVITY.
-
-7. LIMITATION OF LIABILITY
-TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED $100.
-
-8. ARBITRATION & CLASS ACTION WAIVER
-Binding arbitration in Orange County, FL. CLASS ACTION WAIVER INCLUDED.
-
-9. CONTACT
-primesocial@primesocial.xyz | Prime Social LLC | Orange County, Florida`;
-
-  const footerPrivacyContent = `ADONIX FIT - PRIVACY POLICY
-Effective: April 17, 2026 | Prime Social LLC
-
-1. DATA COLLECTION
-Prime Social LLC collects identifiers (email, username, IP address, device ID) and fitness data. Age verification data is deleted immediately after 18+ confirmation.
-
-2. LOCATION DATA
-GPS is used only for session check-in verification and SOS feature. Location data is not retained after the session ends.
-
-3. BIOMETRICS
-Per BIPA, facial estimation data is processed and purged instantly. Separate written consent required.
-
-4. AI MODERATION
-AI scans user-generated content for safety violations. Human review available upon request.
-
-5. NO SALE OF DATA
-Prime Social LLC does not sell personal data to third parties.
-
-6. YOUR RIGHTS
-Per CCPA/CPRA, Florida SB 1722, you have the right to access, correct, delete, and port your data.
-
-7. CONTACT
-primesocial@primesocial.xyz`;
-
-  const footerSafetyContent = `ADONIX FIT - SAFETY GUIDELINES
-
-1. Public Locations Only - All meetups must occur at verified public gyms, parks, or recreation centers.
-
-2. Trust Your Instincts - If something feels off, don't go.
-
-3. GPS Check-In Required - You must verify your location within 0.75 miles of the agreed venue.
-
-4. Two-Person Only - No extra friends, family, or spectators permitted.
-
-5. Report Concerns Immediately - We review all reports within 24 hours.
-
-Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior = permanent ban.`;
-
-  const PartnerCard = ({ partner }: { partner: Profile }) => {
-    const services = (partner as any).service_types || [];
-    const customPartnerServices = (partner as any).custom_service_types || [];
-    const allServices = [...services, ...customPartnerServices];
-    const primaryService = allServices[0] || 'Fitness Training';
-    const secondaryService = allServices[1] || '';
+  // Format rating stars
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     
-    const serviceRates = (partner as any).service_rates || {};
-    const firstService = allServices[0];
-    const hourlyRate = firstService ? (serviceRates[firstService]?.hourly || 75) : 75;
-    
-    const distance = (partner as any)._distance;
-    const partnerUsername = (partner as any).username || partner.first_name?.toLowerCase().replace(/\s/g, '_') || 'partner';
-
     return (
-      <div 
-        onClick={() => setSelectedPartner(partner)}
-        className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/50 hover:scale-[1.02] transition-all cursor-pointer group"
-      >
-        <div className="aspect-square bg-gradient-to-br from-red-500/20 to-orange-500/20 relative">
-          {partner.live_photo_url ? (
-            <img 
-              src={partner.live_photo_url} 
-              alt={partnerUsername} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Dumbbell className="w-12 h-12 text-gray-500" />
-            </div>
-          )}
-        </div>
-
-        <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="text-xl font-bold text-white">🔥 @{partnerUsername}</h3>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-green-400">${hourlyRate}</p>
-              <p className="text-xs text-gray-500">suggested / hr</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 mt-1">
-            <Dumbbell className="w-3 h-3 text-gray-500" />
-            <span className="text-xs text-gray-400">{primaryService}</span>
-            {secondaryService && (
-              <span className="text-xs text-gray-500">• {secondaryService}</span>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-              <span className="text-xs text-gray-400">{partner.avg_rating || 'New'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-gray-500" />
-              <span className="text-xs text-gray-400">
-                {distance !== null ? `${Math.round(distance)} mi away` : 'Distance unknown'}
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center">
+        {[...Array(fullStars)].map((_, i) => (
+          <Star key={`full-${i}`} className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+        ))}
+        {hasHalfStar && (
+          <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <Star key={`empty-${i}`} className="w-3 h-3 text-gray-500" />
+        ))}
       </div>
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+  // Filter sidebar content (used both desktop and mobile)
+  const FilterSidebar = () => (
+    <div className="space-y-6">
+      {/* Distance Filter */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Distance within {searchRadius} miles
+        </label>
+        <input
+          type="range"
+          min="1"
+          max="25"
+          step="1"
+          value={searchRadius}
+          onChange={(e) => setSearchRadius(parseInt(e.target.value))}
+          className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>1mi</span><span>5mi</span><span>10mi</span><span>15mi</span><span>20mi</span><span>25mi</span>
+        </div>
       </div>
-    );
-  }
+      
+      {/* Service Types Filter */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Activities</h3>
+        <div className="flex flex-wrap gap-2">
+          {SERVICE_TYPES.map(service => (
+            <button
+              key={service}
+              onClick={() => toggleService(service)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                selectedServices.includes(service)
+                  ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              {service}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Price Range Filter */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Price Range (per hour)</h3>
+        <div className="space-y-2">
+          {PRICE_RANGES.map(range => (
+            <label key={range.label} className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="priceRange"
+                checked={selectedPriceRange?.min === range.min && selectedPriceRange?.max === range.max}
+                onChange={() => setSelectedPriceRange({ min: range.min, max: range.max })}
+                className="w-4 h-4 accent-red-600"
+              />
+              <span className="text-sm text-gray-300">{range.label}</span>
+            </label>
+          ))}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="radio"
+              name="priceRange"
+              checked={selectedPriceRange === null}
+              onChange={() => setSelectedPriceRange(null)}
+              className="w-4 h-4 accent-red-600"
+            />
+            <span className="text-sm text-gray-300">Any price</span>
+          </label>
+        </div>
+      </div>
+      
+      {/* Sort By */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Sort By</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
+        >
+          {SORT_OPTIONS.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+      
+      {/* Reset Filters */}
+      <button
+        onClick={resetFilters}
+        className="w-full px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition"
+      >
+        Reset All Filters
+      </button>
+    </div>
+  );
 
   return (
-    <>
-      <div className="min-h-screen bg-black text-white flex flex-col">
-        {/* Header - Same as client setup with logout link */}
-        <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img 
                 src="/adonixlogo.png" 
@@ -494,544 +384,275 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 className="h-10 w-auto"
               />
               <span className="text-xl font-bold text-white">ADONIX</span>
-              <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
+              <span className="text-xs text-gray-400 hidden sm:block">Social Fitness, Elevated</span>
             </div>
-            <div className="relative">
-              <button 
-                onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.location.href = '/client-dashboard'}
+                className="text-sm text-gray-400 hover:text-white transition"
               >
-                <span>Menu</span>
-                <span>▼</span>
+                My Dashboard
               </button>
-              {showSettingsDropdown && (
-                <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-20">
-                  <div className="py-2">
-                    <button onClick={() => { setShowMyProfileModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">👤 My Profile</button>
-                    <button onClick={() => { setShowMyPhotosModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">📸 My Photos</button>
-                    <button onClick={() => { setShowSettingsModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">⚙️ Settings</button>
-                    <button onClick={() => { setShowHelpModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">❓ Help & Support</button>
-                    <button onClick={() => { setShowSafetyModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🛡️ Safety Guidelines</button>
-                    <button onClick={() => { setShowDeleteAccountModal(true); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10">🗑️ Delete Account</button>
-                    <button onClick={() => { handleLogout(); setShowSettingsDropdown(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-white/10">🚪 Logout</button>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={() => window.location.href = '/'}
+                className="text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="max-w-7xl mx-auto px-6 py-8 flex-1">
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-4xl font-bold mb-2">Find Your Workout Buddy</h1>
-            <p className="text-gray-400">Discover fitness partners who match your vibe</p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Find Your Fitness Partner</h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">
+            Connect with partners who match your fitness style, location, and budget.
+            No awkward intros. Just good energy.
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex gap-3 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, city, or fitness interest..."
+              className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none"
+            />
           </div>
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="md:hidden px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition"
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
 
-          {/* AI Concierge Disclosure */}
-          <div className="mb-6 flex items-start gap-3 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400">
-            <span className="text-lg leading-none mt-0.5">🤖</span>
-            <p>
-              <span className="text-white font-medium">Adonix AI Concierge: </span>
-              You are interacting with the Adonix AI Concierge. I am an AI, not a human partner. Recommendations and filters are generated automatically. All profiles belong to real human users.
-            </p>
-          </div>
-
-          {/* Location Status Card */}
-          <div className="mb-6 bg-white/5 border border-white/10 rounded-2xl p-5">
-            {presetCity && (
-              <div className="flex items-center gap-2 text-gray-400 text-sm mb-3 pb-3 border-b border-white/10">
-                <Target className="w-4 h-4 text-red-400" />
-                <span>You're looking in <span className="text-white font-medium">{presetCity}</span></span>
-              </div>
-            )}
-            
-            {locationLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
-                <span className="text-gray-400">Getting your current location...</span>
-              </div>
-            ) : locationError ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-yellow-400">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>{locationError}</span>
-                </div>
-                <button
-                  onClick={getCurrentLocation}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors self-start flex items-center gap-2"
-                >
-                  <Navigation className="w-4 h-4" />
-                  Use My Current Location
+        {/* Desktop Layout - 2 columns */}
+        <div className="flex gap-8">
+          {/* Filters Sidebar - Desktop */}
+          <div className="hidden md:block w-72 shrink-0">
+            <div className="sticky top-24 bg-white/5 rounded-2xl p-5 border border-white/10">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-white">Filters</h2>
+                <button onClick={resetFilters} className="text-xs text-red-400 hover:text-red-300">
+                  Reset all
                 </button>
               </div>
-            ) : userLocation ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-green-400">
-                  <Navigation className="w-5 h-5" />
-                  <span>Using your current location to find partners near you</span>
-                </div>
-                
-                {/* Distance Radius Slider */}
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm text-gray-400">Search radius:</label>
-                    <span className="text-red-400 font-medium">{distance} miles</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="25"
-                    step="1"
-                    value={distance}
-                    onChange={(e) => {
-                      setDistance(parseInt(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1 mi</span>
-                    <span>5</span>
-                    <span>10</span>
-                    <span>15</span>
-                    <span>20</span>
-                    <span>25 mi</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <p className="text-gray-400">Allow location access to find partners near you</p>
-                <button
-                  onClick={getCurrentLocation}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors self-start flex items-center gap-2"
-                >
-                  <Navigation className="w-4 h-4" />
-                  Use My Current Location
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Filters Bar */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by username..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:border-red-500 focus:outline-none text-white placeholder-gray-500"
-                />
-              </div>
-
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
-              >
-                Clear All Filters
-              </button>
+              <FilterSidebar />
             </div>
-
-            <div className="border-t border-white/10 pt-4">
-              <label className="block text-sm text-gray-400 mb-3">
-                Select services you're looking for:
-                {selectedServices.length > 0 && (
-                  <span className="ml-2 text-red-400">({selectedServices.length} selected)</span>
-                )}
-              </label>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-3">
-                {allServiceOptions.map(service => (
-                  <button
-                    key={service}
-                    onClick={() => toggleService(service)}
-                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer relative group
-                      ${selectedServices.includes(service) 
-                        ? 'bg-red-500 text-white shadow-lg scale-[1.02]' 
-                        : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:scale-[1.01]'
-                      }
-                    `}
-                  >
-                    {service}
-                    {selectedServices.includes(service) && <span className="ml-1">✓</span>}
-                    
-                    {customServices.includes(service) && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeCustomService(service);
-                        }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs hover:bg-red-600 hidden group-hover:flex items-center justify-center"
-                        title="Remove custom service"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {!showCustomInput ? (
-                <button
-                  onClick={() => setShowCustomInput(true)}
-                  disabled={customServices.length >= MAX_CUSTOM_SERVICES}
-                  className={`mt-2 text-sm flex items-center gap-1 px-3 py-1.5 rounded-full transition-colors
-                    ${customServices.length >= MAX_CUSTOM_SERVICES 
-                      ? 'text-gray-500 cursor-not-allowed' 
-                      : 'text-red-400 hover:text-red-300 hover:bg-white/5'
-                    }
-                  `}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add custom service {customServices.length >= MAX_CUSTOM_SERVICES && `(max ${MAX_CUSTOM_SERVICES})`}
-                </button>
-              ) : (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <input
-                    type="text"
-                    value={customServiceName}
-                    onChange={(e) => setCustomServiceName(e.target.value)}
-                    placeholder="e.g., Kickboxing, Parkour, Dance"
-                    className="px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-gray-400 focus:border-red-500 focus:outline-none"
-                    autoFocus
-                    onKeyPress={(e) => e.key === 'Enter' && addCustomService()}
-                  />
-                  <button
-                    onClick={addCustomService}
-                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Add
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowCustomInput(false);
-                      setCustomError('');
-                      setCustomServiceName('');
-                    }}
-                    className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  {customError && (
-                    <span className="text-red-400 text-xs">{customError}</span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Active Filters Tags */}
-          {activeFilterCount > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {searchTerm && (
-                <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
-                  Search: {searchTerm}
-                  <button onClick={() => setSearchTerm('')} className="hover:text-white">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {selectedServices.map(service => (
-                <span key={service} className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
-                  {service}
-                  <button onClick={() => toggleService(service)} className="hover:text-white">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-              {distance !== 10 && userLocation && (
-                <span className="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm flex items-center gap-1">
-                  Within {distance} miles
-                  <button onClick={() => setDistance(10)} className="hover:text-white">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Results Count */}
-          <div className="mb-4 text-sm text-gray-400">
-            Found {filteredPartners.length} partner{filteredPartners.length !== 1 ? 's' : ''}
-            {userLocation && ` within ${distance} miles of your location`}
           </div>
 
           {/* Partners Grid */}
-          {filteredPartners.length === 0 ? (
-            <div className="text-center py-20">
-              <Dumbbell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No Partners Found</h3>
-              <p className="text-gray-400">
-                {!userLocation 
-                  ? "Enable location access to find partners near you"
-                  : "Try adjusting your filters or increasing your search radius"}
+          <div className="flex-1">
+            {/* Results info */}
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-sm text-gray-400">
+                {loading ? 'Loading...' : `${filteredPartners.length} partner${filteredPartners.length !== 1 ? 's' : ''} found`}
               </p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {currentPartners.map(partner => (
-                  <PartnerCard key={partner.id} partner={partner} />
-                ))}
+              <div className="md:hidden flex items-center gap-2">
+                <span className="text-xs text-gray-500">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-sm"
+                >
+                  {SORT_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
+            </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-8">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <span className="text-sm text-gray-400">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+            {/* Loading State */}
+            {loading && (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+              </div>
+            )}
+
+            {/* Location Error */}
+            {locationError && !loading && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-4">
+                <p className="text-yellow-400 text-sm">{locationError}</p>
+                <button onClick={getUserLocation} className="mt-2 text-sm text-red-400 hover:text-red-300">
+                  Try again →
+                </button>
+              </div>
+            )}
+
+            {/* No Results */}
+            {!loading && filteredPartners.length === 0 && (
+              <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-gray-400 mb-2">No partners found</p>
+                <p className="text-sm text-gray-500">Try adjusting your filters or search radius</p>
+                <button onClick={resetFilters} className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition">
+                  Reset Filters
+                </button>
+              </div>
+            )}
+
+            {/* Partners Grid */}
+            {!loading && filteredPartners.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {currentPartners.map((partner) => (
+                    <div
+                      key={partner.id}
+                      className="bg-white/5 rounded-2xl border border-white/10 hover:border-red-500/50 transition-all group hover:scale-[1.02] duration-200 cursor-pointer overflow-hidden"
+                      onClick={() => setSelectedPartner(partner)}
+                    >
+                      {/* Photo */}
+                      <div className="aspect-square overflow-hidden bg-red-500/10">
+                        {partner.live_photo_url ? (
+                          <img
+                            src={partner.live_photo_url}
+                            alt={partner.first_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-red-500/20 to-orange-500/20">
+                            📷
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-bold text-lg text-white">{partner.first_name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              {renderStars(partner.avg_rating)}
+                              <span className="text-xs text-gray-500">
+                                ({partner.total_reviews || 0})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-green-400">${partner._primary_rate}</p>
+                            <p className="text-xs text-gray-500">/ hour</p>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm text-gray-400 line-clamp-2 mb-3">
+                          {partner.bio || 'No bio yet.'}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                          {partner._distance !== null && partner._distance !== undefined && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {Math.round(partner._distance)} miles away
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {partner.city?.split(',')[0] || 'Location'}
+                          </span>
+                        </div>
+                        
+                        {/* Service tags */}
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {[...(partner.service_types || []), ...(partner.custom_service_types || [])].slice(0, 2).map(service => (
+                            <span key={service} className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full text-gray-400">
+                              {service}
+                            </span>
+                          ))}
+                          {([...(partner.service_types || []), ...(partner.custom_service_types || [])].length > 2 && (
+                            <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full text-gray-400">
+                              +{([...(partner.service_types || []), ...(partner.custom_service_types || [])].length - 2)}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <button className="w-full py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg text-sm font-medium transition">
+                          View Profile
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
-        </div>
 
-        {/* Bottom Buttons - STICKY at bottom, matching app standard size */}
-        <div className="sticky bottom-0 bg-black/95 backdrop-blur-sm border-t border-white/10 p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex gap-4">
-              <button
-                onClick={() => window.location.href = '/client-dashboard'}
-                className="flex-1 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition-all transform hover:scale-105"
-              >
-                BACK
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105"
-              >
-                LOGOUT
-              </button>
-            </div>
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-8">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 bg-white/10 rounded-lg hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 bg-white/10 rounded-lg hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        {/* Footer - Matching home page style */}
-        <footer className="border-t border-white/10 bg-black/80 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-xs text-gray-500">
-                © 2026 ADONIX. All rights reserved.
-              </div>
-              <div className="flex flex-wrap justify-center gap-6 text-xs">
-                <button onClick={() => setShowTermsModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
-                  Terms of Service
-                </button>
-                <button onClick={() => setShowPrivacyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
-                  Privacy Policy
-                </button>
-                <button onClick={() => setShowSafetyModal(true)} className="text-red-400 hover:text-red-300 transition-colors">
-                  Safety Guidelines
-                </button>
-              </div>
-            </div>
-            <div className="text-center text-xs text-gray-600 mt-4">
-              Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.
-            </div>
-          </div>
-        </footer>
       </div>
+
+      {/* Mobile Filter Sidebar */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/80" onClick={() => setMobileFiltersOpen(false)} />
+          <div className="absolute right-0 top-0 bottom-0 w-80 bg-gray-900 shadow-xl p-6 overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold">Filters</h2>
+              <button onClick={() => setMobileFiltersOpen(false)} className="p-1 hover:bg-white/10 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <FilterSidebar />
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  resetFilters();
+                  setMobileFiltersOpen(false);
+                }}
+                className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-medium transition"
+              >
+                Reset All
+              </button>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg font-medium transition"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Partner Profile Modal */}
       {selectedPartner && (
         <PartnerProfileView
-          partner={selectedPartner}
+          partner={selectedPartner as any}
           onClose={() => setSelectedPartner(null)}
+          onBook={(partner) => {
+            console.log('Book partner:', partner);
+            // Will implement booking in next step
+            alert(`Booking with ${partner.first_name} coming soon!`);
+          }}
         />
       )}
-
-      {/* Footer Modals - view only */}
-      <FooterInfoModal
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-        title="Terms of Service"
-        content={footerTermsContent}
-      />
-
-      <FooterInfoModal
-        isOpen={showPrivacyModal}
-        onClose={() => setShowPrivacyModal(false)}
-        title="Privacy Policy"
-        content={footerPrivacyContent}
-      />
-
-      <FooterInfoModal
-        isOpen={showSafetyModal}
-        onClose={() => setShowSafetyModal(false)}
-        title="Safety Guidelines"
-        content={footerSafetyContent}
-      />
-
-      {/* My Profile Modal */}
-      {showMyProfileModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowMyProfileModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowMyProfileModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold mb-4">My Profile</h2>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-red-500/20 border-2 border-red-500/30">
-                {myPhotos[0] || profile?.live_photo_url ? (
-                  <img src={myPhotos[0] || profile?.live_photo_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">📷</div>
-                )}
-              </div>
-              <div>
-                <p className="font-bold text-lg">@{(profile as any)?.username || profile?.first_name?.toLowerCase() || 'user'}</p>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-            </div>
-            <div className="space-y-2 text-sm text-gray-300">
-              <p><span className="text-gray-500">Bio:</span> {profile?.bio || 'No bio yet.'}</p>
-            </div>
-            <button onClick={() => setShowMyProfileModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* My Photos Modal */}
-      {showMyPhotosModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowMyPhotosModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowMyPhotosModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold mb-4">My Photos</h2>
-            {myPhotos.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No photos yet. Manage photos from your dashboard.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {myPhotos.map((photo, idx) => (
-                  <div key={idx} className={`aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500' : 'border-white/20'}`}>
-                    <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-            <button onClick={() => setShowMyPhotosModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowSettingsModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold mb-4">Settings</h2>
-            <div className="space-y-3 text-sm text-gray-300">
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Email Notifications</p>
-                <p className="text-xs text-gray-400">Receive updates about your bookings and messages.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Location Services</p>
-                <p className="text-xs text-gray-400">Used for GPS check-in verification during meetups.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Account Email</p>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-            </div>
-            <button onClick={() => setShowSettingsModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* Help & Support Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowHelpModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 border border-white/10 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowHelpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold mb-4">Help & Support</h2>
-            <div className="space-y-3 text-sm text-gray-300">
-              <p>Need help? We're here for you 24/7.</p>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Contact Support</p>
-                <p className="text-xs text-gray-400">primesocial@primesocial.xyz</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Report an Issue</p>
-                <p className="text-xs text-gray-400">We review all reports within 24 hours.</p>
-              </div>
-              <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white">Safety Concerns</p>
-                <p className="text-xs text-gray-400">For urgent safety issues, contact local authorities first, then notify us.</p>
-              </div>
-            </div>
-            <button onClick={() => setShowHelpModal(false)} className="w-full mt-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all">Close</button>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Account Modal */}
-      {showDeleteAccountModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => !deletingAccount && setShowDeleteAccountModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 border border-red-500/40 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => !deletingAccount && setShowDeleteAccountModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white" disabled={deletingAccount}>
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold mb-3 text-red-400">⚠️ PERMANENT ACTION - CANNOT BE UNDONE</h2>
-            <p className="text-sm text-gray-300 mb-3">Deleting your account will permanently remove:</p>
-            <ul className="text-sm text-gray-300 space-y-1 mb-4 list-disc list-inside">
-              <li>Your profile and bio</li>
-              <li>All uploaded photos</li>
-              <li>All bookings and session history</li>
-              <li>All messages and conversations</li>
-            </ul>
-            <p className="text-sm text-gray-300 mb-2">Type <span className="font-bold text-red-400">DELETE</span> to confirm:</p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              disabled={deletingAccount}
-              className="w-full px-4 py-2 bg-black border border-red-500/40 rounded-lg text-white focus:border-red-500 focus:outline-none mb-4"
-              placeholder="Type DELETE"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowDeleteAccountModal(false); setDeleteConfirmText(''); }}
-                disabled={deletingAccount}
-                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== 'DELETE' || deletingAccount}
-                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {deletingAccount ? 'Deleting...' : 'Permanent Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
