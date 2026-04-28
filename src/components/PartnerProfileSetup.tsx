@@ -246,7 +246,7 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   
-  // Modal agreement states - NEW
+  // Modal agreement states
   const [termsModalAgreed, setTermsModalAgreed] = useState(false);
   const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
   
@@ -300,7 +300,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [affirmNotDatingApp, setAffirmNotDatingApp] = useState(false);
   const [affirmAssumptionOfRisk, setAffirmAssumptionOfRisk] = useState(false);
   const [affirmGpsConsent, setAffirmGpsConsent] = useState(false);
-  const [affirmTermsAndPrivacy, setAffirmTermsAndPrivacy] = useState(false);
   
   const [step2Error, setStep2Error] = useState('');
   
@@ -541,7 +540,6 @@ California Residents:
           setAffirmNotDatingApp(data.affirm_not_dating_app || false);
           setAffirmAssumptionOfRisk(data.affirm_assumption_of_risk || false);
           setAffirmGpsConsent(data.affirm_gps_consent || false);
-          setAffirmTermsAndPrivacy(data.affirm_terms_and_privacy || false);
         }
       } catch (err) {
         console.error('Load error:', err);
@@ -709,6 +707,9 @@ California Residents:
   };
 
   const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if
+        const handlePasswordChange = (val: string) => {
     setPassword(val);
     if (!val) {
       setPasswordError('');
@@ -948,11 +949,11 @@ California Residents:
   };
 
   const isStep2Complete = () => {
-  return username && usernameAvailable === true && city && 
-         emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
-         affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
-         affirmAssumptionOfRisk && affirmGpsConsent;
-};
+    return username && usernameAvailable === true && city && 
+           emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
+           affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
+           affirmAssumptionOfRisk && affirmGpsConsent;
+  };
 
   const isStep3Complete = () => {
     return allPhotos.length > 0 && photoConfirmed;
@@ -1033,7 +1034,7 @@ California Residents:
       }
       setStep2Error('');
       if (user) {
-        await supabase.from('profiles').update({ 
+        const { error: updateError } = await supabase.from('profiles').update({ 
           username: username.toLowerCase(), 
           city, 
           certifications,
@@ -1045,8 +1046,16 @@ California Residents:
           affirm_not_dating_app: affirmNotDatingApp,
           affirm_assumption_of_risk: affirmAssumptionOfRisk,
           affirm_gps_consent: affirmGpsConsent,
-          
         }).eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          setStep2Error('Failed to save profile: ' + updateError.message);
+          return;
+        }
+        
+        // Refresh profile to get updated username
+        await refreshProfile();
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
@@ -1530,8 +1539,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                       <input type="checkbox" checked={affirmGpsConsent} onChange={(e) => setAffirmGpsConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
                       <span className="text-sm text-gray-300">I consent to GPS location tracking during active meetups for safety verification. <span className="text-red-500">*</span></span>
                     </label>
-                    
-                    
                   </div>
                 </div>
                 
@@ -1801,7 +1808,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
-      <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
+      <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
     </>
   );
 }
