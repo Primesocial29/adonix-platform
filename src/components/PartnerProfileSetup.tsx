@@ -948,11 +948,11 @@ California Residents:
   };
 
   const isStep2Complete = () => {
-    return username && usernameAvailable === true && city && 
-           emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
-           affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
-           affirmAssumptionOfRisk && affirmGpsConsent
-  };
+  return username && usernameAvailable === true && city && 
+         emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
+         affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
+         affirmAssumptionOfRisk && affirmGpsConsent;
+};
 
   const isStep3Complete = () => {
     return allPhotos.length > 0 && photoConfirmed;
