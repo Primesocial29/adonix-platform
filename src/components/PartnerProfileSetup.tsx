@@ -951,7 +951,7 @@ California Residents:
     return username && usernameAvailable === true && city && 
            emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
            affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
-           affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
+           affirmAssumptionOfRisk && affirmGpsConsent
   };
 
   const isStep3Complete = () => {
@@ -1386,9 +1386,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                       onChange={(e) => setGatekeeperAccepted(e.target.checked)} 
                       className="mt-1 w-5 h-5 accent-red-600" 
                     />
-                    <span className="text-sm text-gray-300">
-                      I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
-                    </span>
+                    <span className="text-sm text-gray-300">I understand that Adonix is a fitness-only platform — no dating, no romancing, just sweat. <span className="text-red-500">*</span></span>
                   </div>
                 </div>
               </div>
@@ -1533,10 +1531,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                       <span className="text-sm text-gray-300">I consent to GPS location tracking during active meetups for safety verification. <span className="text-red-500">*</span></span>
                     </label>
                     
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input type="checkbox" checked={affirmTermsAndPrivacy} onChange={(e) => setAffirmTermsAndPrivacy(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                      <span className="text-sm text-gray-300">I have read and agree to the Terms of Service and Privacy Policy. <span className="text-red-500">*</span></span>
-                    </label>
+                    
                   </div>
                 </div>
                 
