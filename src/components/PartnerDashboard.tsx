@@ -38,7 +38,7 @@ export default function PartnerDashboard() {
   // Delete Account Password Verification
   const [deletePassword, setDeletePassword] = useState('');
   const [deletePasswordError, setDeletePasswordError] = useState('');
-  
+
   // Photo Gallery States
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
   const [showPhotoGalleryModal, setShowPhotoGalleryModal] = useState(false);
