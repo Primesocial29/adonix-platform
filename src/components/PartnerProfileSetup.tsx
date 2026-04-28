@@ -707,26 +707,23 @@ California Residents:
   };
 
   const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if
-        const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('');
-    } else if (!passwordMinLength) {
-      setPasswordError('Password must be at least 8 characters');
-    } else if (!passwordHasUpper) {
-      setPasswordError('Password must contain at least 1 uppercase letter');
-    } else if (!passwordHasLower) {
-      setPasswordError('Password must contain at least 1 lowercase letter');
-    } else if (!passwordHasNumber) {
-      setPasswordError('Password must contain at least 1 number');
-    } else if (!passwordHasSpecial) {
-      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-    } else {
-      setPasswordError('');
-    }
-  };
+  setPassword(val);
+  if (!val) {
+    setPasswordError('');
+  } else if (!passwordMinLength) {
+    setPasswordError('Password must be at least 8 characters');
+  } else if (!passwordHasUpper) {
+    setPasswordError('Password must contain at least 1 uppercase letter');
+  } else if (!passwordHasLower) {
+    setPasswordError('Password must contain at least 1 lowercase letter');
+  } else if (!passwordHasNumber) {
+    setPasswordError('Password must contain at least 1 number');
+  } else if (!passwordHasSpecial) {
+    setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
+  } else {
+    setPasswordError('');
+  }
+};
 
   const toggleCertification = (cert: string) => {
     setCertifications(prev => prev.includes(cert) ? prev.filter(c => c !== cert) : [...prev, cert]);
