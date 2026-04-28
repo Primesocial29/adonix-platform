@@ -1025,7 +1025,7 @@ California Residents:
       if (!affirmNotDatingApp) errors.push('You must confirm this is not a dating app');
       if (!affirmAssumptionOfRisk) errors.push('You must acknowledge assumption of risk');
       if (!affirmGpsConsent) errors.push('You must consent to GPS tracking');
-      if (!affirmTermsAndPrivacy) errors.push('You must accept Terms and Privacy Policy');
+     
       
       if (errors.length > 0) {
         setStep2Error(errors.join('. '));
@@ -1045,7 +1045,7 @@ California Residents:
           affirm_not_dating_app: affirmNotDatingApp,
           affirm_assumption_of_risk: affirmAssumptionOfRisk,
           affirm_gps_consent: affirmGpsConsent,
-          affirm_terms_and_privacy: affirmTermsAndPrivacy
+          
         }).eq('id', user.id);
       }
       setCurrentStep(3);
