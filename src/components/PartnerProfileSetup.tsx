@@ -1484,7 +1484,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </div>
                   <div className="mb-3">
                     <label className="block text-sm text-gray-400 mb-1">Relationship <span className="text-red-500">*</span></label>
-                    <select value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
+                    <select value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
                       <option value="">Select relationship</option>
                       <option value="Spouse">Spouse</option>
                       <option value="Parent">Parent</option>
