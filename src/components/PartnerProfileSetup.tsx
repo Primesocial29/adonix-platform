@@ -246,6 +246,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   
+  // Modal agreement states - NEW
+  const [termsModalAgreed, setTermsModalAgreed] = useState(false);
+  const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
+  
   // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -284,13 +288,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [customCertInput, setCustomCertInput] = useState('');
   const [certError, setCertError] = useState('');
   
-  // NEW: Emergency Contact Fields
+  // Emergency Contact Fields
   const [emergencyName, setEmergencyName] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
   const [emergencyRelationship, setEmergencyRelationship] = useState('');
   const [emergencyConfirmed, setEmergencyConfirmed] = useState(false);
   
-  // NEW: Legal Declaration Checkboxes
+  // Legal Declaration Checkboxes
   const [affirmNoSexOffender, setAffirmNoSexOffender] = useState(false);
   const [affirmNoViolentFelony, setAffirmNoViolentFelony] = useState(false);
   const [affirmNotDatingApp, setAffirmNotDatingApp] = useState(false);
@@ -344,6 +348,20 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [step6Error, setStep6Error] = useState('');
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
+
+  // Real-time age validation effect
+  useEffect(() => {
+    if (birthMonth && birthDay && birthYear) {
+      const age = calculateAge(birthMonth, birthDay, birthYear);
+      if (age !== null && age < 18) {
+        setBirthDateError('You must be at least 18 years old');
+      } else if (age !== null && age >= 18) {
+        setBirthDateError('');
+      }
+    } else {
+      setBirthDateError('');
+    }
+  }, [birthMonth, birthDay, birthYear]);
 
   // Terms content for modals
   const termsContent = `ADONIX - SOCIAL NETWORKING AGREEMENT
@@ -405,20 +423,6 @@ California Residents:
       age--;
     }
     return age;
-  };
-
-  const validateAge = () => {
-    if (!birthMonth || !birthDay || !birthYear) {
-      setBirthDateError('Please enter your full birth date.');
-      return false;
-    }
-    const age = calculateAge(birthMonth, birthDay, birthYear);
-    if (age === null || age < 18) {
-      setBirthDateError('You must be at least 18 years old to use Adonix Fit.');
-      return false;
-    }
-    setBirthDateError('');
-    return true;
   };
 
   const validateUsername = (value: string) => {
@@ -529,11 +533,9 @@ California Residents:
           setCancellationWindow(data.cancellation_window || 24);
           setUsername(data.username || '');
           setCity(data.city || '');
-          // Load emergency contact data
           setEmergencyName(data.emergency_name || '');
           setEmergencyPhone(data.emergency_phone || '');
           setEmergencyRelationship(data.emergency_relationship || '');
-          // Load legal declarations
           setAffirmNoSexOffender(data.affirm_no_sex_offender || false);
           setAffirmNoViolentFelony(data.affirm_no_violent_felony || false);
           setAffirmNotDatingApp(data.affirm_not_dating_app || false);
@@ -978,7 +980,6 @@ California Residents:
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      // Specific error collection for Step 1
       const errors = [];
       if (!firstName) errors.push('First name is required');
       if (!lastName) errors.push('Last name is required');
@@ -1341,18 +1342,54 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={termsAccepted} onChange={() => setTermsAccepted(!termsAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span></span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span></span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={gatekeeperAccepted} onChange={(e) => setGatekeeperAccepted(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span></span>
-                  </label>
+                  {/* Terms of Service */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={termsAccepted} 
+                      disabled={!termsModalAgreed}
+                      onChange={() => setTermsAccepted(!termsAccepted)} 
+                      className={`mt-1 w-5 h-5 ${!termsModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
+                    />
+                    <span className="text-sm text-gray-300">
+                      I have read and agree to the 
+                      <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline mx-1">
+                        Terms of Service
+                      </button>
+                      . <span className="text-red-500">*</span>
+                    </span>
+                  </div>
+                  
+                  {/* Privacy Policy */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={privacyAccepted} 
+                      disabled={!privacyModalAgreed}
+                      onChange={() => setPrivacyAccepted(!privacyAccepted)} 
+                      className={`mt-1 w-5 h-5 ${!privacyModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
+                    />
+                    <span className="text-sm text-gray-300">
+                      I have read and agree to the 
+                      <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline mx-1">
+                        Privacy Policy
+                      </button>
+                      . <span className="text-red-500">*</span>
+                    </span>
+                  </div>
+                  
+                  {/* Gatekeeper Acknowledgment */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      checked={gatekeeperAccepted} 
+                      onChange={(e) => setGatekeeperAccepted(e.target.checked)} 
+                      className="mt-1 w-5 h-5 accent-red-600" 
+                    />
+                    <span className="text-sm text-gray-300">
+                      I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
+                    </span>
+                  </div>
                 </div>
               </div>
               
@@ -1764,8 +1801,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
-      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
-      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsModalAgreed(true); setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyModalAgreed(true); setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
       
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
