@@ -3,7 +3,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { Plus, X, Calendar, Clock, MapPin } from 'lucide-react';
+import { Plus, X, Calendar, Clock, MapPin, Search, Navigation, Loader2, ChevronDown, ChevronRight, CheckCircle, ShieldCheck, Info, AlertCircle, Eye, EyeOff } from 'lucide-react';
+
+interface SearchResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
 
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -37,6 +43,7 @@ export default function PartnerDashboard() {
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
   const [showPhotoGalleryModal, setShowPhotoGalleryModal] = useState(false);
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
+  const [selectedPhotoForLightbox, setSelectedPhotoForLightbox] = useState<string | null>(null);
   const MAX_PHOTOS = 6;
   
   // Modal states
@@ -46,6 +53,19 @@ export default function PartnerDashboard() {
   const [showVenuesModal, setShowVenuesModal] = useState(false);
   const [showServicesModal, setShowServicesModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  
+  // Venues Modal States
+  const [tempVenues, setTempVenues] = useState<any[]>([]);
+  const [venuesChanged, setVenuesChanged] = useState(false);
+  const [showVenuesUnsavedWarning, setShowVenuesUnsavedWarning] = useState(false);
+  const [addressQuery, setAddressQuery] = useState('');
+  const [addressResults, setAddressResults] = useState<SearchResult[]>([]);
+  const [isSearchingVenues, setIsSearchingVenues] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [pendingLocation, setPendingLocation] = useState<SearchResult | null>(null);
+  const [showLocationConfirm, setShowLocationConfirm] = useState(false);
+  const MAX_VENUES = 5;
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Booking Requests Modal
   const [showBookingRequests, setShowBookingRequests] = useState(false);
@@ -61,7 +81,6 @@ export default function PartnerDashboard() {
   const [serviceHalfHourEnabled, setServiceHalfHourEnabled] = useState<Record<string, boolean>>({});
   const [serviceAreas, setServiceAreas] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
-  const [newLocation, setNewLocation] = useState('');
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [pastMeetups, setPastMeetups] = useState<any[]>([]);
 
@@ -355,7 +374,7 @@ export default function PartnerDashboard() {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('service_types, custom_service_types, service_rates, service_areas, availability, username, phone')
+        .select('service_types, custom_service_types, service_rates, service_areas, availability, username, phone, email')
         .eq('id', user.id)
         .single();
       
@@ -374,6 +393,7 @@ export default function PartnerDashboard() {
         setUsername(data.username || '');
         setEditUsername(data.username || '');
         setNewPhone(data.phone || '');
+        // Also load email from auth user (already in user object)
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -553,20 +573,134 @@ export default function PartnerDashboard() {
     setShowScheduleModal(false);
   };
 
-  const addLocation = async () => {
-    if (!newLocation.trim()) return;
-    const updated = [...serviceAreas, { name: newLocation.trim(), lat: null, lng: null }];
-    setServiceAreas(updated);
-    await supabase.from('profiles').update({ service_areas: updated }).eq('id', user?.id);
-    setNewLocation('');
+  // Venues Modal Functions
+  const searchVenues = (query: string) => {
+    setAddressQuery(query);
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    if (query.length < 3) { setAddressResults([]); return; }
+    searchDebounce.current = setTimeout(async () => {
+      setIsSearchingVenues(true);
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' gym fitness park')}&limit=10`;
+        const response = await fetch(url, { headers: { 'User-Agent': 'Adonix-Fit/1.0' } });
+        const data = await response.json();
+        const filtered = data.filter((result: any) => {
+          const name = result.display_name.toLowerCase();
+          return !name.includes('hotel') && !name.includes('motel') && !name.includes('apartment') && 
+                 !name.includes('residential') && !name.includes('house') && !name.includes('home');
+        });
+        setAddressResults(filtered.slice(0, 10));
+      } catch (error) {
+        console.error('Search error:', error);
+        setAddressResults([]);
+      } finally {
+        setIsSearchingVenues(false);
+      }
+    }, 500);
   };
 
-  const removeLocation = async (index: number) => {
-    const updated = serviceAreas.filter((_, i) => i !== index);
-    setServiceAreas(updated);
-    await supabase.from('profiles').update({ service_areas: updated }).eq('id', user?.id);
+  const searchNearMe = async (lat: number, lng: number) => {
+    setIsSearchingVenues(true);
+    setAddressResults([]);
+    try {
+      const radiusDegrees = 5 * 0.0145;
+      const bbox = `${lng - radiusDegrees},${lat - radiusDegrees},${lng + radiusDegrees},${lat + radiusDegrees}`;
+      const searchTerms = ['gym', 'fitness', 'park', 'recreation', 'sports', 'yoga', 'pilates', 'crossfit'];
+      let allResults: any[] = [];
+      for (const term of searchTerms) {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${term}&limit=10&bounded=1&viewbox=${bbox}`;
+        const response = await fetch(url, { headers: { 'User-Agent': 'Adonix-Fit/1.0' } });
+        const data = await response.json();
+        allResults = [...allResults, ...data];
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      const unique = allResults.filter((item, index, self) => index === self.findIndex(r => r.display_name === item.display_name));
+      const filtered = unique.filter((result: any) => {
+        const name = result.display_name.toLowerCase();
+        return !name.includes('hotel') && !name.includes('motel') && !name.includes('apartment') && 
+               !name.includes('residential') && !name.includes('house') && !name.includes('home');
+      });
+      setAddressResults(filtered.slice(0, 20));
+      if (filtered.length === 0) {
+        alert(`No gyms or parks found. Try searching for a specific gym name.`);
+      }
+    } catch (error) {
+      console.error('Error finding nearby places:', error);
+      alert('Unable to find nearby locations. Please try searching manually.');
+    } finally {
+      setIsSearchingVenues(false);
+    }
   };
 
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+    setIsGettingLocation(true);
+    setAddressResults([]);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      setIsGettingLocation(false);
+      await searchNearMe(lat, lng);
+    }, () => {
+      alert('Unable to get location. Please enable location permissions.');
+      setIsGettingLocation(false);
+    });
+  };
+
+  const initiateAddLocation = (result: SearchResult) => {
+    if (tempVenues.length >= MAX_VENUES) {
+      alert(`Maximum ${MAX_VENUES} locations allowed. Remove one before adding another.`);
+      return;
+    }
+    const alreadyAdded = tempVenues.some(a => a.name === result.display_name);
+    if (alreadyAdded) {
+      alert('This location has already been added.');
+      return;
+    }
+    setPendingLocation(result);
+    setAddressResults([]);
+    setShowLocationConfirm(true);
+  };
+
+  const confirmAddLocation = () => {
+    if (!pendingLocation) return;
+    const lat = parseFloat(pendingLocation.lat);
+    const lng = parseFloat(pendingLocation.lon);
+    const newArea = { name: pendingLocation.display_name, lat, lng };
+    setTempVenues(prev => [...prev, newArea]);
+    setVenuesChanged(true);
+    setAddressQuery('');
+    setPendingLocation(null);
+    setShowLocationConfirm(false);
+  };
+
+  const removeTempVenue = (index: number) => {
+    setTempVenues(prev => prev.filter((_, i) => i !== index));
+    setVenuesChanged(true);
+  };
+
+  const openVenuesModal = () => {
+    setTempVenues([...serviceAreas]);
+    setVenuesChanged(false);
+    setShowVenuesModal(true);
+  };
+
+  const saveVenues = async () => {
+    setServiceAreas(tempVenues);
+    await supabase.from('profiles').update({ service_areas: tempVenues }).eq('id', user?.id);
+    setVenuesChanged(false);
+    setShowVenuesModal(false);
+    alert('Venues saved successfully!');
+  };
+
+  const closeVenuesModal = () => {
+    if (venuesChanged) {
+      setShowVenuesUnsavedWarning(true);
+    } else {
+      setShowVenuesModal(false);
+    }
+  };
+
+  // Services Functions
   const updateServiceRate = (service: string, field: 'hourly' | 'halfHour', value: string) => {
     const num = parseInt(value) || 0;
     setServiceRates(prev => ({
@@ -704,11 +838,24 @@ export default function PartnerDashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
+        {/* Welcome Message */}
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-white">
+            Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">@{username || profile?.first_name?.toLowerCase() || 'partner'}</span>
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Ready to make someone sweat today?</p>
+        </div>
+
         {/* Profile Section */}
         <div className="text-center mb-8">
           <div className="relative w-32 h-32 rounded-full mx-auto overflow-hidden bg-red-500/20 border-4 border-red-500/30 mb-2">
             {allPhotos[0] ? (
-              <img src={allPhotos[0]} alt="Profile" className="w-full h-full object-cover" />
+              <img 
+                src={allPhotos[0]} 
+                alt="Profile" 
+                className="w-full h-full object-cover cursor-pointer" 
+                onClick={() => setSelectedPhotoForLightbox(allPhotos[0])}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl">📷</div>
             )}
@@ -830,7 +977,7 @@ export default function PartnerDashboard() {
           </button>
           <button onClick={() => setShowAllMeetupsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">All Meetups</button>
           <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Contributions</button>
-          <button onClick={() => setShowVenuesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Verified Venues</button>
+          <button onClick={openVenuesModal} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Verified Venues</button>
           <button onClick={() => setShowServicesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Services & Rates</button>
           <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Schedule</button>
           <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Photos</button>
@@ -957,7 +1104,7 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Photo Gallery Modal */}
+      {/* Photo Gallery Modal with Lightbox */}
       {showPhotoGalleryModal && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setShowPhotoGalleryModal(false)}>
           <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
@@ -987,7 +1134,10 @@ export default function PartnerDashboard() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {allPhotos.map((photo, idx) => (
                   <div key={idx} className="relative group">
-                    <div className={`aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'}`}>
+                    <div 
+                      className={`aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'} cursor-pointer`}
+                      onClick={() => setSelectedPhotoForLightbox(photo)}
+                    >
                       <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
                     </div>
                     {idx === 0 && (
@@ -1027,6 +1177,19 @@ export default function PartnerDashboard() {
               Close
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {selectedPhotoForLightbox && (
+        <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4" onClick={() => setSelectedPhotoForLightbox(null)}>
+          <img src={selectedPhotoForLightbox} alt="Full size" className="max-w-full max-h-full object-contain" />
+          <button 
+            onClick={() => setSelectedPhotoForLightbox(null)} 
+            className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
         </div>
       )}
 
@@ -1176,27 +1339,182 @@ export default function PartnerDashboard() {
         </div>
       )}
 
-      {/* Venues Modal */}
+      {/* Verified Venues Modal - UPDATED with full functionality */}
       {showVenuesModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowVenuesModal(false)}>
-          <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4">Verified Public Venues</h2>
-            <div className="flex gap-2 mb-4">
-              <input type="text" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="Gym or park name..." className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm" />
-              <button onClick={addLocation} className="px-3 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-lg text-sm">Add</button>
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeVenuesModal}>
+          <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gray-900 border-b border-white/10 p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">📍 Verified Public Venues</h2>
+              <button onClick={closeVenuesModal} className="p-1 hover:bg-white/10 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            {serviceAreas.length === 0 ? (
-              <p className="text-gray-400 text-center py-4">No venues added yet.</p>
-            ) : (
-              serviceAreas.map((area, i) => (
-                <div key={i} className="flex justify-between items-center bg-white/5 rounded-lg p-2 mb-2">
-                  <span className="text-sm">{area.name}</span>
-                  <button onClick={() => removeLocation(i)} className="text-red-400 text-sm">Remove</button>
+            
+            <div className="p-6 space-y-6">
+              {/* Safety Warning */}
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-5 h-5 text-red-500" />
+                  <p className="text-sm font-semibold text-white">Safety First</p>
                 </div>
-              ))
-            )}
-            <p className="text-xs text-yellow-400 mt-3">Only public gyms, parks, and recreation centers are permitted.</p>
-            <button onClick={() => setShowVenuesModal(false)} className="w-full mt-4 py-2 bg-white/10 rounded-lg">Close</button>
+                <p className="text-xs text-gray-300 mb-2">All meetups must occur at verified public locations:</p>
+                <ul className="space-y-1 text-xs text-gray-300 ml-4">
+                  <li>✓ Public gyms, fitness centers, and parks</li>
+                  <li>✓ Recreation centers and sports facilities</li>
+                  <li>✗ NO private residences, hotels, or Airbnbs</li>
+                  <li>✗ NO bars, clubs, or private studios</li>
+                </ul>
+                <p className="text-xs text-yellow-400 mt-3">⚠️ If you select a gym, ensure you have a valid membership and your gym allows guests.</p>
+              </div>
+              
+              {/* Search Section */}
+              <div>
+                <p className="text-sm text-gray-400 mb-2">Add public venues (MAX {MAX_VENUES})</p>
+                
+                <div className="flex gap-2 mb-3">
+                  <button 
+                    onClick={useCurrentLocation} 
+                    disabled={isGettingLocation || isSearchingVenues} 
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 text-sm font-medium"
+                  >
+                    {isGettingLocation ? <><Loader2 className="w-4 h-4 animate-spin" /> Locating...</> : <><Navigation className="w-4 h-4" /> Search Near Me</>}
+                  </button>
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute left-4 top-3.5">
+                    {isSearchingVenues ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <Search className="w-4 h-4 text-gray-400" />}
+                  </div>
+                  <input 
+                    type="text" 
+                    value={addressQuery} 
+                    onChange={(e) => searchVenues(e.target.value)} 
+                    placeholder="Search: gyms, parks, fitness centers..." 
+                    className="w-full pl-11 pr-4 py-3 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none" 
+                  />
+                </div>
+                
+                {addressResults.length > 0 && (
+                  <div className="mt-3 bg-gray-800 border border-white/20 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                    <p className="px-4 pt-3 pb-1 text-[10px] text-gray-500 uppercase tracking-wider">Safe public venues — tap to add</p>
+                    {addressResults.map((r, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => initiateAddLocation(r)} 
+                        className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/5 last:border-0 transition-colors flex items-center gap-3"
+                      >
+                        <MapPin className="w-4 h-4 text-green-500 shrink-0" />
+                        <p className="text-sm text-white truncate">{r.display_name}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Current Venues List */}
+              <div>
+                <p className="text-sm text-gray-400 mb-2">
+                  Your Venues ({tempVenues.length}/{MAX_VENUES})
+                </p>
+                {tempVenues.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No venues added yet. Search above to add public venues.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {tempVenues.map((venue, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white/5 rounded-xl p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-sm text-gray-300 truncate">{venue.name}</span>
+                        </div>
+                        <button onClick={() => removeTempVenue(idx)} className="text-red-400 hover:text-red-300 p-1">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Footer Buttons */}
+            <div className="sticky bottom-0 bg-gray-900 border-t border-white/10 p-4 flex gap-3">
+              <button onClick={closeVenuesModal} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">
+                Cancel
+              </button>
+              <button onClick={saveVenues} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">
+                Save Venues
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Warning Modal */}
+      {showVenuesUnsavedWarning && (
+        <div className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10 text-center">
+            <div className="text-4xl mb-3">⚠️</div>
+            <h2 className="text-xl font-bold text-white mb-2">Unsaved Changes</h2>
+            <p className="text-gray-400 mb-6">You have unsaved changes to your venues. What would you like to do?</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => { setShowVenuesUnsavedWarning(false); setShowVenuesModal(false); }} 
+                className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition"
+              >
+                Discard Changes
+              </button>
+              <button 
+                onClick={() => { setShowVenuesUnsavedWarning(false); saveVenues(); }} 
+                className="flex-1 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition"
+              >
+                Save Changes
+              </button>
+              <button 
+                onClick={() => setShowVenuesUnsavedWarning(false)} 
+                className="flex-1 py-2 bg-gray-600 hover:bg-gray-700 rounded-xl font-semibold transition"
+              >
+                Stay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Safety Confirmation Modal for Venue Addition */}
+      {showLocationConfirm && pendingLocation && (
+        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-white/20 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <ShieldCheck className="w-7 h-7 text-green-500" />
+              <h2 className="text-xl font-bold text-white">Confirm Public Venue</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Selected Location</p>
+                <p className="text-white font-medium text-sm">{pendingLocation.display_name}</p>
+              </div>
+              <p className="text-gray-300 text-sm">By adding this location you confirm it is a verified public venue where meetups are permitted.</p>
+              <ul className="space-y-2">
+                {[
+                  'This is a public park, gym, or fitness center.',
+                  'This is NOT a private residence or hotel.',
+                  'GPS check-in will be required upon arrival.',
+                ].map((text, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => { setShowLocationConfirm(false); setPendingLocation(null); }} className="flex-1 px-4 py-3 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
+                Go Back
+              </button>
+              <button onClick={confirmAddLocation} className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all">
+                Confirm Public Venue
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1411,6 +1729,7 @@ export default function PartnerDashboard() {
               <div>
                 <p className="font-bold text-lg">@{username || profile?.first_name?.toLowerCase() || 'partner'}</p>
                 <p className="text-xs text-gray-400">{user?.email}</p>
+                <p className="text-xs text-gray-400">{newPhone || 'No phone added'}</p>
               </div>
             </div>
             <div className="space-y-2 text-sm text-gray-300">
