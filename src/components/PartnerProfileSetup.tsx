@@ -1405,4 +1405,371 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 {/* Credentials */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                   <Award className="w-5 h-5 text-red-500" />
+                    <Award className="w-5 h-5 text-red-500" />
+                    <h3 className="text-base font-semibold">Self-Reported Credentials</h3>
+                    <span className="text-xs text-gray-500">(Optional)</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-3">All credentials are self-reported and not verified by Adonix Fit. Select all that apply.</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {PRESET_CERTIFICATIONS.map(cert => (<button key={cert} onClick={() => toggleCertification(cert)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${certifications.includes(cert) ? 'bg-red-600 text-white' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`}>{cert}</button>))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="text" value={customCertInput} onChange={(e) => setCustomCertInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomCert()} placeholder="Add custom credential..." className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm" />
+                    <button onClick={addCustomCert} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
+                  </div>
+                  {certError && <p className="text-xs text-red-400 mt-1">{certError}</p>}
+                </div>
+                
+                {/* Emergency Contact */}
+                <div className="border border-red-500/30 bg-red-500/5 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldCheck className="w-5 h-5 text-red-500" />
+                    <h3 className="text-base font-semibold text-white">Emergency Contact <span className="text-red-500">*</span></h3>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-4">This information is only used for safety emergencies and will never be shared publicly.</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Contact Name <span className="text-red-500">*</span></label>
+                      <input type="text" value={emergencyName} onChange={(e) => setEmergencyName(e.target.value)} placeholder="John Doe" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                      <input type="tel" value={emergencyPhone} onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        let formatted = '';
+                        if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
+                        if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
+                        if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
+                        setEmergencyPhone(formatted);
+                      }} placeholder="(555) 123-4567" className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none" />
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm text-gray-400 mb-1">Relationship <span className="text-red-500">*</span></label>
+                    <select value={emergencyRelationship} onChange={(e) => setEmergencyRelationship(e.target.value)} className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
+                      <option value="">Select relationship</option>
+                      <option value="Spouse">Spouse</option>
+                      <option value="Parent">Parent</option>
+                      <option value="Sibling">Sibling</option>
+                      <option value="Friend">Friend</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <label className="flex items-start gap-3 cursor-pointer mt-2">
+                    <input type="checkbox" checked={emergencyConfirmed} onChange={(e) => setEmergencyConfirmed(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                    <span className="text-sm text-gray-300">I confirm this emergency contact information is accurate and can be used in case of emergency. <span className="text-red-500">*</span></span>
+                  </label>
+                </div>
+                
+                {/* Legal Declarations */}
+                <div className="border border-yellow-500/30 bg-yellow-500/5 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-5 h-5 text-yellow-500" />
+                    <h3 className="text-base font-semibold text-white">Legal & Safety Declarations <span className="text-red-500">*</span></h3>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-4">You must check all boxes to continue. These are legally required for platform safety.</p>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNoSexOffender} onChange={(e) => setAffirmNoSexOffender(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I am NOT a registered sex offender. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNoViolentFelony} onChange={(e) => setAffirmNoViolentFelony(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I have NO felony convictions for violent crimes (assault, battery, domestic violence, etc.). <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmNotDatingApp} onChange={(e) => setAffirmNotDatingApp(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — NOT a dating app or escort service. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmAssumptionOfRisk} onChange={(e) => setAffirmAssumptionOfRisk(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I acknowledge that all meetups are at my own risk and I voluntarily assume all risks of physical activity. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmGpsConsent} onChange={(e) => setAffirmGpsConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I consent to GPS location tracking during active meetups for safety verification. <span className="text-red-500">*</span></span>
+                    </label>
+                    
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input type="checkbox" checked={affirmTermsAndPrivacy} onChange={(e) => setAffirmTermsAndPrivacy(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
+                      <span className="text-sm text-gray-300">I have read and agree to the Terms of Service and Privacy Policy. <span className="text-red-500">*</span></span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+                  <p className="text-xs text-blue-300 text-center">
+                    ℹ️ All information is protected and used only for safety and legal compliance.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-between gap-4 mt-8">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: PHOTOS */}
+          {currentStep === 3 && (
+            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+              <h2 className="text-2xl font-bold text-center mb-6">Show the world who's about to make them sweat.</h2>
+              <p className="text-center text-gray-400 mb-6">You need at least 1 live photo. You can add up to 6 total. Your first photo automatically becomes your profile picture.</p>
+              
+              {step3Error && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                  ⚠️ {step3Error}
+                </div>
+              )}
+              
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {allPhotos.map((photo, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className={`w-24 h-24 rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500 ring-2 ring-red-500/50' : 'border-white/20'}`}>
+                      <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                    {idx === 0 && <div className="absolute -top-2 -left-2 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full">MAIN</div>}
+                    <div className="absolute bottom-1 right-1 flex gap-1">
+                      {idx !== 0 && (<button onClick={() => handleSetPrimaryPhoto(idx)} className="bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-600">Set Primary</button>)}
+                      <button onClick={() => handleDeletePhoto(idx)} className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded hover:bg-red-700">✕</button>
+                    </div>
+                  </div>
+                ))}
+                {allPhotos.length < MAX_PHOTOS && (
+                  <button onClick={handleAddPhoto} className="w-24 h-24 rounded-xl border-2 border-dashed border-white/30 bg-white/5 hover:bg-white/10 transition flex flex-col items-center justify-center gap-1">
+                    <Camera className="w-6 h-6 text-gray-400" />
+                    <span className="text-[10px] text-gray-400">Add Photo</span>
+                  </button>
+                )}
+              </div>
+              
+              {!tempPhotoUrl && allPhotos.length === 0 && (
+                <div className="flex justify-center mb-6">
+                  <button onClick={handleTakePhoto} className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105">
+                    <Camera className="w-5 h-5" />
+                    TAKE YOUR FIRST LIVE PHOTO
+                  </button>
+                </div>
+              )}
+              
+              {tempPhotoUrl && !photoAccepted && (
+                <div className="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-red-500/50">
+                      <img src={tempPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex gap-3">
+                      <button onClick={handleAcceptPhoto} disabled={uploadingPhoto} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold flex items-center gap-2 transition">
+                        <CheckCircle className="w-4 h-4" />
+                        {uploadingPhoto ? 'Saving...' : 'Accept Photo'}
+                      </button>
+                      <button onClick={handleRetakePhoto} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-semibold transition">Retake</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {allPhotos.length > 0 && allPhotos.length < MAX_PHOTOS && !tempPhotoUrl && (
+                <div className="flex justify-center mb-6">
+                  <button onClick={handleAddPhoto} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold flex items-center gap-2 transition-all">
+                    <Plus className="w-5 h-5" />
+                    ADD ANOTHER PHOTO
+                  </button>
+                </div>
+              )}
+              
+              <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                <p className="font-semibold text-white mb-1">🎯 You. Right Now. No Filters.</p>
+                <p className="text-sm text-gray-300 mb-3">Adonix is about real people showing up as themselves. That means live photos only — taken inside the app, in this moment.</p>
+                <p className="text-sm text-gray-300 mb-2">What we're looking for:</p>
+                <ul className="text-sm text-gray-300 space-y-1 ml-4">
+                  <li>• <span className="text-white">You.</span> (authentic, confident, ready to move)</li>
+                  <li>• <span className="text-white">Real.</span> (sweat, smile, or serious game face — just be you)</li>
+                  <li>• <span className="text-white">Appropriate.</span> (active wear that makes you feel powerful)</li>
+                </ul>
+                <p className="text-sm text-gray-300 mt-3 italic">✨ Your energy is your best accessory.</p>
+                
+                <label className="flex items-start gap-3 mt-4 cursor-pointer">
+                  <input type="checkbox" checked={photoConfirmed} onChange={(e) => setPhotoConfirmed(e.target.checked)} className="mt-1 w-5 h-5 accent-purple-600" />
+                  <span className="text-sm text-gray-300">I confirm this is a live photo of me, taken right now, and follows community guidelines. <span className="text-red-500">*</span></span>
+                </label>
+              </div>
+              
+              <div className="mt-4 p-3 bg-red-900/40 border border-red-500/50 rounded-xl">
+                <p className="text-xs text-red-500 font-extrabold flex items-start gap-2">
+                  <Info className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+                  AUTHENTICITY CHECK: Live Camera Only. Use of AI-generated faces or filters is strictly prohibited and results in immediate suspension.
+                </p>
+              </div>
+              
+              <div className="flex justify-between gap-4 mt-8">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: ACTIVITIES & RATES */}
+          {currentStep === 4 && (
+            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+              <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
+              <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
+              
+              {step4Error && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                  ⚠️ {step4Error}
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-2 mb-6">
+                {SERVICE_TYPES.map(s => (<button key={s} onClick={() => toggleService(s)} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${serviceTypes.includes(s) ? 'bg-red-600 text-white shadow-lg' : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'}`}>{s} {serviceTypes.includes(s) && '✓'}</button>))}
+              </div>
+              
+              <div className="flex gap-2 mb-4">
+                <input type="text" value={customServiceInput} onChange={(e) => setCustomServiceInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCustomService()} placeholder="Add custom activity..." className="flex-1 px-4 py-2 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none text-sm" />
+                <button onClick={addCustomService} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"><Plus className="w-4 h-4" /></button>
+              </div>
+              {customServiceError && <p className="text-xs text-red-400 mb-2">{customServiceError}</p>}
+              
+              <p className="text-xs text-gray-400 mb-4">💡 Pro tip: Enable half-hour rates for each activity if you want to offer shorter sessions. This is what your clients will see, so they know exactly what you offer and how long. No surprises. Just sweat.</p>
+              
+              {allSelectedServices.length > 0 && (
+                <div className="space-y-4">
+                  {allSelectedServices.map(service => {
+                    const isHalfHourOn = serviceHalfHourEnabled[service] || false;
+                    const rate = serviceRates[service];
+                    const hourlyError = rate?.hourly && (rate.hourly < 50 || rate.hourly > 500);
+                    return (
+                      <div key={service} className="p-4 bg-black rounded-xl border border-white/10">
+                        <div className="flex justify-between items-center mb-3"><p className="font-semibold text-white">{service}</p>{customServiceTypes.includes(service) && (<button onClick={() => removeCustomService(service)} className="text-gray-400 hover:text-red-400"><X className="w-4 h-4" /></button>)}</div>
+                        <div className="space-y-3">
+                          <div><label className="block text-xs text-gray-400 mb-1">Hourly Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.hourly || ''} onChange={(e) => updateServiceRate(service, 'hourly', e.target.value)} placeholder="0.00" min="50" max="500" step="1" className={`flex-1 px-3 py-2 bg-white/5 border rounded-lg focus:outline-none text-white ${hourlyError ? 'border-red-500' : 'border-white/10'}`} /><span className="text-gray-400 text-sm">/ hr</span></div><p className="text-xs text-gray-500 mt-1">Min $50 · Max $500</p>{hourlyError && <p className="text-xs text-red-400 mt-1">Hourly rate must be between $50 and $500</p>}</div>
+                          {isHalfHourOn && (<div><label className="block text-xs text-gray-400 mb-1">Half-Hour Suggested Contribution <span className="text-red-500">*</span></label><div className="flex items-center gap-2"><span className="text-red-500 font-bold">$</span><input type="number" value={rate?.halfHour || ''} onChange={(e) => updateServiceRate(service, 'halfHour', e.target.value)} placeholder="0.00" min="30" max={rate?.hourly || 500} step="1" className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none text-white" /><span className="text-gray-400 text-sm">/ 30m</span></div><p className="text-xs text-gray-500 mt-1">Min $30 · Cannot exceed hourly rate</p></div>)}
+                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10"><div><p className="text-sm font-medium text-gray-300">Half-Hour Meetups</p><p className="text-xs text-gray-500 mt-0.5">Members can book 30-minute sessions</p></div><button onClick={() => toggleServiceHalfHour(service)} className={`relative w-12 h-6 rounded-full transition-colors ${isHalfHourOn ? 'bg-red-600' : 'bg-gray-600'}`}><span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${isHalfHourOn ? 'translate-x-6' : ''}`} /></button></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              <div className="flex justify-between gap-4 mt-8">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: LOCATIONS & SCHEDULE */}
+          {currentStep === 5 && (
+            <div className="space-y-6">
+              <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+                <h2 className="text-2xl font-bold text-center mb-6">The "Don't Be Weird" Location Picker</h2>
+                <p className="text-center text-gray-400 mb-6">📍 Look, we're not trying to cramp your style. But safety first. That's why we only allow verified public venues — gyms, parks, recreation centers. No private residences, hotels, or Airbnbs.</p>
+                
+                <div className="mb-4 p-4 bg-black/50 rounded-xl border border-white/10">
+                  <p className="text-sm text-yellow-400 mb-2">🏋️‍♂️ If you select a gym, make sure:</p>
+                  <ul className="text-xs text-gray-300 space-y-1 ml-4">
+                    <li>• You have a valid membership</li>
+                    <li>• Your gym allows guests</li>
+                    <li>• You follow their rules and terms of service</li>
+                  </ul>
+                  <p className="text-xs text-red-400 mt-3">⚠️ Adonix is not responsible for gym policies, memberships, or any issues that arise from using their facilities. We don't work with gyms or any company that offers fitness services. You're on your own there — but we know you've got this.</p>
+                </div>
+                
+                {step5Error && (<div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">{step5Error}</div>)}
+                
+                <div className="mb-4"><label className="text-xs text-gray-400 font-medium">Travel Radius</label><div className="flex items-center justify-between mb-1"><span className="text-red-400 font-bold text-sm">{travelRadius} mile{travelRadius !== 1 ? 's' : ''}</span></div><input type="range" min="1" max="25" step="1" value={travelRadius} onChange={(e) => setTravelRadius(parseInt(e.target.value))} className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-red-500" /></div>
+                
+                <div className="flex gap-2 mb-4"><button onClick={useCurrentLocation} disabled={isGettingLocation || isSearching} className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 font-medium text-sm">{isGettingLocation ? <><Loader2 className="w-4 h-4 animate-spin" /> Locating...</> : <><Navigation className="w-4 h-4" /> Search Near Me</>}</button></div>
+                
+                <div className="relative mb-4"><div className="absolute left-4 top-3.5">{isSearching ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <Search className="w-4 h-4 text-gray-400" />}</div><input type="text" value={addressQuery} onChange={(e) => searchAddress(e.target.value)} placeholder="Search: gyms, parks, fitness centers, stadiums..." className="w-full pl-11 pr-4 py-3 bg-black border border-white/20 rounded-xl text-white placeholder-gray-500 focus:border-red-500 focus:outline-none" /></div>
+                
+                {addressResults.length > 0 && (<div className="mb-4 bg-gray-900 border border-white/20 rounded-xl overflow-hidden"><p className="px-4 pt-3 pb-1 text-[10px] text-gray-500 uppercase tracking-wider">Safe public venues — tap to add</p>{addressResults.map((r, i) => (<button key={i} onClick={() => initiateAddLocation(r)} className="w-full text-left px-4 py-3 hover:bg-white/10 border-b border-white/5 last:border-0 transition-colors flex items-center gap-3"><MapPin className="w-4 h-4 text-green-500 shrink-0" /><p className="text-sm text-white truncate">{r.display_name}</p></button>))}</div>)}
+                
+                {serviceAreas.length > 0 && (<div><p className="text-xs text-gray-500 mb-2">Selected locations — tap X to remove:</p><div className="flex flex-wrap gap-2">{serviceAreas.map((area, i) => (<div key={i} className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5"><MapPin className="w-3 h-3 text-green-400" /><span className="text-sm text-green-300 truncate">{area.name.split(',')[0]}</span><button onClick={() => removeServiceArea(i)} className="text-green-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button></div>))}</div></div>)}
+              </div>
+              
+              <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+                <h2 className="text-2xl font-bold text-center mb-6">Availability Schedule</h2>
+                <p className="text-center text-gray-400 mb-6">🕐 Select days and time slots when you're available for meetups. (6 AM – 10 PM, 30-minute increments)</p>
+                
+                <div className="space-y-2">
+                  {DAYS_OF_WEEK.map(day => {
+                    const dayAvail = availability.find(a => a.day === day) || { day, times: [] };
+                    const isExpanded = expandedDays[day];
+                    return (<div key={day} className="border border-white/10 rounded-xl overflow-hidden"><button onClick={() => toggleDay(day)} className="w-full flex items-center justify-between px-4 py-3 bg-white/5 hover:bg-white/10"><div className="flex items-center gap-3">{isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}<span className="font-medium">{day}</span></div><span className={`text-xs px-2 py-0.5 rounded-full ${dayAvail.times.length > 0 ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>{dayAvail.times.length > 0 ? `${dayAvail.times.length} slot${dayAvail.times.length > 1 ? 's' : ''}` : 'No slots'}</span></button>{isExpanded && (<div className="px-4 py-3 bg-black"><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">{generateTimeSlots(true).map(time => (<button key={time} onClick={() => toggleTimeSlot(day, time)} className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${dayAvail.times.includes(time) ? 'bg-red-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{formatTimeLabel(time)}</button>))}</div>{dayAvail.times.length > 0 && (<button onClick={() => setAvailability(prev => prev.map(a => a.day === day ? { ...a, times: [] } : a))} className="mt-3 text-xs text-red-400 hover:text-red-300">Clear all slots for {day}</button>)}</div>)}</div>);
+                  })}
+                </div>
+              </div>
+              
+              <div className="flex justify-between gap-4">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105">NEXT →</button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 6: MEETUP SETTINGS */}
+          {currentStep === 6 && (
+            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+              <h2 className="text-2xl font-bold text-center mb-6">Meetup Settings</h2>
+              <p className="text-center text-gray-400 mb-6">⚙️ Configure how members can book time with you.</p>
+              
+              {step6Error && (<div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">{step6Error}</div>)}
+              
+              <div className="space-y-6">
+                <div><label className="block text-sm text-gray-300 mb-2">📅 Advance Notice Required</label><p className="text-xs text-gray-500 mb-2">How far in advance must members book a session?</p><select value={minAdvanceNotice} onChange={(e) => setMinAdvanceNotice(parseInt(e.target.value))} className="w-full px-4 py-3 bg-black border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"><option value={72}>3 days (72 hours)</option><option value={96}>4 days (96 hours)</option><option value={120}>5 days (120 hours)</option><option value={144}>6 days (144 hours)</option></select></div>
+                
+                <div><label className="block text-sm text-gray-300 mb-2">❌ Cancellation Window</label><p className="text-xs text-gray-500 mb-2">How many hours before a session can members cancel without penalty?</p><select value={cancellationWindow} onChange={(e) => setCancellationWindow(parseInt(e.target.value))} className="w-full px-4 py-3 bg-black border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"><option value={24}>24 hours</option><option value={48}>48 hours</option></select></div>
+                
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl"><p className="text-xs text-blue-300 text-center">💡 Tip: Setting longer notice periods helps you manage your schedule better. Your time is valuable — protect it.</p></div>
+                
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl"><p className="text-xs text-yellow-300 text-center">⚠️ Please review all sections before finalizing.</p></div>
+              </div>
+              
+              <div className="flex justify-between gap-4 mt-8">
+                <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
+                <button onClick={handleNext} disabled={saving} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50">{saving ? 'FINALIZING...' : 'FINALIZE →'}</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* FOOTER */}
+        <footer className="border-t border-white/10 bg-black/80 w-full px-8 md:px-12 lg:px-16 py-6">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="flex flex-wrap justify-center gap-6 text-xs mb-3">
+              <button onClick={() => setShowFooterTermsModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Terms of Service</button>
+              <button onClick={() => setShowFooterPrivacyModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Privacy Policy</button>
+              <button onClick={() => setShowSafetyModal(true)} className="text-orange-400 hover:text-orange-300 transition-colors">Safety Guidelines</button>
+            </div>
+            <div className="text-xs text-gray-500">© 2026 ADONIX. All rights reserved.</div>
+            <div className="text-center text-xs text-gray-600 mt-2">Adonix is a social fitness network — not a professional service. Meet only at verified public locations. GPS check-in required.</div>
+          </div>
+        </footer>
+      </div>
+
+      {/* Modals */}
+      {showCamera && (<LiveCameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} aspectRatio="square" />)}
+      
+      <SafetyConfirmationModal isOpen={showLocationConfirm} onClose={() => { setShowLocationConfirm(false); setPendingLocation(null); }} onConfirm={confirmAddLocation} locationName={pendingLocation?.display_name || ''} />
+      
+      <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
+      
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
+      
+      <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
+      <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
+      <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
+    </>
+  );
+}
