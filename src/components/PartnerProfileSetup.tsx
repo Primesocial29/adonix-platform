@@ -1405,4 +1405,4 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 {/* Credentials */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Award className="w-5 h-5 text-red-500
+                   <Award className="w-5 h-5 text-red-500"
