@@ -998,6 +998,7 @@ California Residents:
       if (!facialAgeConsent) errors.push('You must consent to facial age estimation');
       const age = calculateAge(birthMonth, birthDay, birthYear);
       if (age === null || age < 18) errors.push('You must be at least 18 years old');
+      if (!captchaToken) errors.push('Please complete the verification to prove you are human.');
       
       if (errors.length > 0) {
         setStep1Error(errors.join('. '));
