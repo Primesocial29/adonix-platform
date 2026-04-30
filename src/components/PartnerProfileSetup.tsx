@@ -996,9 +996,10 @@ California Residents:
       if (!birthMonth || !birthDay || !birthYear) errors.push('Please enter your birth date');
       if (!ageVerifyConsent) errors.push('You must consent to age verification');
       if (!facialAgeConsent) errors.push('You must consent to facial age estimation');
+      if (!captchaToken) errors.push('Please complete the verification to prove you are human.');
       const age = calculateAge(birthMonth, birthDay, birthYear);
       if (age === null || age < 18) errors.push('You must be at least 18 years old');
-      if (!captchaToken) errors.push('Please complete the verification to prove you are human.');
+      
       
       if (errors.length > 0) {
         setStep1Error(errors.join('. '));
