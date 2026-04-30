@@ -250,6 +250,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [termsModalAgreed, setTermsModalAgreed] = useState(false);
   const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
   
+  // Track if account was already created to prevent duplicate signup
+  const [accountCreated, setAccountCreated] = useState(false);
+  
   // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -707,23 +710,23 @@ California Residents:
   };
 
   const handlePasswordChange = (val: string) => {
-  setPassword(val);
-  if (!val) {
-    setPasswordError('');
-  } else if (!passwordMinLength) {
-    setPasswordError('Password must be at least 8 characters');
-  } else if (!passwordHasUpper) {
-    setPasswordError('Password must contain at least 1 uppercase letter');
-  } else if (!passwordHasLower) {
-    setPasswordError('Password must contain at least 1 lowercase letter');
-  } else if (!passwordHasNumber) {
-    setPasswordError('Password must contain at least 1 number');
-  } else if (!passwordHasSpecial) {
-    setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-  } else {
-    setPasswordError('');
-  }
-};
+    setPassword(val);
+    if (!val) {
+      setPasswordError('');
+    } else if (!passwordMinLength) {
+      setPasswordError('Password must be at least 8 characters');
+    } else if (!passwordHasUpper) {
+      setPasswordError('Password must contain at least 1 uppercase letter');
+    } else if (!passwordHasLower) {
+      setPasswordError('Password must contain at least 1 lowercase letter');
+    } else if (!passwordHasNumber) {
+      setPasswordError('Password must contain at least 1 number');
+    } else if (!passwordHasSpecial) {
+      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
+    } else {
+      setPasswordError('');
+    }
+  };
 
   const toggleCertification = (cert: string) => {
     setCertifications(prev => prev.includes(cert) ? prev.filter(c => c !== cert) : [...prev, cert]);
@@ -998,16 +1001,24 @@ California Residents:
         return;
       }
       setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-        await signUp(email, password, 'partner', autoUsername, formattedBirthDate);
+      
+      // Only create account if not already created
+      if (!accountCreated) {
+        setLoading(true);
+        try {
+          const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+          const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+          await signUp(email, password, 'partner', autoUsername, formattedBirthDate);
+          setAccountCreated(true);
+          setCurrentStep(2);
+        } catch (err: any) {
+          setStep1Error(err.message || 'Failed to create account');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Account already created, just go to step 2
         setCurrentStep(2);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account');
-      } finally {
-        setLoading(false);
       }
     } else if (currentStep === 2) {
       const errors = [];
@@ -1149,7 +1160,7 @@ California Residents:
 Effective: April 17, 2026 | Prime Social LLC
 
 1. ACCEPTANCE
-Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dating or escort services. Solicitation results in a permanent ban.
+Adonix Fit is a fitness-only platform. No dating, no romancing, just sweat. Solicitation results in a permanent ban.
 
 2. ELIGIBILITY & SAFETY WARRANTY
 You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender.
@@ -1524,7 +1535,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                     
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input type="checkbox" checked={affirmNotDatingApp} onChange={(e) => setAffirmNotDatingApp(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                      <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — NOT a dating app or escort service. <span className="text-red-500">*</span></span>
+                      <span className="text-sm text-gray-300">I understand that Adonix is a fitness-only platform — no dating, no romancing, just sweat. <span className="text-red-500">*</span></span>
                     </label>
                     
                     <label className="flex items-start gap-3 cursor-pointer">
@@ -1805,7 +1816,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
-      <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
+      <FooterInfoModal isOpen={showSafetyModal} onClose={() => setShowSafetyModal(false)} title="Safety Guidelines" content={footerSafetyContent} />
     </>
   );
 }
