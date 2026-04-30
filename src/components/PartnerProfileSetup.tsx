@@ -1013,7 +1013,7 @@ California Residents:
         try {
           const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
           const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-          await signUp(email, password, 'partner', autoUsername, formattedBirthDate);
+          await signUp(email, password, 'partner', autoUsername, formattedBirthDate, captchaToken);
           setAccountCreated(true);
           setCurrentStep(2);
         } catch (err: any) {
