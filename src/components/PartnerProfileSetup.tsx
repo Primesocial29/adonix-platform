@@ -275,6 +275,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+const [captchaError, setCaptchaError] = useState('');
   const [step1Error, setStep1Error] = useState('');
   const [loading, setLoading] = useState(false);
   
