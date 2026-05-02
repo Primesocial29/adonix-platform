@@ -20,6 +20,7 @@ interface Partner {
   service_areas_center_lng: number;
   availability: { day: string; times: string[] }[];
   _distance?: number;
+  
 }
 
 interface CitySuggestion {
