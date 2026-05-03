@@ -1755,8 +1755,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
-      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
-      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsModalAgreed(true); setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
+<TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyModalAgreed(true); setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
       
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />
