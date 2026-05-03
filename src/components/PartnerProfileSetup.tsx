@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 interface SearchResult {
   display_name: string;
@@ -245,6 +246,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
+  
+  // CAPTCHA state
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState('');
   
   // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
@@ -978,6 +983,12 @@ California Residents:
 
   const handleNext = async () => {
     if (currentStep === 1) {
+      // Check CAPTCHA first
+      if (!captchaToken) {
+        setStep1Error('Please complete the verification to prove you are human.');
+        return;
+      }
+      
       if (!isStep1Complete()) {
         setStep1Error('Please fill in all required fields and check all boxes.');
         return;
@@ -1308,6 +1319,28 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                     <span className="text-sm text-gray-300">I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span></span>
                   </label>
                 </div>
+              </div>
+              
+              {/* CAPTCHA Widget */}
+              <div className="mt-6 flex justify-center">
+                <Turnstile
+                  siteKey="0x4AAAAAAC85hzmI4sizlJ-y"
+                  onSuccess={(token) => {
+                    setCaptchaToken(token);
+                    setCaptchaError('');
+                  }}
+                  onError={() => {
+                    setCaptchaToken(null);
+                    setCaptchaError('Please complete the verification.');
+                  }}
+                  onExpire={() => {
+                    setCaptchaToken(null);
+                    setCaptchaError('Verification expired. Please try again.');
+                  }}
+                />
+                {captchaError && (
+                  <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
+                )}
               </div>
               
               <div className="flex justify-center mt-8">
