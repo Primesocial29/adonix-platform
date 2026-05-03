@@ -275,6 +275,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [step1Error, setStep1Error] = useState('');
   const [loading, setLoading] = useState(false);
   
+  // Modal agreement states
+  const [termsModalAgreed, setTermsModalAgreed] = useState(false);
+  const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
+  
   // ========== STEP 2: PROFILE & LEGAL ==========
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
