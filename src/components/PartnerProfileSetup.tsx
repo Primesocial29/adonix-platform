@@ -1324,7 +1324,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               {/* CAPTCHA Widget */}
               <div className="mt-6 flex justify-center">
                 <Turnstile
-                  siteKey="0x4AAAAAAC85hzmI4sizlJ-y"
+                  siteKey="0x4AAAAAAAS5hzmj4sizJ-y"
                   onSuccess={(token) => {
                     setCaptchaToken(token);
                     setCaptchaError('');
