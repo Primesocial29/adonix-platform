@@ -1288,6 +1288,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </ul>
                 </div>
                 
+                {console.log('termsModalAgreed:', termsModalAgreed)}
                 <div className="space-y-3">
                   {/* Terms of Service */}
                   <div className="flex items-start gap-3">
