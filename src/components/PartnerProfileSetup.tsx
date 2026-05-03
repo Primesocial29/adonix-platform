@@ -1765,7 +1765,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       {/* Modals */}
       {showCamera && (<LiveCameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} aspectRatio="square" />)}
       
-      <SafetyConfirmationModal isOpen={showLocationConfirm} onClose={() => { setShowLo{/* CAPTCHA Widget */}ationConfirm(false); setPendingLocation(null); }} onConfirm={confirmAddLocation} locationName={pendingLocation?.display_name || ''} />
+      <SafetyConfirmationModal isOpen={showLocationConfirm} onClose={() => { setShowLocationConfirm(false); setPendingLocation(null); }} onConfirm={confirmAddLocation} locationName={pendingLocation?.display_name || ''} />
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
