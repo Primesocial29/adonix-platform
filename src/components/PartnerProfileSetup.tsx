@@ -1310,13 +1310,39 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={termsAccepted} onChange={() => setTermsAccepted(!termsAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowTermsModal(true)} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span></span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={privacyAccepted} onChange={() => setPrivacyAccepted(!privacyAccepted)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <span className="text-sm text-gray-300">I have read and agree to the <button type="button" onClick={() => setShowPrivacyModal(true)} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span></span>
+                  <input 
+    type="checkbox" 
+    checked={termsAccepted} 
+    disabled={!termsModalAgreed}
+    onChange={() => setTermsAccepted(!termsAccepted)} 
+    className={`mt-1 w-5 h-5 ${!termsModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
+  />
+  <span className="text-sm text-gray-300">
+    I have read and agree to the 
+    <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline mx-1">
+      Terms of Service
+    </button>
+    . <span className="text-red-500">*</span>
+  </span>
+</div>
+
+{/* Privacy Policy */}
+<div className="flex items-start gap-3">
+  <input 
+    type="checkbox" 
+    checked={privacyAccepted} 
+    disabled={!privacyModalAgreed}
+    onChange={() => setPrivacyAccepted(!privacyAccepted)} 
+    className={`mt-1 w-5 h-5 ${!privacyModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
+  />
+  <span className="text-sm text-gray-300">
+    I have read and agree to the 
+    <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline mx-1">
+      Privacy Policy
+    </button>
+    . <span className="text-red-500">*</span>
+  </span>
+</div>
                   </label>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" checked={gatekeeperAccepted} onChange={(e) => setGatekeeperAccepted(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
