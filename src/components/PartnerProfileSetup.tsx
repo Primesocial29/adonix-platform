@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { Turnstile } from '@marsidev/react-turnstile';
+import TurnstileCaptcha from './TurnstileCaptcha';
 
 interface SearchResult {
   display_name: string;
