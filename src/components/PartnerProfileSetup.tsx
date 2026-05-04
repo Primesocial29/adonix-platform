@@ -80,8 +80,9 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
     }
   }, [isOpen]);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const target = scrollRef.current;
     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10;
     if (isAtBottom && !canAccept) {
       setCanAccept(true);
@@ -104,9 +105,9 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4"
         >
-          <div className="whitespace-pre-wrap">{content}</div>
-          <div className="h-10 text-center text-xs text-gray-500 pt-4">
-            {!canAccept && "▼ Scroll to the bottom to accept ▼"}
+          <div className="whitespace-pre-wrap text-sm">{content}</div>
+          <div className="text-center text-xs text-gray-500 pt-4">
+            {!canAccept ? "▼ Scroll to the bottom to accept ▼" : "✓ You can now accept"}
           </div>
         </div>
         <div className="p-4 border-t border-white/10">
@@ -115,7 +116,7 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
             disabled={!canAccept}
             className={`w-full px-4 py-2 rounded-lg font-semibold transition ${
               canAccept 
-                ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white' 
+                ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer' 
                 : 'bg-gray-700 text-gray-400 cursor-not-allowed'
             }`}
           >
