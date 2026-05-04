@@ -1342,15 +1342,21 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               </div>
               
-              {/* CAPTCHA Widget - USING TEST KEY */}
+              {/* CAPTCHA Widget */}
 <div className="mt-6 flex justify-center">
-  <div
-    className="turnstile-widget"
-    dangerouslySetInnerHTML={{
-      __html: `
-        <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-      `
+  <Turnstile
+    siteKey="1x00000000000000000000AA"
+    onSuccess={(token) => {
+      setCaptchaToken(token);
+      setCaptchaError('');
+    }}
+    onError={() => {
+      setCaptchaToken(null);
+      setCaptchaError('Please complete the verification.');
+    }}
+    onExpire={() => {
+      setCaptchaToken(null);
+      setCaptchaError('Verification expired. Please try again.');
     }}
   />
   {captchaError && (
