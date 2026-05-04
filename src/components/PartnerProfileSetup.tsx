@@ -134,7 +134,7 @@ function FooterInfoModal({ isOpen, onClose, title, content }: { isOpen: boolean;
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full h-[300px] flex flex-col border border-white/10">
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
