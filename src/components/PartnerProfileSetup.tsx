@@ -93,8 +93,8 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
   
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 border-b border-white/10">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full h-[500px] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-4 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
             <X className="w-5 h-5 text-gray-400" />
@@ -106,11 +106,11 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
           className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4"
         >
           <div className="whitespace-pre-wrap text-sm">{content}</div>
-          <div className="text-center text-xs text-gray-500 pt-4">
+          <div className="text-center text-xs text-gray-500 pt-4 sticky bottom-0 bg-gray-900 py-2">
             {!canAccept ? "▼ Scroll to the bottom to accept ▼" : "✓ You can now accept"}
           </div>
         </div>
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 shrink-0">
           <button 
             onClick={onAccept}
             disabled={!canAccept}
