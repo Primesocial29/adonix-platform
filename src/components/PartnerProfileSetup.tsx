@@ -256,8 +256,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [termsModalAgreed, setTermsModalAgreed] = useState(false);
   const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
   
- 
-  
   // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -1198,6 +1196,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* STEP 1: CREATE ACCOUNT */}
           {currentStep === 1 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Create Your Account</h2>
@@ -1343,7 +1342,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               </div>
               
-                            {/* CAPTCHA Widget */}
+              {/* CAPTCHA Widget */}
               <div className="mt-6 flex justify-center">
                 <TurnstileCaptcha
                   onSuccess={(token) => {
@@ -1372,7 +1371,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 2 - 6 remain unchanged from your original working code */}
+          {/* STEP 2: YOUR PROFILE & LEGAL */}
           {currentStep === 2 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Your Profile & Legal Information</h2>
