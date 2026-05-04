@@ -101,18 +101,12 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
           </button>
         </div>
         <div 
-  ref={scrollRef}
-  onScroll={handleScroll}
-  className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4"
->
-  <div className="whitespace-pre-wrap text-sm pb-10">{content}</div>
-  <div className="text-center text-xs text-gray-500 py-3 border-t border-white/10 mt-4">
-    {!canAccept ? "▼ Scroll to the bottom to accept ▼" : "✓ You can now accept"}
-  </div>
-</div>
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-6 text-gray-300"
         >
-          <div className="whitespace-pre-wrap text-sm">{content}</div>
-          <div className="text-center text-xs text-gray-500 pt-4 sticky bottom-0 bg-gray-900 py-2">
+          <div className="whitespace-pre-wrap text-sm pb-10">{content}</div>
+          <div className="text-center text-xs text-gray-500 pt-3 border-t border-white/10 mt-2">
             {!canAccept ? "▼ Scroll to the bottom to accept ▼" : "✓ You can now accept"}
           </div>
         </div>
