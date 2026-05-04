@@ -93,7 +93,7 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
   
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full h-[550px] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full h-[70vh] flex flex-col border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b border-white/10 shrink-0">
           <h2 className="text-xl font-semibold text-white">{title}</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full">
