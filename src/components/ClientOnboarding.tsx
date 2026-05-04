@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-import { X, Camera, RefreshCw, Check, AlertCircle, Search } from 'lucide-react';
+import { X, Camera, RefreshCw, Check, AlertCircle, Search, ShieldCheck, Info } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 
 interface Partner {
@@ -136,6 +136,10 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
   const [step1Error, setStep1Error] = useState('');
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
+  
+  // Modal agreement states - FIX: These track if user has scrolled and accepted via modal
+  const [termsModalAgreed, setTermsModalAgreed] = useState(false);
+  const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
   
   // Birth date dropdowns
   const [birthMonth, setBirthMonth] = useState('');
@@ -606,12 +610,15 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     );
   };
   
+  // FIX: Updated accept handlers to set modal agreed state
   const handleTermsAccept = () => {
+    setTermsModalAgreed(true);
     setTermsAccepted(true);
     setShowTermsModal(null);
   };
   
   const handlePrivacyAccept = () => {
+    setPrivacyModalAgreed(true);
     setPrivacyAccepted(true);
     setShowTermsModal(null);
   };
@@ -844,7 +851,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/browse';
   };
   
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent;
+  // FIX: Updated step completion to include modal agreed states
+  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent && termsModalAgreed && privacyModalAgreed;
   const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
   const isStep3Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0 && emergencyName && emergencyPhone && emergencyPhone.replace(/\D/g, '').length === 10 && emergencyRelationship && emergencyConfirmed && affirmNoSexOffender && affirmNoViolentFelony && affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
   
@@ -1327,33 +1335,45 @@ California Residents:
                 </ul>
               </div>
               
+              {/* FIXED: Terms and Privacy Checkboxes - Now disabled until modal agreement */}
               <div className="mt-6 space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={() => setShowTermsModal('terms')}
-                    className="mt-1 w-5 h-5 accent-red-600"
+                {/* Terms of Service */}
+                <div className="flex items-start gap-3">
+                  <input 
+                    type="checkbox" 
+                    checked={termsAccepted} 
+                    disabled={!termsModalAgreed}
+                    onChange={() => setTermsAccepted(!termsAccepted)} 
+                    className={`mt-1 w-5 h-5 ${!termsModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
                   />
                   <span className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('terms')} className="text-red-400 underline">Terms of Service</button>. <span className="text-red-500">*</span>
+                    I have read and agree to the 
+                    <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline mx-1">
+                      Terms of Service
+                    </button>
+                    . <span className="text-red-500">*</span>
                   </span>
-                </label>
-                
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={privacyAccepted}
-                    onChange={() => setShowTermsModal('privacy')}
-                    className="mt-1 w-5 h-5 accent-red-600"
+                </div>
+
+                {/* Privacy Policy */}
+                <div className="flex items-start gap-3">
+                  <input 
+                    type="checkbox" 
+                    checked={privacyAccepted} 
+                    disabled={!privacyModalAgreed}
+                    onChange={() => setPrivacyAccepted(!privacyAccepted)} 
+                    className={`mt-1 w-5 h-5 ${!privacyModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
                   />
                   <span className="text-sm text-gray-300">
-                    I have read and agree to the{' '}
-                    <button onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline">Privacy Policy</button>. <span className="text-red-500">*</span>
+                    I have read and agree to the 
+                    <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline mx-1">
+                      Privacy Policy
+                    </button>
+                    . <span className="text-red-500">*</span>
                   </span>
-                </label>
+                </div>
                 
+                {/* Gatekeeper Agreement - remains independent */}
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1781,6 +1801,7 @@ California Residents:
         />
       )}
       
+      {/* FIXED: TermsModal onAccept handlers now set modal agreed states */}
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
