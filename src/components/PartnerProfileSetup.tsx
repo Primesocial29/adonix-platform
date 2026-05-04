@@ -255,6 +255,12 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [termsModalAgreed, setTermsModalAgreed] = useState(false);
   const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
   
+  // TEMPORARY: Force checkboxes to be enabled for testing
+  useEffect(() => {
+    setTermsModalAgreed(true);
+    setPrivacyModalAgreed(true);
+  }, []);
+  
   // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -1288,7 +1294,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </ul>
                 </div>
                 
-                {console.log('termsModalAgreed:', termsModalAgreed)}
                 <div className="space-y-3">
                   {/* Terms of Service */}
                   <div className="flex items-start gap-3">
