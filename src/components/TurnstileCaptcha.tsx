@@ -7,7 +7,7 @@ interface TurnstileCaptchaProps {
 }
 
 export default function TurnstileCaptcha({ onSuccess, onError, onExpire }: TurnstileCaptchaProps) {
-  // Use Cloudflare's test key that ALWAYS works in development
+  // Use Cloudflare's test key that ALWAYS works
   const siteKey = "1x00000000000000000000AA";
   
   return (
