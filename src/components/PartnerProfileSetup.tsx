@@ -460,25 +460,26 @@ California Residents:
       // @ts-ignore
       if (window.turnstile) {
         // @ts-ignore
-        window.turnstile.render('#turnstile-container', {
-          sitekey: '1x00000000000000000000AA',
-          theme: 'dark',
-          callback: (token: string) => {
-            console.log('CAPTCHA success:', token);
-            setCaptchaToken(token);
-            setCaptchaError('');
-          },
-          'error-callback': () => {
-            console.log('CAPTCHA error');
-            setCaptchaToken(null);
-            setCaptchaError('Please complete the verification.');
-          },
-          'expired-callback': () => {
-            console.log('CAPTCHA expired');
-            setCaptchaToken(null);
-            setCaptchaError('Verification expired. Please try again.');
-          }
-        });
+        // @ts-ignore
+window.turnstile.render('#turnstile-container', {
+  sitekey: '3x00000000000000000000FF',
+  theme: 'dark',
+  callback: (token: string) => {
+    console.log('CAPTCHA success:', token);
+    setCaptchaToken(token);
+    setCaptchaError('');
+  },
+  'error-callback': () => {
+    console.log('CAPTCHA error');
+    setCaptchaToken(null);
+    setCaptchaError('Please complete the verification.');
+  },
+  'expired-callback': () => {
+    console.log('CAPTCHA expired');
+    setCaptchaToken(null);
+    setCaptchaError('Verification expired. Please try again.');
+  }
+});
       }
     };
     document.head.appendChild(script);
