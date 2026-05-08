@@ -1350,13 +1350,16 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               </div>
               
-              {/* CAPTCHA Widget - Android WebView Optimized */}
               <div className="mt-6 flex justify-center">
-                <div id="turnstile-container"></div>
-                {captchaError && (
-                  <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
-                )}
-              </div>
+  <div
+    className="cf-turnstile"
+    data-sitekey="3x00000000000000000000FF"
+    data-theme="dark"
+  ></div>
+  {captchaError && (
+    <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
+  )}
+</div>
               
               <div className="flex justify-center mt-8">
                 <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50">
