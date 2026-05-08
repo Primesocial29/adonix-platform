@@ -450,47 +450,14 @@ California Residents:
     return () => clearTimeout(timeout);
   }, [username]);
 
-  // Load Turnstile script for Android WebView CAPTCHA
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      // @ts-ignore
-      if (window.turnstile) {
-        // @ts-ignore
-        // @ts-ignore
-window.turnstile.render('#turnstile-container', {
-  sitekey: '0x4AAAAAAAC85hzmi4sizIJ-y',
-  theme: 'dark',
-  callback: (token: string) => {
-    console.log('CAPTCHA success:', token);
-    setCaptchaToken(token);
-    setCaptchaError('');
-  },
-  'error-callback': () => {
-    console.log('CAPTCHA error');
-    setCaptchaToken(null);
-    setCaptchaError('Please complete the verification.');
-  },
-  'expired-callback': () => {
-    console.log('CAPTCHA expired');
-    setCaptchaToken(null);
-    setCaptchaError('Verification expired. Please try again.');
-  }
-});
-      }
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      const container = document.querySelector('#turnstile-container');
-      if (container) {
-        container.innerHTML = '';
-      }
-    };
-  }, []);
+  // Load Turnstile script
+useEffect(() => {
+  const script = document.createElement('script');
+  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}, []);
 
   // Search city
   const searchCity = async (query: string) => {
