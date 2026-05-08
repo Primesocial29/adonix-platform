@@ -462,7 +462,7 @@ California Residents:
         // @ts-ignore
         // @ts-ignore
 window.turnstile.render('#turnstile-container', {
-  sitekey: '3x00000000000000000000FF',
+  sitekey: '0x4AAAAAAAC85hzmi4sizIJ-y',
   theme: 'dark',
   callback: (token: string) => {
     console.log('CAPTCHA success:', token);
