@@ -1,4 +1,4 @@
- text-center">
+ <div className="text-center">
               🔔 Once @{partnerUsername} approves, you'll be able to chat and coordinate your session.
             </p>
             <p className="text-xs text-red-400 text-center mt-2">
