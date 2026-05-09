@@ -1,11 +1,13 @@
  <div className="text-center">
               🔔 Once @{partnerUsername} approves, you'll be able to chat and coordinate your session.
-            </p>
-            <p className="text-xs text-red-400 text-center mt-2">
-              ⚠️ Meet only in public. Report bad behavior.
-            </p>
-          </div>
-        </div>
+            <div className="text-center">
+  <p className="text-xs text-gray-500 text-center">
+    🔔 Once @{partnerUsername} approves, you'll be able to chat and coordinate your session.
+  </p>
+  <p className="text-xs text-red-400 text-center mt-2">
+    ⚠️ Meet only in public. Report bad behavior.
+  </p>
+</div>
 
         {/* Image Lightbox */}
         {selectedImage && (
