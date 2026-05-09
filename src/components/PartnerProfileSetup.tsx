@@ -9,6 +9,12 @@ import {
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 
+declare global {
+  interface Window {
+    captchaCallback: (token: string) => void;
+  }
+}
+
 interface SearchResult {
   display_name: string;
   lat: string;
