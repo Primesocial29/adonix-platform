@@ -1353,8 +1353,9 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               <div className="mt-6 flex justify-center">
   <div
     className="cf-turnstile"
-    data-sitekey="0x4AAAAAAAC85hzmi4sizIJ-y"
+    data-sitekey="3x00000000000000000000FF"
     data-theme="dark"
+    data-callback="captchaCallback"
   ></div>
   {captchaError && (
     <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
