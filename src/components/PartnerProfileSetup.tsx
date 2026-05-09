@@ -459,6 +459,15 @@ useEffect(() => {
   document.head.appendChild(script);
 }, []);
 
+// Add this new useEffect right here
+useEffect(() => {
+  window.captchaCallback = (token: string) => {
+    console.log("CAPTCHA token received:", token);
+    setCaptchaToken(token);
+    setCaptchaError('');
+  };
+}, []);
+
   // Search city
   const searchCity = async (query: string) => {
     if (query.length < 2) {
