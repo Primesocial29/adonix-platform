@@ -299,6 +299,10 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [customCertInput, setCustomCertInput] = useState('');
   const [certError, setCertError] = useState('');
   
+  // Bio field
+  const [bio, setBio] = useState('');
+  const [bioError, setBioError] = useState('');
+  
   // Emergency Contact Fields
   const [emergencyName, setEmergencyName] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
@@ -457,22 +461,22 @@ California Residents:
   }, [username]);
 
   // Load Turnstile script
-useEffect(() => {
-  const script = document.createElement('script');
-  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-  script.async = true;
-  script.defer = true;
-  document.head.appendChild(script);
-}, []);
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
 
-// Add this new useEffect right here
-useEffect(() => {
-  window.captchaCallback = (token: string) => {
-    console.log("CAPTCHA token received:", token);
-    setCaptchaToken(token);
-    setCaptchaError('');
-  };
-}, []);
+  // CAPTCHA callback
+  useEffect(() => {
+    window.captchaCallback = (token: string) => {
+      console.log("CAPTCHA token received:", token);
+      setCaptchaToken(token);
+      setCaptchaError('');
+    };
+  }, []);
 
   // Search city
   const searchCity = async (query: string) => {
@@ -511,6 +515,28 @@ useEffect(() => {
     setShowCitySuggestions(false);
   };
 
+  // Bio validation function
+  const handleBioChange = (val: string) => {
+    // Check for social media handles
+    const socialMediaPatterns = /(@[a-zA-Z0-9_]+|instagram\.com|twitter\.com|facebook\.com|tiktok\.com|linkedin\.com|snapchat|discord\.gg|twitch\.tv)/gi;
+    if (socialMediaPatterns.test(val)) {
+      setBioError('No social media handles or links allowed.');
+      setBio(val);
+      return;
+    }
+    
+    // Check for blocked words
+    if (containsBlockedWords(val)) {
+      const blocked = getBlockedWordsInText(val);
+      setBioError(`Your bio contains blocked words: ${blocked.slice(0, 3).join(', ')}`);
+      setBio(val);
+      return;
+    }
+    
+    setBioError('');
+    setBio(val);
+  };
+
   // Load existing profile data
   useEffect(() => {
     const loadProfile = async () => {
@@ -523,6 +549,7 @@ useEffect(() => {
           setCertifications(data.certifications || []);
           setServiceTypes(data.service_types || []);
           setCustomServiceTypes(data.custom_service_types || []);
+          setBio(data.bio || '');
           if (data.service_rates) {
             const rates = data.service_rates as Record<string, ServiceRate>;
             setServiceRates(rates);
@@ -962,7 +989,7 @@ useEffect(() => {
   };
 
   const isStep2Complete = () => {
-    return username && usernameAvailable === true && city && 
+    return username && usernameAvailable === true && city && bio.length >= 50 && bio.length <= 500 && !bioError &&
            emergencyName && emergencyPhone && emergencyRelationship && emergencyConfirmed &&
            affirmNoSexOffender && affirmNoViolentFelony && affirmNotDatingApp &&
            affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
@@ -1024,7 +1051,8 @@ useEffect(() => {
       if (user) {
         await supabase.from('profiles').update({ 
           username: username.toLowerCase(), 
-          city, 
+          city,
+          bio,
           certifications,
           emergency_name: emergencyName,
           emergency_phone: emergencyPhone,
@@ -1366,16 +1394,16 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               </div>
               
               <div className="mt-6 flex justify-center">
-  <div
-    className="cf-turnstile"
-    data-sitekey="3x00000000000000000000FF"
-    data-theme="dark"
-    data-callback="captchaCallback"
-  ></div>
-  {captchaError && (
-    <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
-  )}
-</div>
+                <div
+                  className="cf-turnstile"
+                  data-sitekey="3x00000000000000000000FF"
+                  data-theme="dark"
+                  data-callback="captchaCallback"
+                ></div>
+                {captchaError && (
+                  <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
+                )}
+              </div>
               
               <div className="flex justify-center mt-8">
                 <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50">
@@ -1421,6 +1449,31 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                       {citySuggestions.map((suggestion, idx) => (<button key={idx} onClick={() => selectCity(suggestion)} className="w-full text-left px-4 py-2 hover:bg-white/10 text-sm text-gray-300">{suggestion.display_name}</button>))}
                     </div>
                   )}
+                </div>
+                
+                {/* Bio - NEW */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    ABOUT YOU <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Describe your fitness style. Hype beast? Silent killer? Drill sergeant? 
+                    Make us laugh or make us fear you. Just keep it real.
+                  </p>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => handleBioChange(e.target.value)}
+                    placeholder="No social media handles. No blocked words. Just your vibe."
+                    rows={4}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none resize-none"
+                  />
+                  <div className="flex justify-between mt-2">
+                    <p className={`text-xs ${bio.length < 50 ? 'text-red-400' : bio.length > 500 ? 'text-red-400' : 'text-green-400'}`}>
+                      {bio.length < 50 ? `${50 - bio.length} more characters needed` : bio.length > 500 ? 'Too long' : 'Good length'}
+                    </p>
+                    <p className={`text-xs ${bio.length > 500 ? 'text-red-400' : 'text-gray-500'}`}>{bio.length}/500</p>
+                  </div>
+                  {bioError && <p className="text-red-400 text-xs mt-1">{bioError}</p>}
                 </div>
                 
                 {/* Credentials */}
