@@ -380,6 +380,14 @@ export default function PartnerDashboard() {
     }
   };
 
+  const refreshPartnerData = async () => {
+  await loadProfileData();
+  await fetchMeetups();
+  await fetchContributions();
+  await loadPhotos();
+  await fetchBookingRequests();
+};
+
   const fetchMeetups = async () => {
     if (!user) return;
     try {
@@ -831,7 +839,9 @@ export default function PartnerDashboard() {
           <button onClick={() => setShowAllMeetupsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">All Meetups</button>
           <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Contributions</button>
           <button onClick={() => setShowVenuesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Verified Venues</button>
-          <button onClick={() => setShowServicesModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Services & Rates</button>
+          <button onClick={async () => { await refreshPartnerData(); setShowServicesModal(true); }} className="...">
+  Services & Rates
+</button>
           <button onClick={() => setShowScheduleModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Schedule</button>
           <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Photos</button>
         </div>
