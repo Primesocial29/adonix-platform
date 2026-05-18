@@ -355,7 +355,9 @@ export default function PartnerDashboard() {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('service_types, custom_service_types, service_rates, service_areas, availability, username, phone')
+        const { data } = await supabase
+  .from('profiles')
+  .select('service_types, custom_service_types, service_rates, service_areas, availability, username')
         .eq('id', user.id)
         .single();
       
