@@ -27,8 +27,7 @@
                 ⚠️ Meet only in public. Report bad behavior.
               </p>
             </div>
-          </div>
-        </div>
+     
 
         {/* Image Lightbox */}
         {selectedImage && (
