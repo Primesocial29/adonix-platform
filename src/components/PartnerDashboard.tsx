@@ -69,7 +69,6 @@ export default function PartnerDashboard() {
   const [settingsSubScreen, setSettingsSubScreen] = useState<string | null>(null);
   const [editUsername, setEditUsername] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [newPhone, setNewPhone] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -355,9 +354,7 @@ export default function PartnerDashboard() {
     try {
       const { data } = await supabase
         .from('profiles')
-        const { data } = await supabase
-  .from('profiles')
-  .select('service_types, custom_service_types, service_rates, service_areas, availability, username')
+        .select('service_types, custom_service_types, service_rates, service_areas, availability, username')
         .eq('id', user.id)
         .single();
       
@@ -375,7 +372,7 @@ export default function PartnerDashboard() {
         setAvailability(data.availability || []);
         setUsername(data.username || '');
         setEditUsername(data.username || '');
-        setNewPhone(data.phone || '');
+        console.log('Availability loaded:', data.availability);
       }
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -383,12 +380,12 @@ export default function PartnerDashboard() {
   };
 
   const refreshPartnerData = async () => {
-  await loadProfileData();
-  await fetchMeetups();
-  await fetchContributions();
-  await loadPhotos();
-  await fetchBookingRequests();
-};
+    await loadProfileData();
+    await fetchMeetups();
+    await fetchContributions();
+    await loadPhotos();
+    await fetchBookingRequests();
+  };
 
   const fetchMeetups = async () => {
     if (!user) return;
@@ -478,26 +475,6 @@ export default function PartnerDashboard() {
     } else {
       setSettingsSubScreen(null);
       alert('Email updated! Please verify your new email address.');
-    }
-  };
-
-  const updatePhone = async () => {
-    if (!user) return;
-    const digits = newPhone.replace(/\D/g, '');
-    if (digits.length !== 10) {
-      setPhoneError('Please enter a valid 10-digit phone number');
-      return;
-    }
-    const { error } = await supabase
-      .from('profiles')
-      .update({ phone: newPhone })
-      .eq('id', user.id);
-    if (error) {
-      setPhoneError(error.message);
-    } else {
-      await refreshProfile();
-      setSettingsSubScreen(null);
-      alert('Phone number updated successfully!');
     }
   };
 
@@ -841,14 +818,14 @@ export default function PartnerDashboard() {
           <button onClick={() => setShowAllMeetupsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">All Meetups</button>
           <button onClick={() => setShowContributionsModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">Contributions</button>
           <button onClick={async () => { await refreshPartnerData(); setShowVenuesModal(true); }} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">
-  Verified Venues
-</button>
+            Verified Venues
+          </button>
           <button onClick={async () => { await refreshPartnerData(); setShowServicesModal(true); }} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">
-  Services & Rates
-</button>
+            Services & Rates
+          </button>
           <button onClick={async () => { await refreshPartnerData(); setShowScheduleModal(true); }} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">
-  My Schedule
-</button>
+            My Schedule
+          </button>
           <button onClick={() => setShowPhotoGalleryModal(true)} className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-sm font-semibold hover:scale-105 transition">My Photos</button>
         </div>
 
@@ -1466,10 +1443,6 @@ export default function PartnerDashboard() {
                     <div><p className="font-medium text-white">Email Address</p><p className="text-xs text-gray-400">{user?.email || 'no email'}</p></div>
                     <span className="text-gray-400">→</span>
                   </button>
-                  <button onClick={() => setSettingsSubScreen('phone')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
-                    <div><p className="font-medium text-white">Phone Number</p><p className="text-xs text-gray-400">{newPhone || 'no phone number'}</p></div>
-                    <span className="text-gray-400">→</span>
-                  </button>
                   <button onClick={() => setSettingsSubScreen('password')} className="w-full text-left p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-between">
                     <div><p className="font-medium text-white">Password</p><p className="text-xs text-gray-400">Change your password</p></div>
                     <span className="text-gray-400">→</span>
@@ -1511,18 +1484,6 @@ export default function PartnerDashboard() {
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
                     <button onClick={updateEmail} disabled={!newEmail || !currentPassword} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
-                  </div>
-                </div>
-              </>
-            ) : settingsSubScreen === 'phone' ? (
-              <>
-                <h2 className="text-xl font-bold mb-4">Change Phone Number</h2>
-                <div className="space-y-4">
-                  <div><label className="block text-sm text-gray-400 mb-1">New Phone Number <span className="text-red-500">*</span></label><input type="tel" value={newPhone} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = ''; if (digits.length >= 1) formatted = '(' + digits.substring(0, 3); if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6); if (digits.length >= 7) formatted += '-' + digits.substring(6, 10); setNewPhone(formatted); setPhoneError(''); }} placeholder="(555) 123-4567" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none" /></div>
-                  {phoneError && <p className="text-red-400 text-sm">{phoneError}</p>}
-                  <div className="flex gap-3 mt-6">
-                    <button onClick={() => setSettingsSubScreen(null)} className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">Cancel</button>
-                    <button onClick={updatePhone} disabled={!newPhone || newPhone.replace(/\D/g, '').length !== 10} className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-lg font-semibold transition disabled:opacity-50">Save</button>
                   </div>
                 </div>
               </>
