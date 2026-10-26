@@ -244,7 +244,7 @@ function SafetyConfirmationModal({ isOpen, onClose, onConfirm, locationName }: {
 }
 
 export default function PartnerProfileSetup({ onComplete }: { onComplete?: () => void }) {
-  const { user, refreshProfile, signOut, signUp } = useAuth();
+  const { user, refreshProfile, signOut } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -986,9 +986,12 @@ California Residents:
   };
 
   const isStep1Complete = () => {
-    return firstName && !firstNameError && lastName && !lastNameError && email && !emailError && 
-           phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && 
-           gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent;
+    return username && !usernameError && usernameAvailable === true && city && bio && !bioError &&
+           bio.length >= 50 && bio.length <= 500 && certifications !== null &&
+           emergencyName && emergencyPhone && emergencyPhone.replace(/\D/g, '').length === 10 &&
+           emergencyRelationship && emergencyConfirmed && affirmNoSexOffender &&
+           affirmNoViolentFelony && affirmNotDatingApp && affirmAssumptionOfRisk &&
+           affirmGpsConsent && affirmTermsAndPrivacy;
   };
 
   const isStep2Complete = () => {
@@ -1024,36 +1027,19 @@ California Residents:
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      if (!captchaToken) {
-        setStep1Error('Please complete the verification to prove you are human.');
-        return;
-      }
-      
       if (!isStep1Complete()) {
-        setStep1Error('Please fill in all required fields and check all boxes.');
+        setStep1Error('Please complete all required fields and check all boxes.');
         return;
       }
       setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-        await signUp(email, password, 'partner', autoUsername, formattedBirthDate);
-        setCurrentStep(2);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account');
-      } finally {
-        setLoading(false);
-      }
-    } else if (currentStep === 2) {
-      if (!isStep2Complete()) {
-        setStep2Error('Please complete all required fields and check all boxes.');
-        return;
-      }
-      setStep2Error('');
       if (user) {
-        await supabase.from('profiles').update({ 
-          username: username.toLowerCase(), 
+        const autoUsername = username.toLowerCase();
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          first_name: firstName,
+          display_name: `${firstName} ${lastName}`,
+          username: autoUsername,
+          role: 'trainer',
           city,
           bio,
           certifications,
@@ -1065,18 +1051,18 @@ California Residents:
           affirm_not_dating_app: affirmNotDatingApp,
           affirm_assumption_of_risk: affirmAssumptionOfRisk,
           affirm_gps_consent: affirmGpsConsent,
-          affirm_terms_and_privacy: affirmTermsAndPrivacy
+          affirm_terms_and_privacy: affirmTermsAndPrivacy,
         }).eq('id', user.id);
       }
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
       if (!isStep3Complete()) {
         setStep3Error('You must take and confirm at least one live photo.');
         return;
       }
       setStep3Error('');
-      setCurrentStep(4);
-    } else if (currentStep === 4) {
+      setCurrentStep(3);
+    } else if (currentStep === 3) {
       if (!isStep4Complete()) {
         setStep4Error('Please select at least one activity and set valid rates.');
         return;
@@ -1089,8 +1075,8 @@ California Residents:
           service_rates: serviceRates
         }).eq('id', user.id);
       }
-      setCurrentStep(5);
-    } else if (currentStep === 5) {
+      setCurrentStep(4);
+    } else if (currentStep === 4) {
       if (!isStep5Complete()) {
         setStep5Error('Please add at least one location and select availability slots.');
         return;
@@ -1105,8 +1091,8 @@ California Residents:
           availability
         }).eq('id', user.id);
       }
-      setCurrentStep(6);
-    } else if (currentStep === 6) {
+      setCurrentStep(5);
+    } else if (currentStep === 5) {
       if (!isStep6Complete()) return;
       if (!selfieCaptured) {
         setStep6Error('You must complete identity verification via live selfie before finalizing.');
@@ -1145,7 +1131,7 @@ California Residents:
     window.location.href = '/';
   };
 
-  const totalSteps = 6;
+  const totalSteps = 5;
   const stepProgress = (currentStep / totalSteps) * 100;
 
   const footerTermsContent = `ADONIX FIT - TERMS OF SERVICE
@@ -1244,7 +1230,7 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
               <div className="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all duration-500 rounded-full" style={{ width: `${stepProgress}%` }} />
             </div>
             <div className="flex gap-1 mt-2 flex-wrap">
-              {['Account', 'Profile', 'Photos', 'Services', 'Locations', 'Settings'].map((s, i) => (
+              {['Profile', 'Photos', 'Services', 'Locations', 'Settings'].map((s, i) => (
                 <span key={s} className={`text-[10px] px-2 py-0.5 rounded-full ${currentStep > i + 1 ? 'bg-green-500/20 text-green-400' : currentStep === i + 1 ? 'bg-red-500/20 text-red-400' : 'bg-white/5 text-gray-500'}`}>
                   {currentStep > i + 1 ? '✓' : currentStep === i + 1 ? '●' : '○'} {s}
                 </span>
@@ -1254,10 +1240,11 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* STEP 1: CREATE ACCOUNT */}
+          {/* STEP 1: YOUR PROFILE & LEGAL */}
           {currentStep === 1 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-              <h2 className="text-2xl font-bold text-center mb-6">Create Your Account</h2>
+              <h2 className="text-2xl font-bold text-center mb-6">Your Profile & Legal Information</h2>
+              <p className="text-center text-gray-400 mb-6">You're signed in. Let's set up your partner profile.</p>
               
               {step1Error && (
                 <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
@@ -1265,7 +1252,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                 </div>
               )}
               
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* First/Last Name */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
@@ -1279,160 +1267,6 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
-                  <input type="email" value={email} onChange={(e) => handleEmailChange(e.target.value)} className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${emailError ? 'border-red-500' : 'border-white/20 focus:border-red-500'}`} placeholder="you@example.com" />
-                  {emailError && <p className="text-red-400 text-xs mt-1">{emailError}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
-                  <input type="tel" value={phone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder="(555) 123-4567" className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${phoneError ? 'border-red-500' : 'border-white/20 focus:border-red-500'}`} />
-                  {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => handlePasswordChange(e.target.value)} className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none pr-10 ${passwordError ? 'border-red-500' : 'border-white/20 focus:border-red-500'}`} />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    <p className={`text-xs ${passwordMinLength ? 'text-green-400' : 'text-gray-500'}`}>{passwordMinLength ? '✓' : '○'} At least 8 characters</p>
-                    <p className={`text-xs ${passwordHasUpper ? 'text-green-400' : 'text-gray-500'}`}>{passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter</p>
-                    <p className={`text-xs ${passwordHasLower ? 'text-green-400' : 'text-gray-500'}`}>{passwordHasLower ? '✓' : '○'} At least 1 lowercase letter</p>
-                    <p className={`text-xs ${passwordHasNumber ? 'text-green-400' : 'text-gray-500'}`}>{passwordHasNumber ? '✓' : '○'} At least 1 number</p>
-                    <p className={`text-xs ${passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}`}>{passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)</p>
-                  </div>
-                  {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
-                </div>
-                
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <select value={birthMonth} onChange={(e) => { setBirthMonth(e.target.value); setBirthDateError(''); }} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
-                      <option value="">Month</option>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (<option key={month} value={month}>{month}</option>))}
-                    </select>
-                    <select value={birthDay} onChange={(e) => { setBirthDay(e.target.value); setBirthDateError(''); }} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
-                      <option value="">Day</option>
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (<option key={day} value={day}>{day}</option>))}
-                    </select>
-                    <select value={birthYear} onChange={(e) => { setBirthYear(e.target.value); setBirthDateError(''); }} className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none">
-                      <option value="">Year</option>
-                      {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (<option key={year} value={year}>{year}</option>))}
-                    </select>
-                  </div>
-                  {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-                  <p className="text-xs text-gray-500 mt-2">Used only to verify you are 18+. Deleted immediately after confirmation.</p>
-                  
-                  <div className="flex items-start gap-2 mt-3">
-                    <input type="checkbox" id="ageVerifyConsent" checked={ageVerifyConsent} onChange={(e) => setAgeVerifyConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained. <span className="text-red-500">*</span></label>
-                  </div>
-                  
-                  <div className="flex items-start gap-2 mt-2">
-                    <input type="checkbox" id="facialAgeConsent" checked={facialAgeConsent} onChange={(e) => setFacialAgeConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-red-600" />
-                    <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">I consent to facial age estimation. My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span></label>
-                  </div>
-                </div>
-                
-                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                  <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
-                  <ul className="space-y-1 text-xs text-yellow-200/80">
-                    <li>• Adonix is a social fitness network, not a professional service.</li>
-                    <li>• You are joining to meet fitness partners in public locations only.</li>
-                    <li>• No professional fitness services are provided or implied.</li>
-                    <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
-                    <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-3">
-                  {/* Terms of Service */}
-                  <div className="flex items-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={termsAccepted} 
-                      disabled={!termsModalAgreed}
-                      onChange={() => setTermsAccepted(!termsAccepted)} 
-                      className={`mt-1 w-5 h-5 ${!termsModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
-                    />
-                    <span className="text-sm text-gray-300">
-                      I have read and agree to the 
-                      <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline mx-1">
-                        Terms of Service
-                      </button>
-                      . <span className="text-red-500">*</span>
-                    </span>
-                  </div>
-
-                  {/* Privacy Policy */}
-                  <div className="flex items-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={privacyAccepted} 
-                      disabled={!privacyModalAgreed}
-                      onChange={() => setPrivacyAccepted(!privacyAccepted)} 
-                      className={`mt-1 w-5 h-5 ${!privacyModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
-                    />
-                    <span className="text-sm text-gray-300">
-                      I have read and agree to the 
-                      <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline mx-1">
-                        Privacy Policy
-                      </button>
-                      . <span className="text-red-500">*</span>
-                    </span>
-                  </div>
-
-                  {/* Gatekeeper Acknowledgment */}
-                  <div className="flex items-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      checked={gatekeeperAccepted} 
-                      onChange={(e) => setGatekeeperAccepted(e.target.checked)} 
-                      className="mt-1 w-5 h-5 accent-red-600" 
-                    />
-                    <span className="text-sm text-gray-300">
-                      I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 flex justify-center">
-                <div
-                  className="cf-turnstile"
-                  data-sitekey="3x00000000000000000000FF"
-                  data-theme="dark"
-                  data-callback="captchaCallback"
-                ></div>
-                {captchaError && (
-                  <p className="text-red-400 text-xs text-center mt-2">{captchaError}</p>
-                )}
-              </div>
-              
-              <div className="flex justify-center mt-8">
-                <button onClick={handleNext} disabled={loading} className="px-8 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50">
-                  {loading ? 'Creating Account...' : 'CREATE ACCOUNT →'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: YOUR PROFILE & LEGAL */}
-          {currentStep === 2 && (
-            <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-              <h2 className="text-2xl font-bold text-center mb-6">Your Profile & Legal Information</h2>
-              <p className="text-center text-gray-400 mb-6">Please complete your profile and review legal requirements.</p>
-              
-              {step2Error && (
-                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                  {step2Error}
-                </div>
-              )}
-              
-              <div className="space-y-6">
                 {/* Username */}
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Username <span className="text-red-500">*</span></label>
@@ -1598,8 +1432,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 3: PHOTOS */}
-          {currentStep === 3 && (
+          {/* STEP 2: PHOTOS */}
+          {currentStep === 2 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Show the world who's about to make them sweat.</h2>
               <p className="text-center text-gray-400 mb-6">You need at least 1 live photo. You can add up to 6 total. Your first photo automatically becomes your profile picture.</p>
@@ -1697,8 +1531,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 4: ACTIVITIES & RATES */}
-          {currentStep === 4 && (
+          {/* STEP 3: ACTIVITIES & RATES */}
+          {currentStep === 3 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Activities & Suggested Contributions</h2>
               <p className="text-center text-gray-400 mb-6">💰 Cha-ching! Set your suggested contribution per meetup. Min $50 · Max $500/hr. (You're worth it, trust us.)</p>
@@ -1748,8 +1582,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 5: LOCATIONS & SCHEDULE */}
-          {currentStep === 5 && (
+          {/* STEP 4: LOCATIONS & SCHEDULE */}
+          {currentStep === 4 && (
             <div className="space-y-6">
               <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
                 <h2 className="text-2xl font-bold text-center mb-6">The "Don't Be Weird" Location Picker</h2>
@@ -1826,8 +1660,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
             </div>
           )}
 
-          {/* STEP 6: MEETUP SETTINGS */}
-          {currentStep === 6 && (
+          {/* STEP 5: MEETUP SETTINGS */}
+          {currentStep === 5 && (
             <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
               <h2 className="text-2xl font-bold text-center mb-6">Meetup Settings</h2>
               <p className="text-center text-gray-400 mb-6">⚙️ Configure how members can book time with you.</p>

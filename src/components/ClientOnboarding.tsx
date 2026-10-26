@@ -116,43 +116,15 @@ function TermsModal({ isOpen, onClose, onAccept, title, content }: {
 }
 
 export default function ClientOnboarding({ onComplete }: { onComplete?: () => void }) {
-  const { signUp, user, refreshProfile, profile } = useAuth();
+  const { user, refreshProfile, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showSelfieCamera, setShowSelfieCamera] = useState(false);
   const [selfieCaptured, setSelfieCaptured] = useState(false);
   const [selfieVerifying, setSelfieVerifying] = useState(false);
-  
-  // Step 1: Account Setup
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
-  const [step1Error, setStep1Error] = useState('');
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
-  
-  // Modal agreement states - FIX: These track if user has scrolled and accepted via modal
-  const [termsModalAgreed, setTermsModalAgreed] = useState(false);
-  const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
-  
-  // Birth date dropdowns
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [birthDateError, setBirthDateError] = useState('');
-  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
-  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
-  
-  // Step 2: Photo & Bio
+
+  // Step 1: Photo & Bio (first/last name still needed for profile)
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
   const [tempPhotoUrl, setTempPhotoUrl] = useState('');
   const [photoAccepted, setPhotoAccepted] = useState(false);
@@ -163,7 +135,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoConfirmed, setPhotoConfirmed] = useState(false);
   
-  // Step 3: Your Vibe (Profile & Legal)
+  // Step 2: Your Vibe (Profile & Legal)
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -191,9 +163,9 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [affirmGpsConsent, setAffirmGpsConsent] = useState(false);
   const [affirmTermsAndPrivacy, setAffirmTermsAndPrivacy] = useState(false);
   
-  const [step3Error, setStep3Error] = useState('');
-  
-  // Step 4: Find Partners
+  const [step2Error, setStep2Error] = useState('');
+
+  // Step 3: Find Partners
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [customService, setCustomService] = useState('');
   const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
@@ -210,14 +182,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const partnersPerPage = 6;
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  
-  // Password strength checks
-  const passwordMinLength = password.length >= 8;
-  const passwordHasUpper = /[A-Z]/.test(password);
-  const passwordHasLower = /[a-z]/.test(password);
-  const passwordHasNumber = /[0-9]/.test(password);
-  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
-  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
   
   const validateUsername = (username: string) => {
     if (username.length < 3) {
@@ -513,54 +477,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     }
   };
   
-  const handleEmailChange = (val: string) => {
-    setEmail(val);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(val)) {
-      setEmailError('Please enter a valid email address.');
-    } else {
-      setEmailError('');
-    }
-  };
-  
-  const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    let formatted = '';
-    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
-    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
-    setPhone(formatted);
-    
-    if (digits.length === 10 && digits[0] >= '2') {
-      setPhoneError('');
-    } else if (digits.length > 0 && digits.length !== 10) {
-      setPhoneError('Please enter a valid 10-digit phone number.');
-    } else if (digits.length === 10 && digits[0] < '2') {
-      setPhoneError('Please enter a valid US phone number.');
-    } else {
-      setPhoneError('');
-    }
-  };
-  
-  const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('');
-    } else if (!passwordMinLength) {
-      setPasswordError('Password must be at least 8 characters');
-    } else if (!passwordHasUpper) {
-      setPasswordError('Password must contain at least 1 uppercase letter');
-    } else if (!passwordHasLower) {
-      setPasswordError('Password must contain at least 1 lowercase letter');
-    } else if (!passwordHasNumber) {
-      setPasswordError('Password must contain at least 1 number');
-    } else if (!passwordHasSpecial) {
-      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-    } else {
-      setPasswordError('');
-    }
-  };
-  
   const toggleGoal = (goal: string) => {
     setSelectedGoals(prev =>
       prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
@@ -613,83 +529,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     );
   };
   
-  // FIX: Updated accept handlers to set modal agreed state
-  const handleTermsAccept = () => {
-    setTermsModalAgreed(true);
-    setTermsAccepted(true);
-    setShowTermsModal(null);
-  };
-  
-  const handlePrivacyAccept = () => {
-    setPrivacyModalAgreed(true);
-    setPrivacyAccepted(true);
-    setShowTermsModal(null);
-  };
-  
   const handleNext = async () => {
     if (step === 1) {
-      if (!firstName || firstNameError) {
-        setStep1Error('Please enter a valid first name.');
-        return;
-      }
-      if (!lastName || lastNameError) {
-        setStep1Error('Please enter a valid last name.');
-        return;
-      }
-      if (!email || emailError) {
-        setStep1Error('Please enter a valid email address.');
-        return;
-      }
-      if (!phone || phoneError) {
-        setStep1Error('Please enter a valid phone number.');
-        return;
-      }
-      if (!isPasswordValid) {
-        setStep1Error('Please enter a valid password.');
-        return;
-      }
-      if (!termsAccepted) {
-        setStep1Error('You must agree to the Terms of Service.');
-        return;
-      }
-      if (!privacyAccepted) {
-        setStep1Error('You must agree to the Privacy Policy.');
-        return;
-      }
-      if (!gatekeeperAccepted) {
-        setStep1Error('You must acknowledge the social fitness platform agreement.');
-        return;
-      }
-      
-      const ageValidation = validateAgeFromDropdowns();
-      if (!ageValidation.isValid) {
-        setStep1Error(ageValidation.error);
-        return;
-      }
-      if (!ageVerifyConsent) {
-        setStep1Error('You must consent to age verification using your birth date.');
-        return;
-      }
-      if (!facialAgeConsent) {
-        setStep1Error('You must consent to facial age estimation.');
-        return;
-      }
-      
-      setStep1Error('');
-      setLoading(true);
-      try {
-        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
-        const formattedBirthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
-        await signUp(email, password, 'member', autoUsername, formattedBirthDate);
-        setTimeout(() => {
-          setStep(2);
-          setLoading(false);
-        }, 500);
-      } catch (err: any) {
-        setStep1Error(err.message || 'Failed to create account. Please try again.');
-        setLoading(false);
-      }
-    } else if (step === 2) {
       if (!photoAccepted || !livePhotoUrl) {
         alert('Please take and accept a live photo.');
         return;
@@ -710,80 +551,87 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         alert('You must confirm that your photo follows community guidelines.');
         return;
       }
-      if (!gatekeeperAccepted) {
-        alert('You must acknowledge the social fitness platform agreement.');
-        return;
-      }
       setBioError('');
-      await supabase.from('profiles').update({ bio, live_photo_url: livePhotoUrl }).eq('id', user?.id);
-      setStep(3);
-    } else if (step === 3) {
+      if (user) {
+        const autoUsername = `${firstName.toLowerCase()}_${lastName.toLowerCase()}_${Date.now()}`;
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          first_name: firstName,
+          display_name: `${firstName} ${lastName}`,
+          username: autoUsername,
+          role: 'member',
+          bio,
+          live_photo_url: livePhotoUrl,
+        }).eq('id', user.id);
+      }
+      setStep(2);
+    } else if (step === 2) {
       if (!username) {
-        setStep3Error('Please enter a username.');
+        setStep2Error('Please enter a username.');
         return;
       }
       
       const usernameValidation = validateUsername(username);
       if (!usernameValidation.isValid) {
-        setStep3Error(usernameValidation.error);
+        setStep2Error(usernameValidation.error);
         return;
       }
       
       if (!usernameAvailable) {
-        setStep3Error('This username is already taken. Please choose another.');
+        setStep2Error('This username is already taken. Please choose another.');
         return;
       }
       
       if (!city) {
-        setStep3Error('Please enter your city.');
+        setStep2Error('Please enter your city.');
         return;
       }
       if (selectedGoals.length === 0) {
-        setStep3Error('Please select at least one fitness goal.');
+        setStep2Error('Please select at least one fitness goal.');
         return;
       }
       
       // NEW: Emergency Contact Validation
       if (!emergencyName) {
-        setStep3Error('Please enter an emergency contact name.');
+        setStep2Error('Please enter an emergency contact name.');
         return;
       }
       if (!emergencyPhone || emergencyPhone.replace(/\D/g, '').length !== 10) {
-        setStep3Error('Please enter a valid emergency contact phone number.');
+        setStep2Error('Please enter a valid emergency contact phone number.');
         return;
       }
       if (!emergencyRelationship) {
-        setStep3Error('Please select the relationship to your emergency contact.');
+        setStep2Error('Please select the relationship to your emergency contact.');
         return;
       }
       if (!emergencyConfirmed) {
-        setStep3Error('You must confirm that your emergency contact information is accurate.');
+        setStep2Error('You must confirm that your emergency contact information is accurate.');
         return;
       }
       
       // NEW: Legal Declarations Validation
       if (!affirmNoSexOffender) {
-        setStep3Error('You must affirm that you are not a registered sex offender.');
+        setStep2Error('You must affirm that you are not a registered sex offender.');
         return;
       }
       if (!affirmNoViolentFelony) {
-        setStep3Error('You must affirm that you have no violent felony convictions.');
+        setStep2Error('You must affirm that you have no violent felony convictions.');
         return;
       }
       if (!affirmAssumptionOfRisk) {
-        setStep3Error('You must acknowledge that meetups are at your own risk.');
+        setStep2Error('You must acknowledge that meetups are at your own risk.');
         return;
       }
       if (!affirmGpsConsent) {
-        setStep3Error('You must consent to GPS tracking during meetups.');
+        setStep2Error('You must consent to GPS tracking during meetups.');
         return;
       }
       if (!affirmTermsAndPrivacy) {
-        setStep3Error('You must agree to the Terms of Service and Privacy Policy.');
+        setStep2Error('You must agree to the Terms of Service and Privacy Policy.');
         return;
       }
       
-      setStep3Error('');
+      setStep2Error('');
       await supabase.from('profiles').update({ 
         username, 
         city, 
@@ -797,7 +645,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
         affirm_gps_consent: affirmGpsConsent,
         affirm_terms_and_privacy: affirmTermsAndPrivacy
       }).eq('id', user?.id);
-      setStep(4);
+      setStep(3);
     }
   };
   
@@ -867,7 +715,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const handleComplete = async () => {
     if (!selfieCaptured) {
       alert('You must complete your identity verification via live selfie before finishing.');
-      setStep(5);
+      setStep(4);
       return;
     }
     await supabase.from('profiles').update({ profile_complete: true }).eq('id', user?.id);
@@ -876,10 +724,8 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     else window.location.href = '/browse';
   };
   
-  // FIX: Updated step completion to include modal agreed states
-  const isStep1Complete = firstName && !firstNameError && lastName && !lastNameError && email && !emailError && phone && !phoneError && isPasswordValid && termsAccepted && privacyAccepted && gatekeeperAccepted && birthMonth && birthDay && birthYear && ageVerifyConsent && facialAgeConsent && termsModalAgreed && privacyModalAgreed;
-  const isStep2Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && gatekeeperAccepted;
-  const isStep3Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0 && emergencyName && emergencyPhone && emergencyPhone.replace(/\D/g, '').length === 10 && emergencyRelationship && emergencyConfirmed && affirmNoSexOffender && affirmNoViolentFelony && affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
+  const isStep1Complete = photoAccepted && livePhotoUrl && bio.length >= 20 && bio.length <= 500 && !containsBlockedWords(bio) && photoConfirmed && firstName && !firstNameError && lastName && !lastNameError;
+  const isStep2Complete = username && !usernameError && usernameAvailable === true && username.length >= 3 && username.length <= 20 && city && selectedGoals.length > 0 && emergencyName && emergencyPhone && emergencyPhone.replace(/\D/g, '').length === 10 && emergencyRelationship && emergencyConfirmed && affirmNoSexOffender && affirmNoViolentFelony && affirmAssumptionOfRisk && affirmGpsConsent && affirmTermsAndPrivacy;
   
   const totalPages = Math.ceil(filteredPartners.length / partnersPerPage);
   const startIndex = (currentPage - 1) * partnersPerPage;
@@ -1172,253 +1018,49 @@ California Residents:
         
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} of 5</span>
-            <span>{Math.round(step / 5 * 100)}%</span>
+            <span>Step {step} of 4</span>
+            <span>{Math.round(step / 4 * 100)}%</span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all duration-300"
-              style={{ width: `${(step / 5) * 100}%` }}
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
         
-        {/* Step 1: Create Your Account */}
+        {/* Step 1: Your Photo & Story */}
         {step === 1 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h1 className="text-3xl font-bold text-center mb-2">Create Your Account <span className="text-red-500">*</span></h1>
-            <p className="text-gray-400 text-center mb-8">Join the social fitness network</p>
+            <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story <span className="text-red-500">*</span></h2>
+            <p className="text-center text-gray-400 mb-6">You're signed in. Let's set up your profile.</p>
             
-            {step1Error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                {step1Error}
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => handleFirstNameChange(e.target.value)}
-                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                      firstNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                    }`}
-                  />
-                  {firstNameError && <p className="text-red-400 text-xs mt-1">{firstNameError}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => handleLastNameChange(e.target.value)}
-                    className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                      lastNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                    }`}
-                  />
-                  {lastNameError && <p className="text-red-400 text-xs mt-1">{lastNameError}</p>}
-                </div>
-              </div>
-              
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Email Address <span className="text-red-500">*</span></label>
+                <label className="block text-sm text-gray-400 mb-1">First Name <span className="text-red-500">*</span></label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => handleFirstNameChange(e.target.value)}
                   className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    emailError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                    firstNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
                   }`}
                 />
-                {emailError && <p className="text-red-400 text-xs mt-1">{emailError}</p>}
+                {firstNameError && <p className="text-red-400 text-xs mt-1">{firstNameError}</p>}
               </div>
-              
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                <label className="block text-sm text-gray-400 mb-1">Last Name <span className="text-red-500">*</span></label>
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="(555) 123-4567"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => handleLastNameChange(e.target.value)}
                   className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    phoneError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
+                    lastNameError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
                   }`}
                 />
-                {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Password <span className="text-red-500">*</span></label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white focus:outline-none ${
-                    passwordError ? 'border-red-500' : 'border-white/20 focus:border-red-500'
-                  }`}
-                />
-                <div className="mt-2 space-y-1">
-                  <p className={`text-xs ${passwordMinLength ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordMinLength ? '✓' : '○'} At least 8 characters
-                  </p>
-                  <p className={`text-xs ${passwordHasUpper ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasUpper ? '✓' : '○'} At least 1 uppercase letter
-                  </p>
-                  <p className={`text-xs ${passwordHasLower ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasLower ? '✓' : '○'} At least 1 lowercase letter
-                  </p>
-                  <p className={`text-xs ${passwordHasNumber ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasNumber ? '✓' : '○'} At least 1 number
-                  </p>
-                  <p className={`text-xs ${passwordHasSpecial ? 'text-green-400' : 'text-gray-500'}`}>
-                    {passwordHasSpecial ? '✓' : '○'} At least 1 special character (!@#$%^&*)
-                  </p>
-                </div>
-                {passwordError && <p className="text-red-400 text-xs mt-1">{passwordError}</p>}
-              </div>
-              
-              {/* Birth Date with Dropdowns */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Birth Date <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={birthMonth}
-                    onChange={(e) => setBirthMonth(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Month</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <option key={month} value={month}>{month}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={birthDay}
-                    onChange={(e) => setBirthDay(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Day</option>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-white/20 rounded-lg text-white focus:border-red-500 focus:outline-none"
-                  >
-                    <option value="">Year</option>
-                    {Array.from({ length: 107 }, (_, i) => 2026 - i).map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-                {birthDateError && <p className="text-red-400 text-xs mt-1">{birthDateError}</p>}
-                <p className="text-xs text-gray-500 mt-2">
-                  Used only to verify you are 18+. Deleted immediately after confirmation.
-                </p>
-
-                <div className="flex items-start gap-2 mt-3">
-                  <input
-                    type="checkbox"
-                    id="ageVerifyConsent"
-                    checked={ageVerifyConsent}
-                    onChange={(e) => setAgeVerifyConsent(e.target.checked)}
-                    className="mt-1 w-5 h-5 accent-red-600"
-                  />
-                  <label htmlFor="ageVerifyConsent" className="text-xs text-gray-400">
-                    I consent to age verification using my birth date. This data is used only to confirm I am 18+ and is not retained. <span className="text-red-500">*</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="facialAgeConsent"
-                    checked={facialAgeConsent}
-                    onChange={(e) => setFacialAgeConsent(e.target.checked)}
-                    className="mt-1 w-5 h-5 accent-red-600"
-                  />
-                  <label htmlFor="facialAgeConsent" className="text-xs text-gray-400">
-                    I consent to facial age estimation. My image will be used only for age verification and deleted immediately. <span className="text-red-500">*</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
-                <p className="text-xs text-yellow-300 font-semibold mb-2">⚠️ IMPORTANT INFORMATION</p>
-                <ul className="space-y-1 text-xs text-yellow-200/80">
-                  <li>• Adonix is a social fitness network, not a professional service.</li>
-                  <li>• You are joining to meet fitness partners in public locations only.</li>
-                  <li>• No professional fitness services are provided or implied.</li>
-                  <li>• Private residences, hotels, and Airbnbs are strictly prohibited.</li>
-                  <li>• Harassment, solicitation, or unsafe behavior = permanent ban.</li>
-                </ul>
-              </div>
-              
-              {/* FIXED: Terms and Privacy Checkboxes - Now disabled until modal agreement */}
-              <div className="mt-6 space-y-3">
-                {/* Terms of Service */}
-                <div className="flex items-start gap-3">
-                  <input 
-                    type="checkbox" 
-                    checked={termsAccepted} 
-                    disabled={!termsModalAgreed}
-                    onChange={() => setTermsAccepted(!termsAccepted)} 
-                    className={`mt-1 w-5 h-5 ${!termsModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
-                  />
-                  <span className="text-sm text-gray-300">
-                    I have read and agree to the 
-                    <button type="button" onClick={() => setShowTermsModal('terms')} className="text-red-400 underline mx-1">
-                      Terms of Service
-                    </button>
-                    . <span className="text-red-500">*</span>
-                  </span>
-                </div>
-
-                {/* Privacy Policy */}
-                <div className="flex items-start gap-3">
-                  <input 
-                    type="checkbox" 
-                    checked={privacyAccepted} 
-                    disabled={!privacyModalAgreed}
-                    onChange={() => setPrivacyAccepted(!privacyAccepted)} 
-                    className={`mt-1 w-5 h-5 ${!privacyModalAgreed ? 'opacity-50 cursor-not-allowed' : 'accent-red-600'}`} 
-                  />
-                  <span className="text-sm text-gray-300">
-                    I have read and agree to the 
-                    <button type="button" onClick={() => setShowTermsModal('privacy')} className="text-red-400 underline mx-1">
-                      Privacy Policy
-                    </button>
-                    . <span className="text-red-500">*</span>
-                  </span>
-                </div>
-                
-                {/* Gatekeeper Agreement - remains independent */}
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={gatekeeperAccepted}
-                    onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                    className="mt-1 w-5 h-5 accent-red-600"
-                  />
-                  <span className="text-sm text-gray-300">
-                    I understand that Adonix is a social fitness platform — not a personal training service, dating app, or escort service. <span className="text-red-500">*</span>
-                  </span>
-                </label>
+                {lastNameError && <p className="text-red-400 text-xs mt-1">{lastNameError}</p>}
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Step 2: Photo & Bio */}
-        {step === 2 && (
-          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
-            <h2 className="text-2xl font-bold text-center mb-6">Your Photo & Story <span className="text-red-500">*</span></h2>
             
             <div className="text-center mb-8">
               {!tempPhotoUrl && !livePhotoUrl && (
@@ -1531,32 +1173,18 @@ California Residents:
               </div>
             </div>
             
-            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="gatekeeperAccept"
-                  checked={gatekeeperAccepted}
-                  onChange={(e) => setGatekeeperAccepted(e.target.checked)}
-                  className="mt-1 w-5 h-5 accent-blue-600"
-                />
-                <label htmlFor="gatekeeperAccept" className="text-sm text-gray-300">
-                  I understand that <span className="text-white font-semibold">Adonix Fit is a social fitness platform</span> — not a personal training service, dating app, or escort service. I am joining to connect with other fitness enthusiasts for voluntary social fitness activities in public locations. No professional fitness services are provided or implied. <span className="text-red-500">*</span>
-                </label>
-              </div>
-            </div>
           </div>
         )}
         
-        {/* Step 3: Your Vibe + Legal + Emergency Contact */}
-        {step === 3 && (
+        {/* Step 2: Your Vibe + Legal + Emergency Contact */}
+        {step === 2 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-6">What's Your Vibe? <span className="text-red-500">*</span></h2>
             <p className="text-center text-gray-400 mb-6">Tell us about yourself and review legal requirements.</p>
             
-            {step3Error && (
+            {step2Error && (
               <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
-                {step3Error}
+                {step2Error}
               </div>
             )}
             
@@ -1772,11 +1400,11 @@ California Residents:
           </div>
         )}
         
-        {/* Step 4: Find Partners */}
-        {step === 4 && <Step4Content />}
+        {/* Step 3: Find Partners */}
+        {step === 3 && <Step4Content />}
         
-        {/* Step 5: Identity Verification (Live Selfie) */}
-        {step === 5 && (
+        {/* Step 4: Identity Verification (Live Selfie) */}
+        {step === 4 && (
           <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             <h2 className="text-2xl font-bold text-center mb-2">Verify Your Identity</h2>
             <p className="text-center text-gray-400 mb-6">
@@ -1814,13 +1442,13 @@ California Residents:
               Back
             </button>
           )}
-          {step < 5 ? (
+          {step < 4 ? (
             <button
               onClick={handleNext}
-              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
+              disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete)}
               className={`flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
             >
-              {loading ? 'Creating Account...' : 'Next'}
+              {loading ? 'Saving...' : 'Next'}
             </button>
           ) : (
             <button
@@ -1869,7 +1497,7 @@ California Residents:
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
-        onAccept={handleTermsAccept}
+        onAccept={() => setShowTermsModal(null)}
         title="Terms of Service"
         content={termsContent}
       />
@@ -1877,7 +1505,7 @@ California Residents:
       <TermsModal
         isOpen={showTermsModal === 'privacy'}
         onClose={() => setShowTermsModal(null)}
-        onAccept={handlePrivacyAccept}
+        onAccept={() => setShowTermsModal(null)}
         title="Privacy Policy"
         content={privacyContent}
       />
