@@ -17,6 +17,7 @@ import SafetyPage from './components/SafetyPage';
 import CompleteProfile from './components/CompleteProfile';
 import LoginPage from './components/LoginPage';
 import LandingPageNew from './components/LandingPageNew';
+import VerificationGate from './components/VerificationGate';
 import { useAuth } from './hooks/useAuth';
 
 // Terms Modal for CHECKBOXES - requires scroll-to-accept
@@ -341,6 +342,10 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  const PUBLIC_ROUTES = ['/login', '/', '/terms', '/privacy', '/safety', '/contact', '/accessibility'];
+  const isPublicRoute = PUBLIC_ROUTES.includes(currentRoute);
+  const needsVerification = !!user && (!user.user_metadata?.terms_accepted || !user.phone_confirmed_at);
+
   if (currentRoute === '/login') {
     return <LoginPage />;
   }
@@ -420,6 +425,10 @@ function App() {
 
   if (currentRoute === '/safety') {
     return <SafetyPage />;
+  }
+
+  if (needsVerification && !isPublicRoute) {
+    return <VerificationGate />;
   }
 
   // Fallback - show new landing page

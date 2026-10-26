@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useSelfieLock } from '../hooks/useSelfieLock';
 import { MapPin, Clock, DollarSign, Star, Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import PartnerProfileView from './PartnerProfileView';
 
@@ -41,6 +42,7 @@ const PRICE_RANGES = [
 
 export default function BrowsePartners() {
   const { user, profile } = useAuth();
+  const { guarded } = useSelfieLock();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -647,9 +649,10 @@ export default function BrowsePartners() {
           partner={selectedPartner as any}
           onClose={() => setSelectedPartner(null)}
           onBook={(partner) => {
-            console.log('Book partner:', partner);
-            // Will implement booking in next step
-            alert(`Booking with ${partner.first_name} coming soon!`);
+            guarded(() => {
+              console.log('Book partner:', partner);
+              alert(`Booking with ${partner.first_name} coming soon!`);
+            });
           }}
         />
       )}

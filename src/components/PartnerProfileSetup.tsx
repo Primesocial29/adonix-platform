@@ -248,6 +248,9 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [currentStep, setCurrentStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSelfieCamera, setShowSelfieCamera] = useState(false);
+  const [selfieCaptured, setSelfieCaptured] = useState(false);
+  const [selfieVerifying, setSelfieVerifying] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
   const [showFooterTermsModal, setShowFooterTermsModal] = useState(false);
   const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
@@ -1105,6 +1108,10 @@ California Residents:
       setCurrentStep(6);
     } else if (currentStep === 6) {
       if (!isStep6Complete()) return;
+      if (!selfieCaptured) {
+        setStep6Error('You must complete identity verification via live selfie before finalizing.');
+        return;
+      }
       setStep6Error('');
       setSaving(true);
       try {
@@ -1856,10 +1863,24 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
                   <p className="text-xs text-yellow-300 text-center">⚠️ Please review all sections before finalizing.</p>
                 </div>
               </div>
+
+              <div className="mt-8 p-6 bg-purple-500/10 border border-purple-500/30 rounded-2xl">
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-purple-300" /> Identity Verification</h3>
+                <p className="text-sm text-gray-300 mb-4">Final required step: take a live selfie so we can confirm you're really you. You won't be able to offer services until this is done.</p>
+                {selfieCaptured ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300 font-semibold">
+                    <CheckCircle className="w-5 h-5" /> Identity verified
+                  </div>
+                ) : (
+                  <button onClick={() => setShowSelfieCamera(true)} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl font-semibold flex items-center justify-center gap-2">
+                    <Camera className="w-5 h-5" /> Take Live Selfie
+                  </button>
+                )}
+              </div>
               
               <div className="flex justify-between gap-4 mt-8">
                 <button onClick={handleBack} className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition">← BACK</button>
-                <button onClick={handleNext} disabled={saving} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50">
+                <button onClick={handleNext} disabled={saving || !selfieCaptured || selfieVerifying} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50">
                   {saving ? 'FINALIZING...' : 'FINALIZE →'}
                 </button>
               </div>
@@ -1882,6 +1903,28 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
 
       {/* Modals */}
       {showCamera && (<LiveCameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} aspectRatio="square" />)}
+
+      {showSelfieCamera && (
+        <LiveCameraCapture
+          onCapture={async (blobOrDataURL: Blob | string) => {
+            setSelfieVerifying(true);
+            try {
+              const { error: updateError } = await supabase.auth.updateUser({ data: { selfie_verified: true } });
+              if (updateError) throw updateError;
+              setSelfieCaptured(true);
+              setShowSelfieCamera(false);
+            } catch (err) {
+              console.error('Selfie verification failed:', err);
+              alert('Failed to verify selfie. Please try again.');
+            } finally {
+              setSelfieVerifying(false);
+            }
+          }}
+          onClose={() => setShowSelfieCamera(false)}
+          aspectRatio="square"
+          requireConsent
+        />
+      )}
       
       <SafetyConfirmationModal isOpen={showLocationConfirm} onClose={() => { setShowLocationConfirm(false); setPendingLocation(null); }} onConfirm={confirmAddLocation} locationName={pendingLocation?.display_name || ''} />
       

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useSelfieLock } from '../hooks/useSelfieLock';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
 import { Plus, X, Calendar, Clock, MapPin } from 'lucide-react';
 
 export default function PartnerDashboard() {
   const { user, profile, loading, refreshProfile } = useAuth();
+  const { guarded } = useSelfieLock();
   const [pendingMeetups, setPendingMeetups] = useState<any[]>([]);
   const [upcomingMeetups, setUpcomingMeetups] = useState<any[]>([]);
   const [allMeetups, setAllMeetups] = useState<any[]>([]);
@@ -153,6 +155,7 @@ export default function PartnerDashboard() {
 
   // Accept booking request
   const acceptBooking = async (bookingId: string) => {
+    guarded(async () => {
     setProcessingBookingId(bookingId);
     try {
       const { error } = await supabase
@@ -174,6 +177,7 @@ export default function PartnerDashboard() {
     } finally {
       setProcessingBookingId(null);
     }
+    });
   };
 
   // Decline booking request

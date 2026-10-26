@@ -7,6 +7,8 @@ interface LiveCameraCaptureProps {
   aspectRatio?: 'square' | 'portrait' | 'landscape';
   isEditMode?: boolean;
   onReplaceConfirm?: () => Promise<boolean>;
+  requireConsent?: boolean;
+  consentLabel?: string;
 }
 
 const MIN_ZOOM = 1;
@@ -18,12 +20,15 @@ export default function LiveCameraCapture({
   onClose,
   aspectRatio = 'square',
   isEditMode = false,
-  onReplaceConfirm
+  onReplaceConfirm,
+  requireConsent = false,
+  consentLabel = 'I consent to facial capture for identity verification.',
 }: LiveCameraCaptureProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -367,20 +372,34 @@ export default function LiveCameraCapture({
 
       <div className="px-4 py-4 bg-black/60 backdrop-blur-sm">
         {!isEditing ? (
-          <div className="flex gap-3 max-w-sm mx-auto">
-            <button
-              onClick={onClose}
-              className="flex-1 py-3 bg-white/10 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={takePicture}
-              className="flex-2 px-8 py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <Camera className="w-5 h-5" />
-              Capture
-            </button>
+          <div className="flex flex-col gap-3">
+            {requireConsent && (
+              <label className="flex items-start gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consentGiven}
+                  onChange={(e) => setConsentGiven(e.target.checked)}
+                  className="mt-1 w-5 h-5 accent-red-600"
+                />
+                <span className="text-sm text-gray-300">{consentLabel}</span>
+              </label>
+            )}
+            <div className="flex gap-3 max-w-sm mx-auto w-full">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 bg-white/10 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={takePicture}
+                disabled={requireConsent && !consentGiven}
+                className="flex-2 px-8 py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Camera className="w-5 h-5" />
+                Capture
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex gap-3 max-w-sm mx-auto">

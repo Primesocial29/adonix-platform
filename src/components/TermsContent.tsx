@@ -17,7 +17,7 @@ export default function TermsContent() {
 
       <section>
         <h2 className="text-base font-semibold text-white mb-2">3. BIPA COMPLIANCE</h2>
-        <p>Facial estimation data is deleted immediately after verification. Separate written consent is required before any biometric data is collected.</p>
+        <p>Facial estimation data is deleted immediately after verification. Separate written consent is required before any biometric data is collected. Because users are permitted to browse before participating, separate written consent for biometric data collection will be requested via a checkbox immediately prior to capturing the live selfie required for profile completion, before the user is permitted to contact, book, or offer services.</p>
       </section>
 
       <section>

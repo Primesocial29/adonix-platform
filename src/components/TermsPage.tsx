@@ -22,7 +22,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-white mb-2">3. BIPA COMPLIANCE</h2>
-            <p>If facial age estimation is used, Prime Social LLC obtains separate written consent before collecting any biometric data. Facial estimation data is deleted immediately after verification. We do not sell, share, trade, or otherwise disclose biometric data to any third party. You may withdraw consent at any time by emailing primesocial@primesocial.xyz. This complies with the Illinois Biometric Information Privacy Act (BIPA) and similar state laws.</p>
+            <p>If facial age estimation is used, Prime Social LLC obtains separate written consent before collecting any biometric data. Facial estimation data is deleted immediately after verification. We do not sell, share, trade, or otherwise disclose biometric data to any third party. You may withdraw consent at any time by emailing primesocial@primesocial.xyz. This complies with the Illinois Biometric Information Privacy Act (BIPA) and similar state laws. Because users are permitted to browse before participating, separate written consent for biometric data collection will be requested via a checkbox immediately prior to capturing the live selfie required for profile completion, before the user is permitted to contact, book, or offer services.</p>
           </section>
 
           <section>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, Profile } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useSelfieLock } from '../hooks/useSelfieLock';
 import { 
   X, MapPin, Calendar, Clock, DollarSign, Star, 
   Award, Dumbbell, ChevronLeft, Heart, Flag, CheckCircle
@@ -25,6 +26,7 @@ type ScreenState = 'form' | 'review' | 'processing' | 'success';
 
 export default function PartnerProfileView({ partner, onClose, onBook }: PartnerProfileViewProps) {
   const { user, profile } = useAuth();
+  const { guarded } = useSelfieLock();
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullBio, setShowFullBio] = useState(false);
@@ -405,6 +407,7 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
   };
 
   const handleSecureSession = () => {
+    guarded(() => {
     // Final validation before proceeding
     if (!selectedActivity) setStep1Error('Please select an activity');
     if (!selectedDuration) setStep2Error('Please select a duration');
@@ -415,11 +418,11 @@ export default function PartnerProfileView({ partner, onClose, onBook }: Partner
     if (isFormComplete) {
       setScreen('review');
     }
+    });
   };
 
   const handleConfirmAndAuthorize = () => {
-    // Close the review screen and open CheckoutScreen
-    setShowCheckout(true);
+    guarded(() => setShowCheckout(true));
   };
 
   const handleBackToForm = () => {

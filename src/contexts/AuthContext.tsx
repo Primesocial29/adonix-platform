@@ -8,8 +8,13 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  updatePhone: (phone: string) => Promise<void>;
+  verifyPhoneOtp: (phone: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = session?.user;
     if (!currentUser) return;
     await fetchProfile(currentUser.id);
+  };
+
+  const refreshUser = async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    setUser(currentUser);
   };
 
   useEffect(() => {
@@ -69,13 +79,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) throw error;
+  };
+
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) throw error;
+  };
+
+  const updatePhone = async (phone: string) => {
+    const { error } = await supabase.auth.updateUser({ phone });
+    if (error) throw error;
+  };
+
+  const verifyPhoneOtp = async (phone: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'phone_change' });
+    if (error) throw error;
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        signUp,
+        signIn,
+        signInWithGoogle,
+        signInWithApple,
+        updatePhone,
+        verifyPhoneOtp,
+        signOut,
+        refreshProfile,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

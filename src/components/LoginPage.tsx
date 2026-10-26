@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { X, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { X } from 'lucide-react';
 
-// Simple Modal for Terms/Privacy (view only, no agreement needed)
 function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onClose: () => void; title: string; content: string }) {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col border border-white/10">
@@ -15,11 +13,9 @@ function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onC
             <X className="w-5 h-5 text-gray-400 hover:text-white" />
           </button>
         </div>
-        
         <div className="flex-1 overflow-y-auto p-6 text-gray-300 space-y-4 whitespace-pre-wrap text-sm">
           {content}
         </div>
-        
         <div className="p-4 border-t border-white/10">
           <button
             onClick={onClose}
@@ -33,108 +29,23 @@ function SimpleModal({ isOpen, onClose, title, content }: { isOpen: boolean; onC
   );
 }
 
-interface ConfirmModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-}
-
-function ConfirmModal({ isOpen, onClose, onConfirm, title, message }: ConfirmModalProps) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10">
-        <div className="text-center mb-4">
-          <div className="text-4xl mb-3">⚠️</div>
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-          <p className="text-gray-400 mt-2">{message}</p>
-        </div>
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 rounded-xl font-semibold transition"
-          >
-            Leave
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 text-center mt-3">
-          ↳ Stay on page &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↳ Close & lose progress
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const { signInWithGoogle, signInWithApple } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogle = async () => {
     setLoading(true);
     setError('');
-
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, profile_complete')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profile?.role === 'partner') {
-          if (profile?.profile_complete) {
-            window.location.href = '/partner-dashboard';
-          } else {
-            window.location.href = '/partner-setup';
-          }
-        } else {
-          if (profile?.profile_complete) {
-            window.location.href = '/client-dashboard';
-          } else {
-            window.location.href = '/client-setup';
-          }
-        }
-      }
+      await signInWithGoogle();
+      // OAuth redirect happens; on return, App routes through VerificationGate as needed.
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
-    } finally {
+      setError(err.message || 'Google sign-in failed. Please try again.');
       setLoading(false);
     }
-  };
-
-  const handleBack = () => {
-    setShowConfirmModal(true);
-  };
-
-  const handleClose = () => {
-    setShowConfirmModal(true);
-  };
-
-  const confirmLeave = () => {
-    window.location.href = '/';
   };
 
   const termsContent = `ADONIX FIT - TERMS OF SERVICE
@@ -147,7 +58,7 @@ Adonix Fit is a fitness platform operated by Prime Social LLC. It is NOT for dat
 You must be 18+. You REPRESENT AND WARRANT that you have NO felony convictions, NO history of sexual misconduct or violence, and are NOT a registered sex offender.
 
 3. BIPA COMPLIANCE
-Facial estimation data is deleted immediately after verification. Separate written consent required.
+Facial estimation data is deleted immediately after verification. Separate written consent required. Because users are permitted to browse before participating, separate written consent for biometric data collection will be requested via a checkbox immediately prior to capturing the live selfie required for profile completion, before the user is permitted to contact, book, or offer services.
 
 4. ZERO-TOLERANCE
 Immediate permanent ban for: Harassment, Stalking, Non-Consensual Photos, Nudity, AI Impersonation, External Payments.
@@ -191,29 +102,26 @@ Per CCPA/CPRA, Florida SB 1722, you have the right to access, correct, delete, a
 7. CONTACT
 primesocial@primesocial.xyz`;
 
+  // Apple auth is implemented but intentionally hidden until ready to launch.
+  const showAppleAuth = false;
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
-        {/* Header - Same as client setup */}
         <div className="border-b border-white/10 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center gap-3">
-              <img 
-                src="/adonixlogo.png" 
-                alt="Adonix Logo" 
-                className="h-10 w-auto"
-              />
+              <img src="/adonixlogo.png" alt="Adonix Logo" className="h-10 w-auto" />
               <span className="text-xl font-bold text-white">ADONIX</span>
               <span className="text-xs text-gray-400">Social Fitness, Elevated</span>
             </div>
           </div>
         </div>
-        
+
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Close button - Top Right */}
           <div className="flex justify-end mb-4">
             <button
-              onClick={handleClose}
+              onClick={() => window.location.href = '/'}
               className="p-2 hover:bg-white/10 rounded-full transition-colors"
               aria-label="Close"
             >
@@ -221,7 +129,6 @@ primesocial@primesocial.xyz`;
             </button>
           </div>
 
-          {/* Login Form */}
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-white">Welcome Back</h1>
@@ -234,52 +141,34 @@ primesocial@primesocial.xyz`;
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:border-red-500 focus:outline-none pr-10"
-                    placeholder="Enter your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
+            <div className="space-y-4">
               <button
-                type="submit"
+                onClick={handleGoogle}
                 disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold hover:scale-105 transition disabled:opacity-50"
+                className="w-full py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-xl font-semibold flex items-center justify-center gap-3 transition disabled:opacity-50"
               >
-                {loading ? 'Signing in...' : 'SIGN IN'}
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                {loading ? 'Redirecting...' : 'Continue with Google'}
               </button>
-            </form>
+
+              {showAppleAuth && (
+                <button
+                  onClick={() => signInWithApple()}
+                  className="w-full py-3 bg-black border border-white/20 hover:bg-gray-900 text-white rounded-xl font-semibold flex items-center justify-center gap-3 transition"
+                >
+                   Apple
+                </button>
+              )}
+            </div>
 
             <div className="mt-6">
               <button
-                onClick={handleBack}
+                onClick={() => window.location.href = '/'}
                 className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-semibold transition"
               >
                 BACK
@@ -288,17 +177,11 @@ primesocial@primesocial.xyz`;
 
             <p className="text-center text-xs text-gray-500 mt-6">
               By signing in, you agree to our{' '}
-              <button 
-                onClick={() => setShowTermsModal(true)} 
-                className="text-red-400 hover:text-red-300 underline"
-              >
+              <button onClick={() => setShowTermsModal(true)} className="text-red-400 hover:text-red-300 underline">
                 Terms of Service
               </button>{' '}
               and{' '}
-              <button 
-                onClick={() => setShowPrivacyModal(true)} 
-                className="text-red-400 hover:text-red-300 underline"
-              >
+              <button onClick={() => setShowPrivacyModal(true)} className="text-red-400 hover:text-red-300 underline">
                 Privacy Policy
               </button>.
             </p>
@@ -306,30 +189,8 @@ primesocial@primesocial.xyz`;
         </div>
       </div>
 
-      {/* Confirm Leave Modal */}
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={confirmLeave}
-        title="Leave this page?"
-        message="Any unsaved changes will be lost."
-      />
-
-      {/* Terms Modal */}
-      <SimpleModal
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-        title="Terms of Service"
-        content={termsContent}
-      />
-
-      {/* Privacy Modal */}
-      <SimpleModal
-        isOpen={showPrivacyModal}
-        onClose={() => setShowPrivacyModal(false)}
-        title="Privacy Policy"
-        content={privacyContent}
-      />
+      <SimpleModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} title="Terms of Service" content={termsContent} />
+      <SimpleModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} title="Privacy Policy" content={privacyContent} />
     </>
   );
 }

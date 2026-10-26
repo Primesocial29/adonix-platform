@@ -119,6 +119,9 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const { signUp, user, refreshProfile, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showSelfieCamera, setShowSelfieCamera] = useState(false);
+  const [selfieCaptured, setSelfieCaptured] = useState(false);
+  const [selfieVerifying, setSelfieVerifying] = useState(false);
   
   // Step 1: Account Setup
   const [firstName, setFirstName] = useState('');
@@ -844,7 +847,29 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     );
   };
   
+  const handleSelfieCapture = async (blobOrDataURL: Blob | string) => {
+    setSelfieVerifying(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { selfie_verified: true },
+      });
+      if (updateError) throw updateError;
+      setSelfieCaptured(true);
+      setShowSelfieCamera(false);
+    } catch (err) {
+      console.error('Selfie verification failed:', err);
+      alert('Failed to verify selfie. Please try again.');
+    } finally {
+      setSelfieVerifying(false);
+    }
+  };
+
   const handleComplete = async () => {
+    if (!selfieCaptured) {
+      alert('You must complete your identity verification via live selfie before finishing.');
+      setStep(5);
+      return;
+    }
     await supabase.from('profiles').update({ profile_complete: true }).eq('id', user?.id);
     await refreshProfile();
     if (onComplete) onComplete();
@@ -1147,13 +1172,13 @@ California Residents:
         
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
-            <span>Step {step} of 4</span>
-            <span>{Math.round(step / 4 * 100)}%</span>
+            <span>Step {step} of 5</span>
+            <span>{Math.round(step / 5 * 100)}%</span>
           </div>
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-red-600 to-orange-600 transition-all duration-300"
-              style={{ width: `${(step / 4) * 100}%` }}
+              style={{ width: `${(step / 5) * 100}%` }}
             />
           </div>
         </div>
@@ -1750,6 +1775,36 @@ California Residents:
         {/* Step 4: Find Partners */}
         {step === 4 && <Step4Content />}
         
+        {/* Step 5: Identity Verification (Live Selfie) */}
+        {step === 5 && (
+          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
+            <h2 className="text-2xl font-bold text-center mb-2">Verify Your Identity</h2>
+            <p className="text-center text-gray-400 mb-6">
+              This is the final step. Take a live selfie so we can confirm you're really you. You won't be able to contact, book, or offer services until this is done.
+            </p>
+
+            <div className="text-center mb-6">
+              {selfieCaptured ? (
+                <div className="inline-flex items-center gap-2 px-4 py-3 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300 font-semibold">
+                  <Check className="w-5 h-5" /> Identity verified
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowSelfieCamera(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold flex items-center justify-center gap-2"
+                >
+                  <Camera className="w-5 h-5" /> Take Live Selfie
+                </button>
+              )}
+            </div>
+
+            <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm text-gray-300">
+              <p className="font-semibold text-white mb-1">Facial capture consent</p>
+              <p>You'll be asked to consent to facial capture right before the camera opens. Your image is used only for identity verification and is deleted immediately after.</p>
+            </div>
+          </div>
+        )}
+        
         <div className="flex justify-between gap-4 mt-8">
           {step > 1 && (
             <button
@@ -1759,7 +1814,7 @@ California Residents:
               Back
             </button>
           )}
-          {step < 4 ? (
+          {step < 5 ? (
             <button
               onClick={handleNext}
               disabled={loading || (step === 1 && !isStep1Complete) || (step === 2 && !isStep2Complete) || (step === 3 && !isStep3Complete)}
@@ -1770,10 +1825,10 @@ California Residents:
           ) : (
             <button
               onClick={handleComplete}
-              disabled={!hasSearched || filteredPartners.length === 0}
+              disabled={!selfieCaptured || selfieVerifying}
               className="flex-1 py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl font-semibold transition hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
-              Find Partners
+              {selfieVerifying ? 'Verifying...' : 'Finish'}
             </button>
           )}
         </div>
@@ -1798,6 +1853,15 @@ California Residents:
           onCapture={handleCameraCapture}
           onClose={() => setShowCamera(false)}
           aspectRatio="square"
+        />
+      )}
+
+      {showSelfieCamera && (
+        <LiveCameraCapture
+          onCapture={handleSelfieCapture}
+          onClose={() => setShowSelfieCamera(false)}
+          aspectRatio="square"
+          requireConsent
         />
       )}
       
