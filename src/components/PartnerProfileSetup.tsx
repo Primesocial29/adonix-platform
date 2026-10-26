@@ -4,16 +4,10 @@ import { useAuth } from '../hooks/useAuth';
 import {
   Plus, Trash2, MapPin, Clock, DollarSign, Camera,
   Loader2, Navigation, Search, ChevronDown, ChevronRight,
-  Award, CheckCircle, X, ShieldCheck, Info, AlertCircle, Eye, EyeOff
+  Award, CheckCircle, X, ShieldCheck, Info, AlertCircle
 } from 'lucide-react';
 import LiveCameraCapture from './LiveCameraCapture';
 import { containsBlockedWords, getBlockedWordsInText } from '../lib/textSanitizer';
-
-declare global {
-  interface Window {
-    captchaCallback: (token: string) => void;
-  }
-}
 
 interface SearchResult {
   display_name: string;
@@ -256,39 +250,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [showFooterPrivacyModal, setShowFooterPrivacyModal] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
   
-  // CAPTCHA state
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaError, setCaptchaError] = useState('');
-  
-  // Modal agreement states for Terms & Privacy
-  const [termsModalAgreed, setTermsModalAgreed] = useState(false);
-  const [privacyModalAgreed, setPrivacyModalAgreed] = useState(false);
-  
-  // ========== STEP 1: ACCOUNT SETUP ==========
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [firstNameError, setFirstNameError] = useState('');
   const [lastNameError, setLastNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  const [birthDateError, setBirthDateError] = useState('');
-  const [ageVerifyConsent, setAgeVerifyConsent] = useState(false);
-  const [facialAgeConsent, setFacialAgeConsent] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [gatekeeperAccepted, setGatekeeperAccepted] = useState(false);
   const [step1Error, setStep1Error] = useState('');
-  const [loading, setLoading] = useState(false);
   
-  // ========== STEP 2: PROFILE & LEGAL ==========
+  // ========== STEP 1: PROFILE & LEGAL ==========
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -321,8 +289,6 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [affirmTermsAndPrivacy, setAffirmTermsAndPrivacy] = useState(false);
   
   const [step2Error, setStep2Error] = useState('');
-  
-  // ========== STEP 3: PHOTOS ==========
   const [showCamera, setShowCamera] = useState(false);
   const [livePhotoUrl, setLivePhotoUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -333,7 +299,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const MAX_PHOTOS = 6;
   const [step3Error, setStep3Error] = useState('');
   
-  // ========== STEP 4: SERVICES & RATES ==========
+
+  // ========== STEP 2: SERVICES & RATES ==========
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [customServiceTypes, setCustomServiceTypes] = useState<string[]>([]);
   const [customServiceInput, setCustomServiceInput] = useState('');
@@ -342,7 +309,8 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [serviceHalfHourEnabled, setServiceHalfHourEnabled] = useState<Record<string, boolean>>({});
   const [step4Error, setStep4Error] = useState('');
   
-  // ========== STEP 5: LOCATIONS & SCHEDULE ==========
+
+  // ========== STEP 3: LOCATIONS & SCHEDULE ==========
   const [serviceAreas, setServiceAreas] = useState<{ name: string; lat: number | null; lng: number | null }[]>([]);
   const [serviceAreasCenterLat, setServiceAreasCenterLat] = useState<number | null>(null);
   const [serviceAreasCenterLng, setServiceAreasCenterLng] = useState<number | null>(null);
@@ -360,73 +328,13 @@ export default function PartnerProfileSetup({ onComplete }: { onComplete?: () =>
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const [step5Error, setStep5Error] = useState('');
   
-  // ========== STEP 6: MEETUP SETTINGS ==========
+
+  // ========== STEP 4: MEETUP SETTINGS ==========
   const [minAdvanceNotice, setMinAdvanceNotice] = useState(72);
   const [cancellationWindow, setCancellationWindow] = useState(24);
   const [step6Error, setStep6Error] = useState('');
 
   const allSelectedServices = [...serviceTypes, ...customServiceTypes];
-
-  const termsContent = `ADONIX - SOCIAL NETWORKING AGREEMENT
-
-1. This is a social fitness network, not a professional service marketplace.
-
-2. Partners are independent social participants, not employees or contractors of Adonix.
-
-3. Suggested contributions are voluntary social gifts, not professional service fees.
-
-4. All meetups must occur at verified public locations. No private residences, hotels, or Airbnbs.
-
-5. You are responsible for your own safety and well-being during meetups.
-
-6. Adonix is not liable for any injuries, damages, or incidents that occur during meetups.
-
-7. Platform Support (15%) + processing fees are deducted from each suggested contribution.
-
-8. Violation of these terms may result in permanent account suspension.`;
-
-  const privacyContent = `ADONIX - PRIVACY POLICY
-
-Information We Collect:
-- Name, email, phone number, age, city, photos, and location data
-- Meetup history and preferences
-
-How We Use Your Information:
-- To facilitate meetups and verify identities
-- To improve our platform and match you with partners
-
-Data Sharing:
-- We do not sell your personal data
-- Payment information is processed securely through Stripe
-
-Location Data:
-- Used only during active meetups for GPS check-in verification
-
-Data Retention:
-- You may request deletion of your account and data at any time
-
-California Residents:
-- You have the right to opt out of data sharing under CPRA`;
-
-  // Password strength checks
-  const passwordMinLength = password.length >= 8;
-  const passwordHasUpper = /[A-Z]/.test(password);
-  const passwordHasLower = /[a-z]/.test(password);
-  const passwordHasNumber = /[0-9]/.test(password);
-  const passwordHasSpecial = /[!@#$%^&*]/.test(password);
-  const isPasswordValid = passwordMinLength && passwordHasUpper && passwordHasLower && passwordHasNumber && passwordHasSpecial;
-
-  const calculateAge = (month: string, day: string, year: string): number | null => {
-    if (!month || !day || !year) return null;
-    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   const validateUsername = (value: string) => {
     if (!value) return '';
@@ -462,24 +370,6 @@ California Residents:
     const timeout = setTimeout(checkAvailability, 500);
     return () => clearTimeout(timeout);
   }, [username]);
-
-  // Load Turnstile script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-  }, []);
-
-  // CAPTCHA callback
-  useEffect(() => {
-    window.captchaCallback = (token: string) => {
-      console.log("CAPTCHA token received:", token);
-      setCaptchaToken(token);
-      setCaptchaError('');
-    };
-  }, []);
 
   // Search city
   const searchCity = async (query: string) => {
@@ -720,54 +610,6 @@ California Residents:
       setLastNameError('Last name is required');
     } else {
       setLastNameError('');
-    }
-  };
-
-  const handleEmailChange = (val: string) => {
-    setEmail(val);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(val)) {
-      setEmailError('Please enter a valid email address.');
-    } else {
-      setEmailError('');
-    }
-  };
-
-  const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '');
-    let formatted = '';
-    if (digits.length >= 1) formatted = '(' + digits.substring(0, 3);
-    if (digits.length >= 4) formatted += ') ' + digits.substring(3, 6);
-    if (digits.length >= 7) formatted += '-' + digits.substring(6, 10);
-    setPhone(formatted);
-    
-    if (digits.length === 10 && digits[0] >= '2') {
-      setPhoneError('');
-    } else if (digits.length > 0 && digits.length !== 10) {
-      setPhoneError('Please enter a valid 10-digit phone number.');
-    } else if (digits.length === 10 && digits[0] < '2') {
-      setPhoneError('Please enter a valid US phone number.');
-    } else {
-      setPhoneError('');
-    }
-  };
-
-  const handlePasswordChange = (val: string) => {
-    setPassword(val);
-    if (!val) {
-      setPasswordError('');
-    } else if (!passwordMinLength) {
-      setPasswordError('Password must be at least 8 characters');
-    } else if (!passwordHasUpper) {
-      setPasswordError('Password must contain at least 1 uppercase letter');
-    } else if (!passwordHasLower) {
-      setPasswordError('Password must contain at least 1 lowercase letter');
-    } else if (!passwordHasNumber) {
-      setPasswordError('Password must contain at least 1 number');
-    } else if (!passwordHasSpecial) {
-      setPasswordError('Password must contain at least 1 special character (!@#$%^&*)');
-    } else {
-      setPasswordError('');
     }
   };
 
@@ -1039,7 +881,7 @@ California Residents:
           first_name: firstName,
           display_name: `${firstName} ${lastName}`,
           username: autoUsername,
-          role: 'trainer',
+          role: 'partner',
           city,
           bio,
           certifications,
@@ -1764,8 +1606,8 @@ Zero-Tolerance Policy: Private location requests, harassment, or unsafe behavior
       
       <ConfirmLeaveModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmLeave} />
       
-      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => { setTermsModalAgreed(true); setTermsAccepted(true); setShowTermsModal(null); }} title="Terms of Service" content={termsContent} />
-      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => { setPrivacyModalAgreed(true); setPrivacyAccepted(true); setShowTermsModal(null); }} title="Privacy Policy" content={privacyContent} />
+      <TermsModal isOpen={showTermsModal === 'terms'} onClose={() => setShowTermsModal(null)} onAccept={() => setShowTermsModal(null)} title="Terms of Service" content="Terms of Service are handled during the verification step before onboarding." />
+      <TermsModal isOpen={showTermsModal === 'privacy'} onClose={() => setShowTermsModal(null)} onAccept={() => setShowTermsModal(null)} title="Privacy Policy" content="Privacy Policy is handled during the verification step before onboarding." />
       
       <FooterInfoModal isOpen={showFooterTermsModal} onClose={() => setShowFooterTermsModal(false)} title="Terms of Service" content={footerTermsContent} />
       <FooterInfoModal isOpen={showFooterPrivacyModal} onClose={() => setShowFooterPrivacyModal(false)} title="Privacy Policy" content={footerPrivacyContent} />

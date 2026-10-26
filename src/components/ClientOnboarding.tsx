@@ -124,7 +124,12 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const [selfieVerifying, setSelfieVerifying] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState<'terms' | 'privacy' | null>(null);
 
-  // Step 1: Photo & Bio (first/last name still needed for profile)
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
+
+  // Step 1: Photo & Bio
   const [livePhotoUrl, setLivePhotoUrl] = useState('');
   const [tempPhotoUrl, setTempPhotoUrl] = useState('');
   const [photoAccepted, setPhotoAccepted] = useState(false);
@@ -236,31 +241,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
     return () => clearTimeout(timeout);
   }, [username]);
 
-  const calculateAge = (month: string, day: string, year: string): number | null => {
-    if (!month || !day || !year) return null;
-    const birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const validateAgeFromDropdowns = () => {
-    if (!birthMonth || !birthDay || !birthYear) {
-      return { isValid: false, error: 'Please enter your full birth date.' };
-    }
-    
-    const age = calculateAge(birthMonth, birthDay, birthYear);
-    if (age === null || age < 18) {
-      return { isValid: false, error: 'You must be at least 18 years old to use Adonix Fit.' };
-    }
-    
-    return { isValid: true, error: null };
-  };
-  
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 3959;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -559,7 +539,7 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
           first_name: firstName,
           display_name: `${firstName} ${lastName}`,
           username: autoUsername,
-          role: 'member',
+          role: 'client',
           bio,
           live_photo_url: livePhotoUrl,
         }).eq('id', user.id);
@@ -731,47 +711,6 @@ export default function ClientOnboarding({ onComplete }: { onComplete?: () => vo
   const startIndex = (currentPage - 1) * partnersPerPage;
   const endIndex = startIndex + partnersPerPage;
   const currentPartners = filteredPartners.slice(startIndex, endIndex);
-  
-  const termsContent = `ADONIX - SOCIAL NETWORKING AGREEMENT
-
-1. This is a social fitness network, not a professional service marketplace.
-
-2. Partners are independent social participants, not employees or contractors of Adonix.
-
-3. Suggested contributions are voluntary social gifts, not professional service fees.
-
-4. All meetups must occur at verified public locations. No private residences, hotels, or Airbnbs.
-
-5. You are responsible for your own safety and well-being during meetups.
-
-6. Adonix is not liable for any injuries, damages, or incidents that occur during meetups.
-
-7. Platform Support (15%) + processing fees are deducted from each suggested contribution.
-
-8. Violation of these terms may result in permanent account suspension.`;
-  
-  const privacyContent = `ADONIX - PRIVACY POLICY
-
-Information We Collect:
-- Name, email, phone number, age, city, photos, and location data
-- Meetup history and preferences
-
-How We Use Your Information:
-- To facilitate meetups and verify identities
-- To improve our platform and match you with partners
-
-Data Sharing:
-- We do not sell your personal data
-- Payment information is processed securely through Stripe
-
-Location Data:
-- Used only during active meetups for GPS check-in verification
-
-Data Retention:
-- You may request deletion of your account and data at any time
-
-California Residents:
-- You have the right to opt out of data sharing under CPRA`;
   
   const Step4Content = () => (
     <div className="space-y-6">
@@ -989,7 +928,7 @@ California Residents:
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             <img 
-              src="/Screenshot_2026-04-03_221406.png" 
+              src="/adonixlogo.png" 
               alt="Adonix Logo" 
               className="h-10 w-auto"
             />
@@ -1493,13 +1432,12 @@ California Residents:
         />
       )}
       
-      {/* FIXED: TermsModal onAccept handlers now set modal agreed states */}
       <TermsModal
         isOpen={showTermsModal === 'terms'}
         onClose={() => setShowTermsModal(null)}
         onAccept={() => setShowTermsModal(null)}
         title="Terms of Service"
-        content={termsContent}
+        content="Terms of Service are handled during the verification step before onboarding."
       />
       
       <TermsModal
@@ -1507,7 +1445,7 @@ California Residents:
         onClose={() => setShowTermsModal(null)}
         onAccept={() => setShowTermsModal(null)}
         title="Privacy Policy"
-        content={privacyContent}
+        content="Privacy Policy is handled during the verification step before onboarding."
       />
 
       {selectedPartner && (
